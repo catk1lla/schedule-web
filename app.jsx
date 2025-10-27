@@ -179,8 +179,6 @@ function App() {
   const [systemTheme, setSystemTheme] = useState(() => getPreferredTheme());
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
   const [headerVisibility, setHeaderVisibility] = useState('visible');
-  const userCollapsedRef = useRef(false);
-  const autoCollapsedRef = useRef(false);
   const headerRef = useRef(null);
 
   const autoCollapseFilters = useCallback(() => {
@@ -188,31 +186,13 @@ function App() {
       if (current) {
         return current;
       }
-      autoCollapsedRef.current = true;
       return true;
-    });
-  }, []);
-
-  const releaseAutoCollapsedFilters = useCallback(() => {
-    setHeaderCollapsed(current => {
-      if (!autoCollapsedRef.current) {
-        return current;
-      }
-      autoCollapsedRef.current = false;
-      if (userCollapsedRef.current) {
-        return current;
-      }
-      return false;
     });
   }, []);
 
   const handleToggleHeaderCollapsed = useCallback(() => {
     setHeaderCollapsed(current => {
       const next = !current;
-      userCollapsedRef.current = next;
-      if (!next) {
-        autoCollapsedRef.current = false;
-      }
       return next;
     });
   }, []);
@@ -225,12 +205,11 @@ function App() {
     const currentY = window.scrollY;
     if (currentY <= 24) {
       setHeaderVisibility('visible');
-      releaseAutoCollapsedFilters();
     } else {
       setHeaderVisibility('peek');
       autoCollapseFilters();
     }
-  }, [autoCollapseFilters, releaseAutoCollapsedFilters]);
+  }, [autoCollapseFilters]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || !headerRef.current) {
@@ -367,9 +346,7 @@ function App() {
           return prev;
         });
 
-        if (nearTop) {
-          releaseAutoCollapsedFilters();
-        } else if (scrolledDown && currentY > 16) {
+        if (scrolledDown && currentY > 16) {
           autoCollapseFilters();
         } else if (scrolledUp && currentY > 0) {
           autoCollapseFilters();
@@ -388,7 +365,7 @@ function App() {
         window.cancelAnimationFrame(rafId);
       }
     };
-  }, [autoCollapseFilters, releaseAutoCollapsedFilters]);
+  }, [autoCollapseFilters]);
 
   useEffect(() => {
     writeStorage(STORAGE_KEYS.parity, parityMode);
