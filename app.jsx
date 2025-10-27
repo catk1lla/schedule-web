@@ -177,40 +177,6 @@ function App() {
     return stored === 'dark' || stored === 'light' || stored === 'system' ? stored : 'system';
   });
   const [systemTheme, setSystemTheme] = useState(() => getPreferredTheme());
-  const [headerElevated, setHeaderElevated] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return undefined;
-    }
-
-    let ticking = false;
-
-    const update = () => {
-      ticking = false;
-      const shouldElevate = window.scrollY > 24;
-      setHeaderElevated(prev => (prev === shouldElevate ? prev : shouldElevate));
-    };
-
-    const handleScroll = () => {
-      if (typeof window.requestAnimationFrame === 'function') {
-        if (ticking) {
-          return;
-        }
-        ticking = true;
-        window.requestAnimationFrame(update);
-      } else {
-        update();
-      }
-    };
-
-    update();
-    window.addEventListener('scroll', handleScroll, { passive: true });
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, []);
 
   const handleScrollToTop = useCallback(() => {
     if (typeof window === 'undefined') {
@@ -324,9 +290,7 @@ function App() {
 
   return (
     <div className="app-shell">
-      <header
-        className={`app-header${headerElevated ? ' is-condensed' : ''}`}
-      >
+      <header className="app-header">
         <div className="header-inner">
           <div className="brand-block" aria-live="polite">
             <span className="brand-kicker">Учебный график</span>
