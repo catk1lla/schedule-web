@@ -1,4 +1,4 @@
-const { useState, useMemo, useEffect, useCallback, useRef } = React;
+const { useState, useMemo, useEffect, useCallback } = React;
 
 const SCHEDULE_ODD = [
   {day:'Понедельник', pair:3, time:'11:35-13:10', weeks:'all', type:'практика', subgroup:null, subject:'Электив по физической культуре и спорту', place:'спорткомплекс 6-го учебного корпуса', teacher:'Андронова Л. Н.', note:''},
@@ -177,63 +177,39 @@ function App() {
     return stored === 'dark' || stored === 'light' || stored === 'system' ? stored : 'system';
   });
   const [systemTheme, setSystemTheme] = useState(() => getPreferredTheme());
-  const [headerCollapsed, setHeaderCollapsed] = useState(false);
-  const headerRef = useRef(null);
-  const headerMetricsRef = useRef({ height: 0, peekHeight: 0 });
-  const headerVisibleHeightRef = useRef(0);
+  const [headerElevated, setHeaderElevated] = useState(false);
 
-  const applyHeaderVisibleHeight = useCallback((value) => {
-    const element = headerRef.current;
-    const { height } = headerMetricsRef.current;
-    const maxHeight = height || value || 0;
-    const clamped = Math.max(0, Math.min(value, maxHeight));
-    headerVisibleHeightRef.current = clamped;
-
-    if (!element) {
-      return;
-    }
-
-    element.style.setProperty('--header-visible-height', `${clamped}px`);
-
-    const tolerance = 2;
-    let nextVisibility = 'hidden';
-    if (maxHeight <= tolerance || clamped >= maxHeight - tolerance) {
-      nextVisibility = 'visible';
-    } else if (clamped > 8) {
-      nextVisibility = 'peek';
-    }
-
-    element.dataset.visibility = nextVisibility;
-    if (nextVisibility === 'hidden') {
-      element.style.pointerEvents = 'none';
-    } else {
-      element.style.pointerEvents = '';
-    }
-  }, []);
-
-  const readPeekHeight = useCallback(() => {
+  useEffect(() => {
     if (typeof window === 'undefined') {
-      return 60;
+      return undefined;
     }
-    const raw = window.getComputedStyle(document.documentElement).getPropertyValue('--header-peek-height');
-    const parsed = parseFloat(raw);
-    return Number.isFinite(parsed) ? parsed : 60;
-  }, []);
 
-  const autoCollapseFilters = useCallback(() => {
-    setHeaderCollapsed(current => {
-      if (current) {
-        return current;
+    let ticking = false;
+
+    const update = () => {
+      ticking = false;
+      const shouldElevate = window.scrollY > 24;
+      setHeaderElevated(prev => (prev === shouldElevate ? prev : shouldElevate));
+    };
+
+    const handleScroll = () => {
+      if (typeof window.requestAnimationFrame === 'function') {
+        if (ticking) {
+          return;
+        }
+        ticking = true;
+        window.requestAnimationFrame(update);
+      } else {
+        update();
       }
-      return true;
-    });
-  }, []);
+    };
 
-  const handleToggleHeaderCollapsed = useCallback(() => {
-    setHeaderCollapsed(current => {
-      const next = !current;
-      return next;
-    });
+    update();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, []);
 
   const handleScrollToTop = useCallback(() => {
@@ -242,58 +218,6 @@ function App() {
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || !headerRef.current) {
-      return undefined;
-    }
-
-    const headerElement = headerRef.current;
-
-    const updateMetrics = () => {
-      const measuredHeight = headerElement.offsetHeight;
-      headerMetricsRef.current.height = measuredHeight;
-      headerElement.style.setProperty('--header-height', `${measuredHeight}px`);
-
-      const peekHeight = Math.min(readPeekHeight(), measuredHeight);
-      headerMetricsRef.current.peekHeight = peekHeight;
-
-      const nearTop = window.scrollY <= 24;
-      const maxVisible = nearTop || !headerCollapsed ? measuredHeight : peekHeight;
-      const currentVisible = headerVisibleHeightRef.current != null ? headerVisibleHeightRef.current : maxVisible;
-      let desired;
-      if (nearTop) {
-        desired = measuredHeight;
-      } else if (headerCollapsed) {
-        desired = Math.min(currentVisible, maxVisible);
-      } else {
-        desired = measuredHeight;
-      }
-      applyHeaderVisibleHeight(desired);
-    };
-
-    updateMetrics();
-
-    const handleResize = () => {
-      updateMetrics();
-    };
-
-    if (typeof ResizeObserver === 'undefined') {
-      window.addEventListener('resize', handleResize);
-      return () => {
-        window.removeEventListener('resize', handleResize);
-      };
-    }
-
-    const observer = new ResizeObserver(updateMetrics);
-    observer.observe(headerElement);
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      observer.disconnect();
-      window.removeEventListener('resize', handleResize);
-    };
-  }, [headerCollapsed, applyHeaderVisibleHeight, readPeekHeight]);
 
   const [filters, setFilters] = useState(() => {
     const storedSubgroup = readStorage(STORAGE_KEYS.subgroup);
@@ -357,106 +281,6 @@ function App() {
   }, [themeMode, systemTheme]);
 
   useEffect(() => {
-    if (typeof window === 'undefined' || !headerRef.current) {
-      return undefined;
-    }
-
-    let lastY = window.scrollY;
-    let rafId = null;
-
-    const processScroll = () => {
-      rafId = null;
-      const currentY = window.scrollY;
-      const delta = currentY - lastY;
-      if (Math.abs(delta) < 0.5) {
-        lastY = currentY;
-        return;
-      }
-
-      const scrolledDown = delta > 0;
-      const scrolledUp = delta < 0;
-      const nearTop = currentY <= 24;
-      const { height, peekHeight } = headerMetricsRef.current;
-
-      let visibleHeight = headerVisibleHeightRef.current;
-      if (!Number.isFinite(visibleHeight)) {
-        visibleHeight = nearTop ? height : (headerCollapsed ? Math.min(peekHeight || 0, height || 0) : height);
-      }
-      const collapsePeekCap = Math.min(peekHeight || 0, height || 0);
-      const revealCap = Number.isFinite(height) ? height : 0;
-
-      if (nearTop) {
-        visibleHeight = height;
-      } else if (scrolledDown) {
-        visibleHeight = Math.max(0, Math.min(revealCap, visibleHeight - delta));
-        if (headerCollapsed) {
-          visibleHeight = Math.min(visibleHeight, collapsePeekCap);
-        }
-      } else if (scrolledUp) {
-        const expandedHeight = Math.min(revealCap, visibleHeight - delta);
-        if (headerCollapsed) {
-          const minimumPeek = collapsePeekCap || 0;
-          visibleHeight = Math.max(minimumPeek, expandedHeight);
-        } else {
-          visibleHeight = expandedHeight;
-        }
-      }
-
-      if (Number.isFinite(revealCap) && revealCap > 0) {
-        visibleHeight = Math.max(0, Math.min(revealCap, visibleHeight));
-      } else {
-        visibleHeight = Math.max(0, visibleHeight);
-      }
-
-      applyHeaderVisibleHeight(visibleHeight);
-
-      if (scrolledDown && currentY > 16) {
-        autoCollapseFilters();
-      }
-
-      lastY = currentY;
-    };
-
-    const handleScroll = () => {
-      if (rafId != null) {
-        return;
-      }
-
-      rafId = window.requestAnimationFrame(processScroll);
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      if (rafId != null) {
-        window.cancelAnimationFrame(rafId);
-      }
-    };
-  }, [headerCollapsed, autoCollapseFilters, applyHeaderVisibleHeight]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || !headerRef.current) {
-      return;
-    }
-
-    const { height, peekHeight } = headerMetricsRef.current;
-
-    if (window.scrollY <= 24) {
-      applyHeaderVisibleHeight(height);
-      return;
-    }
-
-    if (headerCollapsed) {
-      const cap = Math.min(peekHeight, height);
-      const next = Math.min(headerVisibleHeightRef.current, cap);
-      applyHeaderVisibleHeight(next);
-    } else {
-      applyHeaderVisibleHeight(height);
-    }
-  }, [headerCollapsed, applyHeaderVisibleHeight]);
-
-  useEffect(() => {
     writeStorage(STORAGE_KEYS.parity, parityMode);
   }, [parityMode]);
 
@@ -501,37 +325,38 @@ function App() {
   return (
     <div className="app-shell">
       <header
-        ref={headerRef}
-        className={`app-header${headerCollapsed ? ' collapsed' : ''}`}
+        className={`app-header${headerElevated ? ' is-condensed' : ''}`}
       >
-        <div className="brand-line">
+        <div className="header-inner">
           <div className="brand-block" aria-live="polite">
+            <span className="brand-kicker">Учебный график</span>
             <h1>Расписание учебных пар</h1>
-            <div className="brand-meta">
-              <span>{formatDateLabel(now)}</span>
-              <span className="accent-dot" aria-hidden="true"></span>
-              <span>{autoParity === 'odd' ? 'Нечётная неделя' : 'Чётная неделя'}</span>
-            </div>
           </div>
-          <div className="control-block">
+          <div className="header-actions">
             <ParitySelector parityMode={parityMode} onChange={setParityMode} />
             <button
               type="button"
-              className={`collapse-button${headerCollapsed ? ' collapsed' : ''}`}
-              onClick={handleToggleHeaderCollapsed}
-              aria-label={headerCollapsed ? 'Развернуть шапку' : 'Свернуть шапку'}
-              aria-expanded={!headerCollapsed}
-              aria-controls="filters-panel"
-              title={headerCollapsed ? 'Развернуть шапку' : 'Свернуть шапку'}
+              className="theme-button"
+              onClick={() => {
+                const currentIndex = THEME_SEQUENCE.indexOf(themeMode);
+                const nextIndex = (currentIndex + 1) % THEME_SEQUENCE.length;
+                setThemeMode(THEME_SEQUENCE[nextIndex]);
+              }}
+              aria-label={`Текущая тема: ${THEME_LABELS[themeMode]} (нажмите, чтобы переключить)`}
+              title={`Тема: ${THEME_LABELS[themeMode]}`}
             >
-              <ChevronIcon direction={headerCollapsed ? 'down' : 'up'} />
+              <ThemeIcon mode={themeMode} />
             </button>
           </div>
+        </div>
+        <div className="header-meta">
+          <span>{formatDateLabel(now)}</span>
+          <span className="accent-dot" aria-hidden="true"></span>
+          <span>{autoParity === 'odd' ? 'Нечётная неделя' : 'Чётная неделя'}</span>
         </div>
         <FiltersPanel
           filters={filters}
           onUpdateFilter={handleFilterChange}
-          collapsed={headerCollapsed}
           id="filters-panel"
         />
       </header>
@@ -568,19 +393,6 @@ function App() {
             >
               Наверх
             </button>
-            <button
-              type="button"
-              className="theme-button footer-action-button"
-              onClick={() => {
-                const currentIndex = THEME_SEQUENCE.indexOf(themeMode);
-                const nextIndex = (currentIndex + 1) % THEME_SEQUENCE.length;
-                setThemeMode(THEME_SEQUENCE[nextIndex]);
-              }}
-              aria-label={`Текущая тема: ${THEME_LABELS[themeMode]} (нажмите, чтобы переключить)`}
-              title={`Тема: ${THEME_LABELS[themeMode]}`}
-            >
-              <ThemeIcon mode={themeMode} />
-            </button>
           </div>
         </div>
       </footer>
@@ -612,12 +424,11 @@ function ParitySelector({ parityMode, onChange }) {
   );
 }
 
-function FiltersPanel({ filters, onUpdateFilter, collapsed = false, id }) {
+function FiltersPanel({ filters, onUpdateFilter, id }) {
   return (
     <div
-      className={`filters-panel${collapsed ? ' is-collapsed' : ''}`}
+      className="filters-panel"
       aria-label="Фильтры"
-      aria-hidden={collapsed}
       id={id}
     >
       {FILTER_GROUPS.map(group => (
@@ -650,26 +461,6 @@ function FilterOptionButton({ active, onClick, children }) {
     >
       {children}
     </button>
-  );
-}
-
-function ChevronIcon({ direction }) {
-  return (
-    <svg
-      className={`icon icon-chevron icon-chevron--${direction}`}
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path
-        d="M7 10.5l5 5 5-5"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
   );
 }
 
