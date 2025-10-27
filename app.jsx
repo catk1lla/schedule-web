@@ -162,6 +162,7 @@ function App() {
     return stored === 'dark' || stored === 'light' || stored === 'system' ? stored : 'system';
   });
   const [systemTheme, setSystemTheme] = useState(() => getPreferredTheme());
+  const [headerCollapsed, setHeaderCollapsed] = useState(false);
 
   const [filters, setFilters] = useState(() => {
     const storedSubgroup = localStorage.getItem(STORAGE_KEYS.subgroup);
@@ -257,7 +258,7 @@ function App() {
 
   return (
     <div className="app-shell">
-      <header className="app-header">
+      <header className={`app-header${headerCollapsed ? ' collapsed' : ''}`}>
         <div className="brand-line">
           <div className="brand-block" aria-live="polite">
             <h1>Расписание учебных пар</h1>
@@ -282,9 +283,23 @@ function App() {
             >
               {THEME_ICONS[themeMode]}
             </button>
+            <button
+              type="button"
+              className={`collapse-button${headerCollapsed ? ' collapsed' : ''}`}
+              onClick={() => setHeaderCollapsed(value => !value)}
+              aria-label={headerCollapsed ? 'Развернуть шапку' : 'Свернуть шапку'}
+              aria-expanded={!headerCollapsed}
+              aria-controls="filters-panel"
+              title={headerCollapsed ? 'Развернуть шапку' : 'Свернуть шапку'}
+            ></button>
           </div>
         </div>
-        <FiltersPanel filters={filters} onChange={setFilters} />
+        <FiltersPanel
+          filters={filters}
+          onChange={setFilters}
+          collapsed={headerCollapsed}
+          id="filters-panel"
+        />
       </header>
 
       <main className="app-main">
@@ -345,9 +360,14 @@ function ParitySelector({ parityMode, onChange }) {
   );
 }
 
-function FiltersPanel({ filters, onChange }) {
+function FiltersPanel({ filters, onChange, collapsed = false, id }) {
   return (
-    <div className="filters-panel" aria-label="Фильтры">
+    <div
+      className={`filters-panel${collapsed ? ' is-collapsed' : ''}`}
+      aria-label="Фильтры"
+      aria-hidden={collapsed}
+      id={id}
+    >
       <div className="filter-field">
         <span className="filter-label">Подгруппа</span>
         <div className="filter-buttons" role="group" aria-label="Подгруппа">
