@@ -318,12 +318,15 @@ function App() {
           <span className="accent-dot" aria-hidden="true"></span>
           <span>{autoParity === 'odd' ? 'Нечётная неделя' : 'Чётная неделя'}</span>
         </div>
+      </header>
+
+      <section className="filters-section" aria-label="Фильтры">
         <FiltersPanel
           filters={filters}
           onUpdateFilter={handleFilterChange}
           id="filters-panel"
         />
-      </header>
+      </section>
 
       <main className="app-main">
         <section>
