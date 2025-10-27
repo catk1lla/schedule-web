@@ -1,4 +1,4 @@
-const { useState, useMemo, useEffect, useCallback } = React;
+const { useState, useMemo, useEffect, useCallback, useRef } = React;
 
 const SCHEDULE_ODD = [
   {day:'Понедельник', pair:3, time:'11:35-13:10', weeks:'all', type:'практика', subgroup:null, subject:'Электив по физической культуре и спорту', place:'спорткомплекс 6-го учебного корпуса', teacher:'Андронова Л. Н.', note:''},
@@ -158,11 +158,6 @@ const FILTER_GROUPS = [
 ];
 
 const THEME_SEQUENCE = ['system', 'light', 'dark'];
-const THEME_ICONS = {
-  system: '🖥️',
-  light: '☀️',
-  dark: '🌙'
-};
 const THEME_LABELS = {
   system: 'Системная тема',
   light: 'Светлая тема',
@@ -182,7 +177,98 @@ function App() {
     return stored === 'dark' || stored === 'light' || stored === 'system' ? stored : 'system';
   });
   const [systemTheme, setSystemTheme] = useState(() => getPreferredTheme());
-  const [headerCollapsed, setHeaderCollapsed] = useState(true);
+  const [headerCollapsed, setHeaderCollapsed] = useState(false);
+  const [headerVisibility, setHeaderVisibility] = useState('visible');
+  const userCollapsedRef = useRef(false);
+  const autoCollapsedRef = useRef(false);
+  const headerRef = useRef(null);
+
+  const autoCollapseFilters = useCallback(() => {
+    setHeaderCollapsed(current => {
+      if (current) {
+        return current;
+      }
+      autoCollapsedRef.current = true;
+      return true;
+    });
+  }, []);
+
+  const releaseAutoCollapsedFilters = useCallback(() => {
+    setHeaderCollapsed(current => {
+      if (!autoCollapsedRef.current) {
+        return current;
+      }
+      autoCollapsedRef.current = false;
+      if (userCollapsedRef.current) {
+        return current;
+      }
+      return false;
+    });
+  }, []);
+
+  const handleToggleHeaderCollapsed = useCallback(() => {
+    setHeaderCollapsed(current => {
+      const next = !current;
+      userCollapsedRef.current = next;
+      if (!next) {
+        autoCollapsedRef.current = false;
+      }
+      return next;
+    });
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const currentY = window.scrollY;
+    if (currentY <= 24) {
+      setHeaderVisibility('visible');
+      releaseAutoCollapsedFilters();
+    } else {
+      setHeaderVisibility('peek');
+      autoCollapseFilters();
+    }
+  }, [autoCollapseFilters, releaseAutoCollapsedFilters]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !headerRef.current) {
+      return undefined;
+    }
+
+    const headerElement = headerRef.current;
+
+    const updateHeightVariable = () => {
+      const measuredHeight = headerElement.offsetHeight;
+      headerElement.style.setProperty('--header-height', `${measuredHeight}px`);
+    };
+
+    updateHeightVariable();
+
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', updateHeightVariable);
+      return () => {
+        window.removeEventListener('resize', updateHeightVariable);
+      };
+    }
+
+    const observer = new ResizeObserver(updateHeightVariable);
+    observer.observe(headerElement);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!headerRef.current) {
+      return;
+    }
+
+    const measuredHeight = headerRef.current.offsetHeight;
+    headerRef.current.style.setProperty('--header-height', `${measuredHeight}px`);
+  }, [headerCollapsed]);
 
   const [filters, setFilters] = useState(() => {
     const storedSubgroup = readStorage(STORAGE_KEYS.subgroup);
@@ -246,6 +332,65 @@ function App() {
   }, [themeMode, systemTheme]);
 
   useEffect(() => {
+    if (typeof window === 'undefined') {
+      return undefined;
+    }
+
+    let lastY = window.scrollY;
+    let rafId = null;
+
+    const handleScroll = () => {
+      if (rafId != null) {
+        return;
+      }
+
+      rafId = window.requestAnimationFrame(() => {
+        const currentY = window.scrollY;
+        const delta = currentY - lastY;
+        const scrolledDown = delta > 4;
+        const scrolledUp = delta < -4;
+        const nearTop = currentY <= 24;
+
+        setHeaderVisibility(prev => {
+          if (nearTop) {
+            return 'visible';
+          }
+
+          if (scrolledDown && currentY > 16) {
+            return 'hidden';
+          }
+
+          if (scrolledUp && currentY > 0) {
+            return 'peek';
+          }
+
+          return prev;
+        });
+
+        if (nearTop) {
+          releaseAutoCollapsedFilters();
+        } else if (scrolledDown && currentY > 16) {
+          autoCollapseFilters();
+        } else if (scrolledUp && currentY > 0) {
+          autoCollapseFilters();
+        }
+
+        lastY = currentY;
+        rafId = null;
+      });
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (rafId != null) {
+        window.cancelAnimationFrame(rafId);
+      }
+    };
+  }, [autoCollapseFilters, releaseAutoCollapsedFilters]);
+
+  useEffect(() => {
     writeStorage(STORAGE_KEYS.parity, parityMode);
   }, [parityMode]);
 
@@ -289,7 +434,10 @@ function App() {
 
   return (
     <div className="app-shell">
-      <header className={`app-header${headerCollapsed ? ' collapsed' : ''}`}>
+      <header
+        ref={headerRef}
+        className={`app-header app-header--${headerVisibility}${headerCollapsed ? ' collapsed' : ''}`}
+      >
         <div className="brand-line">
           <div className="brand-block" aria-live="polite">
             <h1>Расписание учебных пар</h1>
@@ -304,12 +452,14 @@ function App() {
             <button
               type="button"
               className={`collapse-button${headerCollapsed ? ' collapsed' : ''}`}
-              onClick={() => setHeaderCollapsed(value => !value)}
+              onClick={handleToggleHeaderCollapsed}
               aria-label={headerCollapsed ? 'Развернуть шапку' : 'Свернуть шапку'}
               aria-expanded={!headerCollapsed}
               aria-controls="filters-panel"
               title={headerCollapsed ? 'Развернуть шапку' : 'Свернуть шапку'}
-            ></button>
+            >
+              <ChevronIcon direction={headerCollapsed ? 'down' : 'up'} />
+            </button>
           </div>
         </div>
         <FiltersPanel
@@ -360,7 +510,7 @@ function App() {
               aria-label={`Текущая тема: ${THEME_LABELS[themeMode]} (нажмите, чтобы переключить)`}
               title={`Тема: ${THEME_LABELS[themeMode]}`}
             >
-              {THEME_ICONS[themeMode]}
+              <ThemeIcon mode={themeMode} />
             </button>
           </div>
         </div>
@@ -438,6 +588,88 @@ function FilterOptionButton({ active, onClick, children }) {
     >
       {children}
     </button>
+  );
+}
+
+function ChevronIcon({ direction }) {
+  return (
+    <svg
+      className={`icon icon-chevron icon-chevron--${direction}`}
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        d="M7 10.5l5 5 5-5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function ThemeIcon({ mode }) {
+  if (mode === 'dark') {
+    return (
+      <svg className="icon icon-theme" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path
+          d="M15 3.8a8.7 8.7 0 1 0 5.2 12.64A7 7 0 0 1 15 3.8z"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  }
+
+  if (mode === 'light') {
+    return (
+      <svg className="icon icon-theme" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <circle
+          cx="12"
+          cy="12"
+          r="4.5"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+        />
+        <path
+          d="M12 4V2m0 20v-2M5.6 5.6L4.2 4.2m15.6 15.6-1.4-1.4M4 12H2m20 0h-2M5.6 18.4 4.2 19.8m15.6-15.6-1.4 1.4"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+        />
+      </svg>
+    );
+  }
+
+  return (
+    <svg className="icon icon-theme" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <rect
+        x="4"
+        y="6.2"
+        width="16"
+        height="11.6"
+        rx="3"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.7"
+      />
+      <path
+        d="M8.5 9.2h2.5m2 0h2.5M8.5 12h8M8.5 14.8h5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 

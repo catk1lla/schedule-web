@@ -25,6 +25,7 @@
   --radius-lg: 28px;
   --radius-md: 18px;
   --radius-sm: 12px;
+  --header-peek-height: 72px;
   color-scheme: light;
 }
 
@@ -52,6 +53,7 @@
   --shadow-lg: 0 30px 70px rgba(5, 10, 24, 0.55);
   --shadow-md: 0 20px 60px rgba(3, 12, 28, 0.45);
   --shadow-sm: 0 12px 28px rgba(3, 12, 28, 0.38);
+  --header-peek-height: 72px;
   color-scheme: dark;
 }
 
@@ -89,24 +91,65 @@ body::before {
   z-index: 1;
 }
 
+@media (max-width: 768px) {
+  :root,
+  [data-theme="dark"] {
+    --header-peek-height: 60px;
+  }
+}
+
+@media (max-width: 480px) {
+  :root,
+  [data-theme="dark"] {
+    --header-peek-height: 52px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  header.app-header {
+    transition: none;
+  }
+
+  .filters-panel {
+    transition: none;
+  }
+}
+
 header.app-header {
-  position: sticky;
-  top: 0;
-  z-index: 10;
+  --header-offset: 0px;
   display: flex;
   flex-direction: column;
   gap: 1rem;
   padding: 1.4rem 1.5rem;
-  margin: 0 -1.5rem;
+  margin: 0 -1.5rem calc(-1 * var(--header-offset));
   backdrop-filter: blur(18px);
   background: var(--bg-soft);
   border: 1px solid var(--border);
   border-radius: 0 0 var(--radius-md) var(--radius-md);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  transform: translateY(0);
+  transition: transform 0.32s ease, opacity 0.32s ease, padding 0.24s ease, gap 0.24s ease, margin-bottom 0.32s ease;
+  will-change: transform;
+  box-shadow: var(--shadow-sm);
 }
 
 header.app-header.collapsed {
   gap: 0.75rem;
   padding-bottom: 1rem;
+}
+
+.app-header--hidden {
+  --header-offset: calc(var(--header-height, 260px) + 12px);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(calc(-100% - 12px));
+}
+
+.app-header--peek {
+  --header-offset: calc(var(--header-height, 260px) - var(--header-peek-height));
+  transform: translateY(calc(-100% + var(--header-peek-height)));
 }
 
 .brand-line {
@@ -206,28 +249,47 @@ header.app-header.collapsed {
   transform: translateY(-1px);
 }
 
-.collapse-button::before {
-  content: '';
-  width: 0;
-  height: 0;
-  border-left: 7px solid transparent;
-  border-right: 7px solid transparent;
-  border-top: 9px solid currentColor;
+.collapse-button {
+  padding: 0;
+}
+
+.icon {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+
+.icon-chevron {
   transition: transform 0.2s ease;
 }
 
-.collapse-button.collapsed::before {
+.icon-chevron--up {
   transform: rotate(180deg);
+}
+
+.theme-button svg,
+.collapse-button svg {
+  width: 22px;
+  height: 22px;
+  pointer-events: none;
 }
 
 .filters-panel {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 0.85rem;
+  transition: opacity 0.26s ease, transform 0.26s ease, max-height 0.26s ease;
+  transform-origin: top;
+  max-height: 640px;
+  will-change: transform, opacity;
 }
 
 .filters-panel.is-collapsed {
-  display: none;
+  opacity: 0;
+  transform: translateY(-12px);
+  max-height: 0;
+  overflow: hidden;
+  pointer-events: none;
 }
 
 .filter-field {
@@ -432,33 +494,33 @@ main.app-main {
 }
 
 .meta-chip-type {
-  background: rgba(148, 163, 184, 0.12);
-  border-color: rgba(148, 163, 184, 0.18);
+  background: rgba(148, 163, 184, 0.1);
+  border-color: rgba(148, 163, 184, 0.2);
   color: #475569;
 }
 
 .meta-chip-type.meta-chip-type--practice {
-  background: rgba(248, 113, 113, 0.18);
-  border-color: rgba(248, 113, 113, 0.32);
-  color: #b91c1c;
+  background: rgba(248, 150, 150, 0.18);
+  border-color: rgba(248, 150, 150, 0.3);
+  color: #9f1239;
 }
 
 .meta-chip-type.meta-chip-type--lecture {
-  background: rgba(100, 116, 139, 0.18);
-  border-color: rgba(100, 116, 139, 0.32);
+  background: rgba(100, 116, 139, 0.16);
+  border-color: rgba(100, 116, 139, 0.28);
   color: #334155;
 }
 
 .meta-chip-type.meta-chip-type--lab {
-  background: rgba(56, 189, 248, 0.18);
-  border-color: rgba(56, 189, 248, 0.32);
-  color: #0ea5e9;
+  background: rgba(125, 211, 252, 0.18);
+  border-color: rgba(125, 211, 252, 0.3);
+  color: #0369a1;
 }
 
 .meta-chip-type.meta-chip-type--seminar {
-  background: rgba(251, 191, 36, 0.2);
-  border-color: rgba(251, 191, 36, 0.32);
-  color: #b45309;
+  background: rgba(252, 211, 77, 0.2);
+  border-color: rgba(252, 211, 77, 0.3);
+  color: #a16207;
 }
 
 .meta-chip-type.meta-chip-type--other {
@@ -468,38 +530,38 @@ main.app-main {
 }
 
 [data-theme="dark"] .meta-chip-type {
-  background: rgba(148, 163, 184, 0.18);
-  border-color: rgba(148, 163, 184, 0.28);
-  color: #cbd5f5;
+  background: rgba(148, 163, 184, 0.2);
+  border-color: rgba(148, 163, 184, 0.32);
+  color: #dbeafe;
 }
 
 [data-theme="dark"] .meta-chip-type.meta-chip-type--practice {
-  background: rgba(248, 113, 113, 0.24);
-  border-color: rgba(248, 113, 113, 0.35);
-  color: #fecaca;
+  background: rgba(248, 150, 150, 0.28);
+  border-color: rgba(248, 150, 150, 0.38);
+  color: #fecdd3;
 }
 
 [data-theme="dark"] .meta-chip-type.meta-chip-type--lecture {
-  background: rgba(100, 116, 139, 0.24);
-  border-color: rgba(100, 116, 139, 0.38);
+  background: rgba(100, 116, 139, 0.28);
+  border-color: rgba(100, 116, 139, 0.4);
   color: #e2e8f0;
 }
 
 [data-theme="dark"] .meta-chip-type.meta-chip-type--lab {
-  background: rgba(56, 189, 248, 0.24);
-  border-color: rgba(56, 189, 248, 0.36);
-  color: #bae6fd;
+  background: rgba(125, 211, 252, 0.28);
+  border-color: rgba(125, 211, 252, 0.4);
+  color: #bfdbfe;
 }
 
 [data-theme="dark"] .meta-chip-type.meta-chip-type--seminar {
-  background: rgba(251, 191, 36, 0.24);
-  border-color: rgba(251, 191, 36, 0.35);
-  color: #facc15;
+  background: rgba(252, 211, 77, 0.28);
+  border-color: rgba(252, 211, 77, 0.38);
+  color: #fde68a;
 }
 
 [data-theme="dark"] .meta-chip-type.meta-chip-type--other {
-  background: rgba(96, 165, 250, 0.24);
-  border-color: rgba(96, 165, 250, 0.36);
+  background: rgba(96, 165, 250, 0.28);
+  border-color: rgba(96, 165, 250, 0.4);
   color: var(--accent);
 }
 
@@ -975,5 +1037,11 @@ select:focus-visible {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.6rem;
+  }
+
+  .meta-tags {
+    margin-left: 0;
+    justify-content: flex-start;
+    width: 100%;
   }
 }
