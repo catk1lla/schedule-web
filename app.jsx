@@ -136,6 +136,27 @@ const DAY_OPTIONS = [
   ...WEEK_DAYS.map(day => ({ value: day, label: day }))
 ];
 
+const FILTER_GROUPS = [
+  {
+    field: 'subgroup',
+    label: 'Подгруппа',
+    ariaLabel: 'Подгруппа',
+    options: SUBGROUP_OPTIONS
+  },
+  {
+    field: 'type',
+    label: 'Тип занятия',
+    ariaLabel: 'Тип занятия',
+    options: TYPE_OPTIONS
+  },
+  {
+    field: 'day',
+    label: 'День недели',
+    ariaLabel: 'День недели',
+    options: DAY_OPTIONS
+  }
+];
+
 const THEME_SEQUENCE = ['system', 'light', 'dark'];
 const THEME_ICONS = {
   system: '🖥️',
@@ -387,64 +408,36 @@ function FiltersPanel({ filters, onUpdateFilter, collapsed = false, id }) {
       aria-hidden={collapsed}
       id={id}
     >
-      <div className="filter-field">
-        <span className="filter-label">Подгруппа</span>
-        <div className="filter-buttons" role="group" aria-label="Подгруппа">
-          {SUBGROUP_OPTIONS.map(option => {
-            const active = filters.subgroup === option.value;
-            return (
-              <button
+      {FILTER_GROUPS.map(group => (
+        <div className="filter-field" key={group.field}>
+          <span className="filter-label">{group.label}</span>
+          <div className="filter-buttons" role="group" aria-label={group.ariaLabel}>
+            {group.options.map(option => (
+              <FilterOptionButton
                 key={option.value}
-                type="button"
-                className={`filter-button${active ? ' active' : ''}`}
-                aria-pressed={active}
-                onClick={() => onUpdateFilter('subgroup', option.value)}
+                active={filters[group.field] === option.value}
+                onClick={() => onUpdateFilter(group.field, option.value)}
               >
                 {option.label}
-              </button>
-            );
-          })}
+              </FilterOptionButton>
+            ))}
+          </div>
         </div>
-      </div>
-      <div className="filter-field">
-        <span className="filter-label">Тип занятия</span>
-        <div className="filter-buttons" role="group" aria-label="Тип занятия">
-          {TYPE_OPTIONS.map(option => {
-            const active = filters.type === option.value;
-            return (
-              <button
-                key={option.value}
-                type="button"
-                className={`filter-button${active ? ' active' : ''}`}
-                aria-pressed={active}
-                onClick={() => onUpdateFilter('type', option.value)}
-              >
-                {option.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-      <div className="filter-field">
-        <span className="filter-label">День недели</span>
-        <div className="filter-buttons" role="group" aria-label="День недели">
-          {DAY_OPTIONS.map(option => {
-            const active = filters.day === option.value;
-            return (
-              <button
-                key={option.value}
-                type="button"
-                className={`filter-button${active ? ' active' : ''}`}
-                aria-pressed={active}
-                onClick={() => onUpdateFilter('day', option.value)}
-              >
-                {option.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      ))}
     </div>
+  );
+}
+
+function FilterOptionButton({ active, onClick, children }) {
+  return (
+    <button
+      type="button"
+      className={`filter-button${active ? ' active' : ''}`}
+      aria-pressed={active}
+      onClick={onClick}
+    >
+      {children}
+    </button>
   );
 }
 
