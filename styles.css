@@ -104,6 +104,11 @@ header.app-header {
   border-radius: 0 0 var(--radius-md) var(--radius-md);
 }
 
+header.app-header.collapsed {
+  gap: 0.75rem;
+  padding-bottom: 1rem;
+}
+
 .brand-line {
   display: flex;
   align-items: flex-start;
@@ -176,7 +181,8 @@ header.app-header {
   box-shadow: 0 12px 24px rgba(37, 99, 235, 0.18);
 }
 
-.theme-button {
+.theme-button,
+.collapse-button {
   border-radius: 999px;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -184,22 +190,44 @@ header.app-header {
   height: 44px;
   display: grid;
   place-items: center;
-  font-size: 1.1rem;
   cursor: pointer;
   color: var(--muted);
   transition: all 0.2s ease;
   box-shadow: var(--shadow-sm);
 }
 
+.theme-button {
+  font-size: 1.1rem;
+}
+
 .theme-button:hover,
+.collapse-button:hover,
 .parity-switch button:hover {
   transform: translateY(-1px);
+}
+
+.collapse-button::before {
+  content: '';
+  width: 0;
+  height: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 9px solid currentColor;
+  transition: transform 0.2s ease;
+}
+
+.collapse-button.collapsed::before {
+  transform: rotate(180deg);
 }
 
 .filters-panel {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 0.85rem;
+}
+
+.filters-panel.is-collapsed {
+  display: none;
 }
 
 .filter-field {
