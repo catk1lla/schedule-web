@@ -361,28 +361,44 @@ function App() {
       rafId = null;
       const currentY = window.scrollY;
       const delta = currentY - lastY;
-      const scrolledDown = delta > 4;
-      const scrolledUp = delta < -4;
+      if (Math.abs(delta) < 0.5) {
+        lastY = currentY;
+        return;
+      }
+
+      const scrolledDown = delta > 0;
+      const scrolledUp = delta < 0;
       const nearTop = currentY <= 24;
       const { height, peekHeight } = headerMetricsRef.current;
 
       let visibleHeight = headerVisibleHeightRef.current;
+      if (!Number.isFinite(visibleHeight)) {
+        visibleHeight = nearTop ? height : (headerCollapsed ? Math.min(peekHeight || 0, height || 0) : height);
+      }
       const collapsePeekCap = Math.min(peekHeight || 0, height || 0);
-      const revealCap = height;
+      const revealCap = Number.isFinite(height) ? height : 0;
 
       if (nearTop) {
         visibleHeight = height;
       } else if (scrolledDown) {
-        visibleHeight = Math.max(0, visibleHeight - delta);
-        if (headerCollapsed && !nearTop) {
+        visibleHeight = Math.max(0, Math.min(revealCap, visibleHeight - delta));
+        if (headerCollapsed) {
           visibleHeight = Math.min(visibleHeight, collapsePeekCap);
         }
       } else if (scrolledUp) {
-        if (headerCollapsed && !nearTop) {
+        const expandedHeight = Math.min(revealCap, visibleHeight - delta);
+        if (headerCollapsed) {
           const minimumPeek = collapsePeekCap || 0;
-          visibleHeight = Math.max(minimumPeek, visibleHeight);
+          visibleHeight = Math.max(minimumPeek, expandedHeight);
+        } else {
+          visibleHeight = expandedHeight;
         }
-        visibleHeight = Math.min(revealCap, visibleHeight - delta);
+      }
+
+      if (Number.isFinite(revealCap) && revealCap > 0) {
+        visibleHeight = Math.max(0, Math.min(revealCap, visibleHeight));
+      } else {
+        visibleHeight = Math.max(0, visibleHeight);
       }
 
       applyHeaderVisibleHeight(visibleHeight);
