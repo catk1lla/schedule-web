@@ -198,6 +198,8 @@ header.app-header {
   border: 1px solid var(--border);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12), 0 18px 32px rgba(15, 23, 42, 0.12);
   backdrop-filter: blur(16px);
+  flex-wrap: wrap;
+  gap: 0.35rem;
 }
 
 .parity-switch button {
@@ -210,6 +212,7 @@ header.app-header {
   color: var(--muted);
   cursor: pointer;
   transition: color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  white-space: nowrap;
 }
 
 .parity-switch button:hover {
@@ -1104,15 +1107,23 @@ select:focus-visible {
   }
 
   .header-actions .theme-button {
-    align-self: flex-end;
+    align-self: stretch;
+    width: 100%;
+    max-width: 100%;
   }
 
   .parity-switch {
     gap: 0.5rem;
+    padding: 0.4rem;
+    width: 100%;
   }
 
   .parity-switch button {
     font-size: 0.82rem;
+    flex: 1 1 calc(50% - 0.5rem);
+    min-width: calc(50% - 0.5rem);
+    padding: 0.5rem 0.75rem;
+    text-align: center;
   }
 
   .header-meta {
