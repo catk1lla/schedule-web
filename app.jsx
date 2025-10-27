@@ -158,11 +158,6 @@ const FILTER_GROUPS = [
 ];
 
 const THEME_SEQUENCE = ['system', 'light', 'dark'];
-const THEME_ICONS = {
-  system: '🖥️',
-  light: '☀️',
-  dark: '🌙'
-};
 const THEME_LABELS = {
   system: 'Системная тема',
   light: 'Светлая тема',
@@ -182,7 +177,7 @@ function App() {
     return stored === 'dark' || stored === 'light' || stored === 'system' ? stored : 'system';
   });
   const [systemTheme, setSystemTheme] = useState(() => getPreferredTheme());
-  const [headerCollapsed, setHeaderCollapsed] = useState(true);
+  const [headerCollapsed, setHeaderCollapsed] = useState(false);
 
   const [filters, setFilters] = useState(() => {
     const storedSubgroup = readStorage(STORAGE_KEYS.subgroup);
@@ -244,6 +239,48 @@ function App() {
     const effectiveTheme = themeMode === 'system' ? systemTheme : themeMode;
     document.documentElement.setAttribute('data-theme', effectiveTheme);
   }, [themeMode, systemTheme]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return undefined;
+    }
+
+    let lastY = window.scrollY;
+    let rafId = null;
+
+    const handleScroll = () => {
+      if (rafId != null) {
+        return;
+      }
+
+      rafId = window.requestAnimationFrame(() => {
+        const currentY = window.scrollY;
+        const scrollingDown = currentY > lastY;
+
+        setHeaderCollapsed(prev => {
+          if (scrollingDown && currentY > 64) {
+            return true;
+          }
+          if (!scrollingDown && currentY < 16) {
+            return false;
+          }
+          return prev;
+        });
+
+        lastY = currentY;
+        rafId = null;
+      });
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (rafId != null) {
+        window.cancelAnimationFrame(rafId);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     writeStorage(STORAGE_KEYS.parity, parityMode);
@@ -309,7 +346,9 @@ function App() {
               aria-expanded={!headerCollapsed}
               aria-controls="filters-panel"
               title={headerCollapsed ? 'Развернуть шапку' : 'Свернуть шапку'}
-            ></button>
+            >
+              <ChevronIcon direction={headerCollapsed ? 'down' : 'up'} />
+            </button>
           </div>
         </div>
         <FiltersPanel
@@ -360,7 +399,7 @@ function App() {
               aria-label={`Текущая тема: ${THEME_LABELS[themeMode]} (нажмите, чтобы переключить)`}
               title={`Тема: ${THEME_LABELS[themeMode]}`}
             >
-              {THEME_ICONS[themeMode]}
+              <ThemeIcon mode={themeMode} />
             </button>
           </div>
         </div>
@@ -438,6 +477,88 @@ function FilterOptionButton({ active, onClick, children }) {
     >
       {children}
     </button>
+  );
+}
+
+function ChevronIcon({ direction }) {
+  return (
+    <svg
+      className={`icon icon-chevron icon-chevron--${direction}`}
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        d="M7 10.5l5 5 5-5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function ThemeIcon({ mode }) {
+  if (mode === 'dark') {
+    return (
+      <svg className="icon icon-theme" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path
+          d="M15 3.8a8.7 8.7 0 1 0 5.2 12.64A7 7 0 0 1 15 3.8z"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  }
+
+  if (mode === 'light') {
+    return (
+      <svg className="icon icon-theme" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <circle
+          cx="12"
+          cy="12"
+          r="4.5"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+        />
+        <path
+          d="M12 4V2m0 20v-2M5.6 5.6L4.2 4.2m15.6 15.6-1.4-1.4M4 12H2m20 0h-2M5.6 18.4 4.2 19.8m15.6-15.6-1.4 1.4"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+        />
+      </svg>
+    );
+  }
+
+  return (
+    <svg className="icon icon-theme" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <rect
+        x="4"
+        y="6.2"
+        width="16"
+        height="11.6"
+        rx="3"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.7"
+      />
+      <path
+        d="M8.5 9.2h2.5m2 0h2.5M8.5 12h8M8.5 14.8h5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 

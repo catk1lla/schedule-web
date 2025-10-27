@@ -90,9 +90,6 @@ body::before {
 }
 
 header.app-header {
-  position: sticky;
-  top: 0;
-  z-index: 10;
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -206,18 +203,29 @@ header.app-header.collapsed {
   transform: translateY(-1px);
 }
 
-.collapse-button::before {
-  content: '';
-  width: 0;
-  height: 0;
-  border-left: 7px solid transparent;
-  border-right: 7px solid transparent;
-  border-top: 9px solid currentColor;
+.collapse-button {
+  padding: 0;
+}
+
+.icon {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+
+.icon-chevron {
   transition: transform 0.2s ease;
 }
 
-.collapse-button.collapsed::before {
+.icon-chevron--up {
   transform: rotate(180deg);
+}
+
+.theme-button svg,
+.collapse-button svg {
+  width: 22px;
+  height: 22px;
+  pointer-events: none;
 }
 
 .filters-panel {
@@ -432,33 +440,33 @@ main.app-main {
 }
 
 .meta-chip-type {
-  background: rgba(148, 163, 184, 0.12);
-  border-color: rgba(148, 163, 184, 0.18);
+  background: rgba(148, 163, 184, 0.1);
+  border-color: rgba(148, 163, 184, 0.2);
   color: #475569;
 }
 
 .meta-chip-type.meta-chip-type--practice {
-  background: rgba(248, 113, 113, 0.18);
-  border-color: rgba(248, 113, 113, 0.32);
-  color: #b91c1c;
+  background: rgba(248, 150, 150, 0.18);
+  border-color: rgba(248, 150, 150, 0.3);
+  color: #9f1239;
 }
 
 .meta-chip-type.meta-chip-type--lecture {
-  background: rgba(100, 116, 139, 0.18);
-  border-color: rgba(100, 116, 139, 0.32);
+  background: rgba(100, 116, 139, 0.16);
+  border-color: rgba(100, 116, 139, 0.28);
   color: #334155;
 }
 
 .meta-chip-type.meta-chip-type--lab {
-  background: rgba(56, 189, 248, 0.18);
-  border-color: rgba(56, 189, 248, 0.32);
-  color: #0ea5e9;
+  background: rgba(125, 211, 252, 0.18);
+  border-color: rgba(125, 211, 252, 0.3);
+  color: #0369a1;
 }
 
 .meta-chip-type.meta-chip-type--seminar {
-  background: rgba(251, 191, 36, 0.2);
-  border-color: rgba(251, 191, 36, 0.32);
-  color: #b45309;
+  background: rgba(252, 211, 77, 0.2);
+  border-color: rgba(252, 211, 77, 0.3);
+  color: #a16207;
 }
 
 .meta-chip-type.meta-chip-type--other {
@@ -468,38 +476,38 @@ main.app-main {
 }
 
 [data-theme="dark"] .meta-chip-type {
-  background: rgba(148, 163, 184, 0.18);
-  border-color: rgba(148, 163, 184, 0.28);
-  color: #cbd5f5;
+  background: rgba(148, 163, 184, 0.2);
+  border-color: rgba(148, 163, 184, 0.32);
+  color: #dbeafe;
 }
 
 [data-theme="dark"] .meta-chip-type.meta-chip-type--practice {
-  background: rgba(248, 113, 113, 0.24);
-  border-color: rgba(248, 113, 113, 0.35);
-  color: #fecaca;
+  background: rgba(248, 150, 150, 0.28);
+  border-color: rgba(248, 150, 150, 0.38);
+  color: #fecdd3;
 }
 
 [data-theme="dark"] .meta-chip-type.meta-chip-type--lecture {
-  background: rgba(100, 116, 139, 0.24);
-  border-color: rgba(100, 116, 139, 0.38);
+  background: rgba(100, 116, 139, 0.28);
+  border-color: rgba(100, 116, 139, 0.4);
   color: #e2e8f0;
 }
 
 [data-theme="dark"] .meta-chip-type.meta-chip-type--lab {
-  background: rgba(56, 189, 248, 0.24);
-  border-color: rgba(56, 189, 248, 0.36);
-  color: #bae6fd;
+  background: rgba(125, 211, 252, 0.28);
+  border-color: rgba(125, 211, 252, 0.4);
+  color: #bfdbfe;
 }
 
 [data-theme="dark"] .meta-chip-type.meta-chip-type--seminar {
-  background: rgba(251, 191, 36, 0.24);
-  border-color: rgba(251, 191, 36, 0.35);
-  color: #facc15;
+  background: rgba(252, 211, 77, 0.28);
+  border-color: rgba(252, 211, 77, 0.38);
+  color: #fde68a;
 }
 
 [data-theme="dark"] .meta-chip-type.meta-chip-type--other {
-  background: rgba(96, 165, 250, 0.24);
-  border-color: rgba(96, 165, 250, 0.36);
+  background: rgba(96, 165, 250, 0.28);
+  border-color: rgba(96, 165, 250, 0.4);
   color: var(--accent);
 }
 
@@ -975,5 +983,11 @@ select:focus-visible {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.6rem;
+  }
+
+  .meta-tags {
+    margin-left: 0;
+    justify-content: flex-start;
+    width: 100%;
   }
 }
