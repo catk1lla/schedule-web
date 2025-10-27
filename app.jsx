@@ -152,21 +152,21 @@ function App() {
   const now = useMoscowNow();
 
   const [parityMode, setParityMode] = useState(() => {
-    const stored = localStorage.getItem(STORAGE_KEYS.parity);
+    const stored = readStorage(STORAGE_KEYS.parity);
     return stored === 'odd' || stored === 'even' || stored === 'auto' || stored === 'all' ? stored : 'auto';
   });
 
   const [themeMode, setThemeMode] = useState(() => {
-    const stored = localStorage.getItem(STORAGE_KEYS.theme);
+    const stored = readStorage(STORAGE_KEYS.theme);
     return stored === 'dark' || stored === 'light' || stored === 'system' ? stored : 'system';
   });
   const [systemTheme, setSystemTheme] = useState(() => getPreferredTheme());
   const [headerCollapsed, setHeaderCollapsed] = useState(true);
 
   const [filters, setFilters] = useState(() => {
-    const storedSubgroup = localStorage.getItem(STORAGE_KEYS.subgroup);
-    const storedType = localStorage.getItem(STORAGE_KEYS.type);
-    const storedDay = localStorage.getItem(STORAGE_KEYS.day);
+    const storedSubgroup = readStorage(STORAGE_KEYS.subgroup);
+    const storedType = readStorage(STORAGE_KEYS.type);
+    const storedDay = readStorage(STORAGE_KEYS.day);
     const validSubgroups = new Set(SUBGROUP_OPTIONS.map(option => option.value));
     const validTypes = new Set(['all', ...TYPE_VALUES]);
     const validDays = new Set(DAY_OPTIONS.map(option => option.value));
@@ -178,7 +178,7 @@ function App() {
   });
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.theme, themeMode);
+    writeStorage(STORAGE_KEYS.theme, themeMode);
   }, [themeMode]);
 
   useEffect(() => {
@@ -214,13 +214,13 @@ function App() {
   }, [themeMode, systemTheme]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.parity, parityMode);
+    writeStorage(STORAGE_KEYS.parity, parityMode);
   }, [parityMode]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.subgroup, filters.subgroup);
-    localStorage.setItem(STORAGE_KEYS.type, filters.type);
-    localStorage.setItem(STORAGE_KEYS.day, filters.day);
+    writeStorage(STORAGE_KEYS.subgroup, filters.subgroup);
+    writeStorage(STORAGE_KEYS.type, filters.type);
+    writeStorage(STORAGE_KEYS.day, filters.day);
   }, [filters]);
 
   const { parity: academicParity } = computeAcademicParity(now);
@@ -903,6 +903,35 @@ function computeAcademicParity(now) {
   const weeksFromStart = Math.floor(normalizedDays / 7);
   const parity = weeksFromStart % 2 === 0 ? 'odd' : 'even';
   return { parity, weekNumber: weeksFromStart + 1 };
+}
+
+function readStorage(key) {
+  const storage = getSafeStorage();
+  if (!storage) return null;
+  try {
+    return storage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function writeStorage(key, value) {
+  const storage = getSafeStorage();
+  if (!storage) return;
+  try {
+    storage.setItem(key, value);
+  } catch {
+    // ignore write errors (e.g., private mode)
+  }
+}
+
+function getSafeStorage() {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App />);
