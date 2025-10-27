@@ -178,8 +178,47 @@ function App() {
   });
   const [systemTheme, setSystemTheme] = useState(() => getPreferredTheme());
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
-  const [headerVisibility, setHeaderVisibility] = useState('visible');
   const headerRef = useRef(null);
+  const headerMetricsRef = useRef({ height: 0, peekHeight: 0 });
+  const headerVisibleHeightRef = useRef(0);
+
+  const applyHeaderVisibleHeight = useCallback((value) => {
+    const element = headerRef.current;
+    const { height } = headerMetricsRef.current;
+    const maxHeight = height || value || 0;
+    const clamped = Math.max(0, Math.min(value, maxHeight));
+    headerVisibleHeightRef.current = clamped;
+
+    if (!element) {
+      return;
+    }
+
+    element.style.setProperty('--header-visible-height', `${clamped}px`);
+
+    const tolerance = 2;
+    let nextVisibility = 'hidden';
+    if (maxHeight <= tolerance || clamped >= maxHeight - tolerance) {
+      nextVisibility = 'visible';
+    } else if (clamped > 8) {
+      nextVisibility = 'peek';
+    }
+
+    element.dataset.visibility = nextVisibility;
+    if (nextVisibility === 'hidden') {
+      element.style.pointerEvents = 'none';
+    } else {
+      element.style.pointerEvents = '';
+    }
+  }, []);
+
+  const readPeekHeight = useCallback(() => {
+    if (typeof window === 'undefined') {
+      return 60;
+    }
+    const raw = window.getComputedStyle(document.documentElement).getPropertyValue('--header-peek-height');
+    const parsed = parseFloat(raw);
+    return Number.isFinite(parsed) ? parsed : 60;
+  }, []);
 
   const autoCollapseFilters = useCallback(() => {
     setHeaderCollapsed(current => {
@@ -198,56 +237,49 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    const currentY = window.scrollY;
-    if (currentY <= 24) {
-      setHeaderVisibility('visible');
-    } else {
-      setHeaderVisibility('peek');
-      autoCollapseFilters();
-    }
-  }, [autoCollapseFilters]);
-
-  useEffect(() => {
     if (typeof window === 'undefined' || !headerRef.current) {
       return undefined;
     }
 
     const headerElement = headerRef.current;
 
-    const updateHeightVariable = () => {
+    const updateMetrics = () => {
       const measuredHeight = headerElement.offsetHeight;
+      headerMetricsRef.current.height = measuredHeight;
       headerElement.style.setProperty('--header-height', `${measuredHeight}px`);
+
+      const peekHeight = Math.min(readPeekHeight(), measuredHeight);
+      headerMetricsRef.current.peekHeight = peekHeight;
+
+      const nearTop = window.scrollY <= 24;
+      const maxVisible = nearTop || !headerCollapsed ? measuredHeight : peekHeight;
+      const currentVisible = headerVisibleHeightRef.current != null ? headerVisibleHeightRef.current : maxVisible;
+      const desired = nearTop ? measuredHeight : Math.min(currentVisible, maxVisible);
+      applyHeaderVisibleHeight(desired);
     };
 
-    updateHeightVariable();
+    updateMetrics();
+
+    const handleResize = () => {
+      updateMetrics();
+    };
 
     if (typeof ResizeObserver === 'undefined') {
-      window.addEventListener('resize', updateHeightVariable);
+      window.addEventListener('resize', handleResize);
       return () => {
-        window.removeEventListener('resize', updateHeightVariable);
+        window.removeEventListener('resize', handleResize);
       };
     }
 
-    const observer = new ResizeObserver(updateHeightVariable);
+    const observer = new ResizeObserver(updateMetrics);
     observer.observe(headerElement);
+    window.addEventListener('resize', handleResize);
 
     return () => {
       observer.disconnect();
+      window.removeEventListener('resize', handleResize);
     };
-  }, []);
-
-  useEffect(() => {
-    if (!headerRef.current) {
-      return;
-    }
-
-    const measuredHeight = headerRef.current.offsetHeight;
-    headerRef.current.style.setProperty('--header-height', `${measuredHeight}px`);
-  }, [headerCollapsed]);
+  }, [headerCollapsed, applyHeaderVisibleHeight, readPeekHeight]);
 
   const [filters, setFilters] = useState(() => {
     const storedSubgroup = readStorage(STORAGE_KEYS.subgroup);
@@ -311,50 +343,48 @@ function App() {
   }, [themeMode, systemTheme]);
 
   useEffect(() => {
-    if (typeof window === 'undefined') {
+    if (typeof window === 'undefined' || !headerRef.current) {
       return undefined;
     }
 
     let lastY = window.scrollY;
     let rafId = null;
 
+    const processScroll = () => {
+      rafId = null;
+      const currentY = window.scrollY;
+      const delta = currentY - lastY;
+      const scrolledDown = delta > 4;
+      const scrolledUp = delta < -4;
+      const nearTop = currentY <= 24;
+      const { height, peekHeight } = headerMetricsRef.current;
+
+      let visibleHeight = headerVisibleHeightRef.current;
+      const revealCap = (!headerCollapsed || nearTop) ? height : peekHeight;
+
+      if (nearTop) {
+        visibleHeight = height;
+      } else if (scrolledDown) {
+        visibleHeight = Math.max(0, visibleHeight - delta);
+      } else if (scrolledUp) {
+        visibleHeight = Math.min(revealCap, visibleHeight - delta);
+      }
+
+      applyHeaderVisibleHeight(visibleHeight);
+
+      if (scrolledDown && currentY > 16) {
+        autoCollapseFilters();
+      }
+
+      lastY = currentY;
+    };
+
     const handleScroll = () => {
       if (rafId != null) {
         return;
       }
 
-      rafId = window.requestAnimationFrame(() => {
-        const currentY = window.scrollY;
-        const delta = currentY - lastY;
-        const scrolledDown = delta > 4;
-        const scrolledUp = delta < -4;
-        const nearTop = currentY <= 24;
-
-        setHeaderVisibility(prev => {
-          if (nearTop) {
-            return 'visible';
-          }
-
-          if (scrolledDown && currentY > 16) {
-            return 'hidden';
-          }
-
-          if (scrolledUp && currentY > 0) {
-            return 'peek';
-          }
-
-          return prev;
-        });
-
-        if (scrolledDown && currentY > 16) {
-          autoCollapseFilters();
-        } else if (scrolledUp && currentY > 0) {
-          autoCollapseFilters();
-        }
-
-        lastY = currentY;
-        rafId = null;
-      });
+      rafId = window.requestAnimationFrame(processScroll);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -365,7 +395,28 @@ function App() {
         window.cancelAnimationFrame(rafId);
       }
     };
-  }, [autoCollapseFilters]);
+  }, [headerCollapsed, autoCollapseFilters, applyHeaderVisibleHeight]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !headerRef.current) {
+      return;
+    }
+
+    const { height, peekHeight } = headerMetricsRef.current;
+
+    if (window.scrollY <= 24) {
+      applyHeaderVisibleHeight(height);
+      return;
+    }
+
+    if (headerCollapsed) {
+      const cap = Math.min(peekHeight, height);
+      const next = Math.min(headerVisibleHeightRef.current, cap);
+      applyHeaderVisibleHeight(next);
+    } else {
+      applyHeaderVisibleHeight(height);
+    }
+  }, [headerCollapsed, applyHeaderVisibleHeight]);
 
   useEffect(() => {
     writeStorage(STORAGE_KEYS.parity, parityMode);
@@ -413,7 +464,7 @@ function App() {
     <div className="app-shell">
       <header
         ref={headerRef}
-        className={`app-header app-header--${headerVisibility}${headerCollapsed ? ' collapsed' : ''}`}
+        className={`app-header${headerCollapsed ? ' collapsed' : ''}`}
       >
         <div className="brand-line">
           <div className="brand-block" aria-live="polite">
