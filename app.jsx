@@ -236,6 +236,13 @@ function App() {
     });
   }, []);
 
+  const handleScrollToTop = useCallback(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
   useEffect(() => {
     if (typeof window === 'undefined' || !headerRef.current) {
       return undefined;
@@ -360,13 +367,21 @@ function App() {
       const { height, peekHeight } = headerMetricsRef.current;
 
       let visibleHeight = headerVisibleHeightRef.current;
-      const revealCap = (!headerCollapsed || nearTop) ? height : peekHeight;
+      const collapsePeekCap = Math.min(peekHeight || 0, height || 0);
+      const revealCap = height;
 
       if (nearTop) {
         visibleHeight = height;
       } else if (scrolledDown) {
         visibleHeight = Math.max(0, visibleHeight - delta);
+        if (headerCollapsed && !nearTop) {
+          visibleHeight = Math.min(visibleHeight, collapsePeekCap);
+        }
       } else if (scrolledUp) {
+        if (headerCollapsed && !nearTop) {
+          const minimumPeek = collapsePeekCap || 0;
+          visibleHeight = Math.max(minimumPeek, visibleHeight);
+        }
         visibleHeight = Math.min(revealCap, visibleHeight - delta);
       }
 
@@ -520,16 +535,19 @@ function App() {
       </main>
 
       <footer className="app-footer">
-        <div className="footer-head">
-          <div className="footer-info">
-            <div className="footer-title">Как пользоваться расписанием</div>
-            <p className="footer-text">Здесь собраны подсказки, как быстрее находить нужные пары и управлять отображением.</p>
-          </div>
-          <div className="footer-theme-control">
-            <span className="footer-theme-label">Тема интерфейса</span>
+        <div className="footer-content">
+          <div className="footer-note">© {now.year} Расписание учебных пар</div>
+          <div className="footer-actions">
             <button
               type="button"
-              className="theme-button footer-theme-button"
+              className="footer-action-button"
+              onClick={handleScrollToTop}
+            >
+              Наверх
+            </button>
+            <button
+              type="button"
+              className="theme-button footer-action-button"
               onClick={() => {
                 const currentIndex = THEME_SEQUENCE.indexOf(themeMode);
                 const nextIndex = (currentIndex + 1) % THEME_SEQUENCE.length;
@@ -542,13 +560,6 @@ function App() {
             </button>
           </div>
         </div>
-        <ul className="footer-guide">
-          <li>Следите за сегодняшними парами: статус и таймер отображаются в верхнем блоке.</li>
-          <li>Переключайте чётность недели или смотрите обе сразу через переключатель «Неделя».</li>
-          <li>Фильтры подгруппы, типа занятия и дня помогут оставить только нужные пары.</li>
-          <li>Нажмите ещё раз на выбранный фильтр, чтобы вернуться к варианту «Все».</li>
-          <li>Иконка темы переключает светлую, тёмную или системную палитру интерфейса.</li>
-        </ul>
       </footer>
     </div>
   );
