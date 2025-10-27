@@ -261,7 +261,14 @@ function App() {
       const nearTop = window.scrollY <= 24;
       const maxVisible = nearTop || !headerCollapsed ? measuredHeight : peekHeight;
       const currentVisible = headerVisibleHeightRef.current != null ? headerVisibleHeightRef.current : maxVisible;
-      const desired = nearTop ? measuredHeight : Math.min(currentVisible, maxVisible);
+      let desired;
+      if (nearTop) {
+        desired = measuredHeight;
+      } else if (headerCollapsed) {
+        desired = Math.min(currentVisible, maxVisible);
+      } else {
+        desired = measuredHeight;
+      }
       applyHeaderVisibleHeight(desired);
     };
 
