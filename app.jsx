@@ -1,4 +1,4 @@
-const { useState, useMemo, useEffect, useCallback } = React;
+const { useState, useMemo, useEffect, useCallback, useRef } = React;
 
 const SCHEDULE_ODD = [
   {day:'Понедельник', pair:3, time:'11:35-13:10', weeks:'all', type:'практика', subgroup:null, subject:'Электив по физической культуре и спорту', place:'спорткомплекс 6-го учебного корпуса', teacher:'Андронова Л. Н.', note:''},
@@ -354,9 +354,11 @@ function App() {
           <div className="brand-block" aria-live="polite">
             <h1>Расписание учебных пар</h1>
             <div className="brand-meta">
-              <span>{formatDateLabel(now)}</span>
-              <span className="accent-dot" aria-hidden="true"></span>
-              <span>{autoParity === 'odd' ? 'Нечётная неделя' : 'Чётная неделя'}</span>
+              <span className="brand-meta-primary">{formatDateLabel(now)}</span>
+              <div className="brand-meta-secondary">
+                <span>Академическая неделя №{academicWeekNumber}</span>
+                <span>Автоопределение: {autoParity === 'odd' ? 'нечётная' : 'чётная'} неделя</span>
+              </div>
             </div>
           </div>
           <div className="control-block">
@@ -446,7 +448,7 @@ function App() {
                 <h3>Дополнительно</h3>
                 <ul>
                   <li><a href="https://www.nntu.ru/" target="_blank" rel="noreferrer">Сайт университета</a></li>
-                  <li><span>Учебная часть: будни 09:00–17:00</span></li>
+                  <li><span>Обновление расписания: еженедельно</span></li>
                 </ul>
               </div>
             </div>
@@ -646,35 +648,38 @@ function TodaySection({ info, showParityLabels }) {
   const subgroupBadge = getSubgroupBadge(entry.subgroup);
   const teacherLabel = formatTeacherNames(entry.teacher);
   const showTeacher = teacherLabel !== '';
-  const parityVariant = showParityLabels ? getParityVariant(entry.weeks) : null;
-  const parityLabel = parityVariant ? getParityLabel(entry.weeks) : null;
+  const parityTone = getParityVariant(entry.weeks);
+  const parityLabel = showParityLabels && parityTone ? getParityLabel(entry.weeks) : null;
+  const cardParityVariant = showParityLabels ? null : parityTone;
   const typeVariant = getTypeVariant(entry.type);
 
   return (
     <article
-      className={`today-card${isCurrent ? ' current' : ''}${parityVariant ? ` parity-${parityVariant}` : ''}`}
+      className={`today-card${isCurrent ? ' current' : ''}${cardParityVariant ? ` parity-${cardParityVariant}` : ''}`}
       aria-live="polite"
     >
-      <div className="today-main">
+      <div className="today-head">
         <span className="badge">{info.title}</span>
+        {subgroupBadge && (
+          <span className={`subgroup-badge subgroup-${subgroupBadge.variant} today-subgroup-badge`}>
+            {subgroupBadge.label}
+          </span>
+        )}
+      </div>
+      <div className="today-main">
         <h3 className="today-title">{entry.subject}</h3>
         <div className="today-meta">
           <div className="meta-time">
-            <div className="meta-time-row">
-              <span className="meta-time-value">{entry.time}</span>
-              {subgroupBadge && (
-                <span className={`subgroup-badge subgroup-${subgroupBadge.variant}`}>
-                  {subgroupBadge.label}
-                </span>
-              )}
-            </div>
+            <span className="meta-time-value">{entry.time}</span>
             <span className="meta-room-value">ауд. {entry.place}</span>
           </div>
           <div className="meta-tags">
-            {parityLabel && (
-              <span className={`meta-chip parity-chip parity-${parityVariant}`}>{parityLabel}</span>
+            {parityLabel && parityTone && (
+              <span className={`meta-chip parity-chip parity-${parityTone}`}>{parityLabel}</span>
             )}
-            <span className={`meta-chip meta-chip-type meta-chip-type--${typeVariant}`}>{formatTypeLabel(entry.type)}</span>
+            <span className={`meta-chip meta-chip-type meta-chip-type--${typeVariant}`}>
+              {formatTypeLabel(entry.type)}
+            </span>
             {showTeacher && (
               <span className="meta-chip meta-chip-muted">{teacherLabel}</span>
             )}
@@ -718,6 +723,202 @@ function WeekView({ days, entries, currentKey, showParityLabels }) {
       return { day, entries: dayEntries };
     });
   }, [days, entries]);
+  const carouselRef = useRef(null);
+
+  useEffect(() => {
+    const container = carouselRef.current;
+    if (!container) return undefined;
+
+    let pointerActive = false;
+    let isDragging = false;
+    let isVerticalScroll = false;
+    let startX = 0;
+    let startY = 0;
+    let lastX = 0;
+    let velocity = 0;
+    let rafId = null;
+    const DRAG_THRESHOLD = 6;
+    const mediaQuery = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+      ? window.matchMedia('(prefers-reduced-motion: reduce)')
+      : null;
+    const prefersReducedMotion = () => Boolean(mediaQuery && mediaQuery.matches);
+    const getScrollBehavior = () => (prefersReducedMotion() ? 'auto' : 'smooth');
+
+    const stopMomentum = () => {
+      if (rafId != null) {
+        window.cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+      velocity = 0;
+    };
+
+    const stepMomentum = () => {
+      container.scrollLeft += velocity;
+      velocity *= 0.92;
+      if (Math.abs(velocity) > 0.5) {
+        rafId = window.requestAnimationFrame(stepMomentum);
+      } else {
+        stopMomentum();
+      }
+    };
+
+    const capturePointer = event => {
+      if (typeof container.setPointerCapture === 'function') {
+        try {
+          container.setPointerCapture(event.pointerId);
+        } catch {
+          // ignore capture failures (e.g., Safari)
+        }
+      }
+    };
+
+    const releasePointer = event => {
+      if (typeof container.releasePointerCapture === 'function') {
+        try {
+          container.releasePointerCapture(event.pointerId);
+        } catch {
+          // ignore release failures
+        }
+      }
+    };
+
+    const onPointerDown = event => {
+      if (event.pointerType === 'mouse' && event.button !== 0) {
+        return;
+      }
+
+      pointerActive = true;
+      isDragging = false;
+      isVerticalScroll = false;
+      startX = event.clientX;
+      startY = event.clientY;
+      lastX = startX;
+      velocity = 0;
+      stopMomentum();
+    };
+
+    const onPointerMove = event => {
+      if (!pointerActive) return;
+
+      const currentX = event.clientX;
+      const currentY = event.clientY;
+      const totalX = currentX - startX;
+      const totalY = currentY - startY;
+
+      if (!isDragging && !isVerticalScroll) {
+        if (Math.abs(totalX) > DRAG_THRESHOLD && Math.abs(totalX) > Math.abs(totalY)) {
+          isDragging = true;
+          container.classList.add('is-dragging');
+          capturePointer(event);
+        } else if (Math.abs(totalY) > DRAG_THRESHOLD) {
+          isVerticalScroll = true;
+          stopMomentum();
+          return;
+        }
+      }
+
+      if (!isDragging) {
+        return;
+      }
+
+      const deltaX = currentX - lastX;
+      container.scrollLeft -= deltaX;
+      velocity = -deltaX;
+      lastX = currentX;
+      event.preventDefault();
+    };
+
+    const settlePointer = event => {
+      if (!pointerActive) return;
+
+      releasePointer(event);
+
+      if (isDragging) {
+        container.classList.remove('is-dragging');
+        if (!prefersReducedMotion() && Math.abs(velocity) > 0.5) {
+          rafId = window.requestAnimationFrame(stepMomentum);
+        } else {
+          stopMomentum();
+        }
+      } else {
+        stopMomentum();
+      }
+
+      pointerActive = false;
+      isDragging = false;
+      isVerticalScroll = false;
+    };
+
+    const onPointerUp = event => {
+      settlePointer(event);
+    };
+
+    const onPointerLeave = event => {
+      if (!pointerActive) return;
+      if (event.pointerType === 'mouse' && isDragging) {
+        settlePointer(event);
+      } else if (event.pointerType === 'mouse') {
+        pointerActive = false;
+        isDragging = false;
+        isVerticalScroll = false;
+        velocity = 0;
+        container.classList.remove('is-dragging');
+        stopMomentum();
+        releasePointer(event);
+      }
+    };
+
+    const onPointerCancel = event => {
+      settlePointer(event);
+    };
+
+    const onWheel = event => {
+      if (event.ctrlKey) return;
+      if (Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
+        event.preventDefault();
+        container.scrollBy({
+          left: event.deltaY,
+          behavior: getScrollBehavior()
+        });
+      }
+    };
+
+    const onKeyDown = event => {
+      if (event.defaultPrevented) return;
+      if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+        event.preventDefault();
+        container.scrollBy({ left: container.clientWidth * 0.9, behavior: getScrollBehavior() });
+      } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        container.scrollBy({ left: -container.clientWidth * 0.9, behavior: getScrollBehavior() });
+      } else if (event.key === 'Home') {
+        event.preventDefault();
+        container.scrollTo({ left: 0, behavior: getScrollBehavior() });
+      } else if (event.key === 'End') {
+        event.preventDefault();
+        container.scrollTo({ left: container.scrollWidth, behavior: getScrollBehavior() });
+      }
+    };
+
+    container.addEventListener('pointerdown', onPointerDown);
+    container.addEventListener('pointermove', onPointerMove, { passive: false });
+    container.addEventListener('pointerup', onPointerUp);
+    container.addEventListener('pointerleave', onPointerLeave);
+    container.addEventListener('pointercancel', onPointerCancel);
+    container.addEventListener('wheel', onWheel, { passive: false });
+    container.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      stopMomentum();
+      container.removeEventListener('pointerdown', onPointerDown);
+      container.removeEventListener('pointermove', onPointerMove);
+      container.removeEventListener('pointerup', onPointerUp);
+      container.removeEventListener('pointerleave', onPointerLeave);
+      container.removeEventListener('pointercancel', onPointerCancel);
+      container.removeEventListener('wheel', onWheel);
+      container.removeEventListener('keydown', onKeyDown);
+    };
+  }, []);
 
   if (!days.length) {
     return <div className="empty-state">Дни не выбраны.</div>;
@@ -727,79 +928,91 @@ function WeekView({ days, entries, currentKey, showParityLabels }) {
 
   return (
     <>
-      <ol className="week-day-list">
-        {scheduleByDay.map(({ day, entries: dayEntries }) => {
-          const dayHasEntries = dayEntries.length > 0;
-          return (
-            <li
-              key={day}
-              className={`week-day-card${dayHasEntries ? '' : ' is-empty'}`}
-              aria-label={`Занятия на ${day}`}
-            >
-              <div className="week-day-header">
-                <span className="week-day-name">{day}</span>
-                <span className="week-day-short">{DAY_SHORT[day]}</span>
-              </div>
-              {dayHasEntries ? (
-                <ul className="day-pair-list">
-                  {dayEntries.map(({ entry, key }) => {
-                    const isCurrent = currentKey && currentKey === key;
-                    const subgroupBadge = getSubgroupBadge(entry.subgroup);
-                    const parityVariant = showParityLabels ? getParityVariant(entry.weeks) : null;
-                    const parityLabel = parityVariant ? getParityLabel(entry.weeks) : null;
+      <div
+        className="week-carousel"
+        ref={carouselRef}
+        tabIndex="0"
+        role="group"
+        aria-label="Занятия на неделю"
+      >
+        <ol className="week-day-list">
+          {scheduleByDay.map(({ day, entries: dayEntries }) => {
+            const dayHasEntries = dayEntries.length > 0;
+            return (
+              <li
+                key={day}
+                className={`week-day-card${dayHasEntries ? '' : ' is-empty'}`}
+                aria-label={`Занятия на ${day}`}
+              >
+                <div className="week-day-header">
+                  <span className="week-day-name">{day}</span>
+                  <span className="week-day-short">{DAY_SHORT[day]}</span>
+                </div>
+                {dayHasEntries ? (
+                  <ul className="day-pair-list">
+                    {dayEntries.map(({ entry, key }) => {
+                      const isCurrent = currentKey && currentKey === key;
+                      const subgroupBadge = getSubgroupBadge(entry.subgroup);
+                    const parityTone = getParityVariant(entry.weeks);
+                    const parityLabel = showParityLabels && parityTone ? getParityLabel(entry.weeks) : null;
+                    const parityCardVariant = showParityLabels ? null : parityTone;
                     const teacherLabel = formatTeacherNames(entry.teacher);
                     const showTeacher = teacherLabel !== '';
                     const typeVariant = getTypeVariant(entry.type);
                     const note = (entry.note || '').trim();
+                    const hasTags = showTeacher || note;
                     return (
                       <li
                         key={key}
-                        className={`pair-entry${isCurrent ? ' is-current' : ''}${parityVariant ? ` parity-${parityVariant}` : ''}`}
+                        className={`pair-entry${isCurrent ? ' is-current' : ''}${parityCardVariant ? ` parity-${parityCardVariant}` : ''}`}
                       >
-                        <div className="pair-entry-header">
-                          <div className="pair-entry-time">
-                            <span className="pair-entry-number">
-                              {typeof entry.pair === 'number' ? `${entry.pair}-я пара` : entry.pair}
-                            </span>
-                            <span className="pair-entry-clock">{entry.time}</span>
-                          </div>
-                          <div className="pair-entry-flags">
-                            {subgroupBadge && (
-                              <span className={`subgroup-badge subgroup-${subgroupBadge.variant}`}>
-                                {subgroupBadge.label}
+                          <div className="pair-entry-header">
+                            <div className="pair-entry-time">
+                              <span className="pair-entry-number">
+                                {typeof entry.pair === 'number' ? `${entry.pair}-я пара` : entry.pair}
                               </span>
-                            )}
-                            {parityLabel && (
-                              <span className={`meta-chip parity-chip parity-${parityVariant}`}>{parityLabel}</span>
+                              <span className="pair-entry-clock">{entry.time}</span>
+                            </div>
+                            <div className="pair-entry-flags">
+                              {subgroupBadge && (
+                                <span className={`subgroup-badge subgroup-${subgroupBadge.variant}`}>
+                                  {subgroupBadge.label}
+                                </span>
+                              )}
+                              {parityLabel && parityTone && (
+                                <span className={`meta-chip parity-chip parity-${parityTone}`}>{parityLabel}</span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="pair-entry-body">
+                            <div className="pair-entry-subject">{entry.subject}</div>
+                            <div className="pair-entry-room">ауд. {entry.place}</div>
+                          </div>
+                          <div className="pair-entry-footer">
+                            <span className={`meta-chip meta-chip-type meta-chip-type--${typeVariant}`}>
+                              {formatTypeLabel(entry.type)}
+                            </span>
+                            {hasTags && (
+                              <div className="pair-entry-tags">
+                                {showTeacher && (
+                                  <span className="meta-chip meta-chip-muted">{teacherLabel}</span>
+                                )}
+                                {note && <span className="meta-chip meta-chip-note">{note}</span>}
+                              </div>
                             )}
                           </div>
-                        </div>
-                        <div className="pair-entry-body">
-                          <div className="pair-entry-subject">{entry.subject}</div>
-                          <div className="pair-entry-room">ауд. {entry.place}</div>
-                        </div>
-                        <div className="pair-entry-footer">
-                          <span className={`meta-chip meta-chip-type meta-chip-type--${typeVariant}`}>
-                            {formatTypeLabel(entry.type)}
-                          </span>
-                          <div className="pair-entry-tags">
-                            {showTeacher && (
-                              <span className="meta-chip meta-chip-muted">{teacherLabel}</span>
-                            )}
-                            {note && <span className="meta-chip meta-chip-note">{note}</span>}
-                          </div>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              ) : (
-                <p className="day-empty">В этот день занятий нет.</p>
-              )}
-            </li>
-          );
-        })}
-      </ol>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : (
+                  <p className="day-empty">В этот день занятий нет.</p>
+                )}
+              </li>
+            );
+          })}
+        </ol>
+      </div>
       {!hasEntries && (
         <p className="empty-table-note">По выбранным фильтрам занятия не найдены.</p>
       )}
