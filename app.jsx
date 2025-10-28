@@ -343,6 +343,9 @@ function App() {
   const dayFilterList = filters.day === 'all' ? WEEK_DAYS : WEEK_DAYS.filter(day => day === filters.day);
   const filtersAreDefault = isDefaultFilters(filters);
 
+  const currentYear = now.year;
+  const themeLabel = THEME_LABELS[themeMode];
+
   return (
     <div className="app-shell">
       <header className={`app-header${headerCollapsed ? ' collapsed' : ''}`}>
@@ -368,15 +371,6 @@ function App() {
             >
               <ChevronIcon direction={headerCollapsed ? 'down' : 'up'} />
             </button>
-            <button
-              type="button"
-              className={`collapse-button${headerCollapsed ? ' collapsed' : ''}`}
-              onClick={() => setHeaderCollapsed(value => !value)}
-              aria-label={headerCollapsed ? 'Развернуть шапку' : 'Свернуть шапку'}
-              aria-expanded={!headerCollapsed}
-              aria-controls="filters-panel"
-              title={headerCollapsed ? 'Развернуть шапку' : 'Свернуть шапку'}
-            ></button>
           </div>
         </div>
         <FiltersPanel
@@ -390,14 +384,14 @@ function App() {
       </header>
 
       <main className="app-main">
-        <section>
+        <section id="today">
           <div className="section-header">
             <h2>Сегодня</h2>
           </div>
           <TodaySection info={todayInfo} showParityLabels={parityMode === 'all'} />
         </section>
 
-        <section className="week-section">
+        <section className="week-section" id="week">
           <div className="section-header">
             <h2>Неделя</h2>
           </div>
@@ -411,35 +405,54 @@ function App() {
       </main>
 
       <footer className="app-footer">
-        <div className="footer-head">
-          <div className="footer-info">
-            <div className="footer-title">Как пользоваться расписанием</div>
-            <p className="footer-text">Здесь собраны подсказки, как быстрее находить нужные пары и управлять отображением.</p>
+        <div className="footer-inner">
+          <div className="footer-upper">
+            <div className="footer-brand">
+              <div className="footer-title">Учебный ритм под контролем</div>
+              <p className="footer-description">
+                Следите за текущими и предстоящими парами, фильтруйте подгруппы и выбирайте удобную тему оформления.
+              </p>
+              <div className="footer-actions">
+                <span className="footer-action-label">Тема интерфейса</span>
+                <button
+                  type="button"
+                  className="theme-button footer-theme-button"
+                  onClick={() => {
+                    const currentIndex = THEME_SEQUENCE.indexOf(themeMode);
+                    const nextIndex = (currentIndex + 1) % THEME_SEQUENCE.length;
+                    setThemeMode(THEME_SEQUENCE[nextIndex]);
+                  }}
+                  aria-label={`Текущая тема: ${themeLabel} (нажмите, чтобы переключить)`}
+                  title={`Тема: ${themeLabel}`}
+                >
+                  <ThemeIcon mode={themeMode} />
+                </button>
+              </div>
+            </div>
+            <div className="footer-columns">
+              <div className="footer-column">
+                <h3>Разделы</h3>
+                <ul>
+                  <li><a href="#today">Сегодня</a></li>
+                  <li><a href="#week">Неделя</a></li>
+                  <li><a href="#filters-panel">Фильтры</a></li>
+                </ul>
+              </div>
+              <div className="footer-column">
+                <h3>Поддержка</h3>
+                <ul>
+                  <li><a href="mailto:schedule@university.local">schedule@university.local</a></li>
+                  <li><a href="https://www.urfu.ru" target="_blank" rel="noreferrer">Сайт университета</a></li>
+                  <li><span>Учебная часть: будни 09:00–17:00</span></li>
+                </ul>
+              </div>
+            </div>
           </div>
-          <div className="footer-theme-control">
-            <span className="footer-theme-label">Тема интерфейса</span>
-            <button
-              type="button"
-              className="theme-button footer-theme-button"
-              onClick={() => {
-                const currentIndex = THEME_SEQUENCE.indexOf(themeMode);
-                const nextIndex = (currentIndex + 1) % THEME_SEQUENCE.length;
-                setThemeMode(THEME_SEQUENCE[nextIndex]);
-              }}
-              aria-label={`Текущая тема: ${THEME_LABELS[themeMode]} (нажмите, чтобы переключить)`}
-              title={`Тема: ${THEME_LABELS[themeMode]}`}
-            >
-              <ThemeIcon mode={themeMode} />
-            </button>
+          <div className="footer-bottom">
+            <small>© {currentYear} Расписание учебных пар</small>
+            <small>Последнее обновление по московскому времени</small>
           </div>
         </div>
-        <ul className="footer-guide">
-          <li>Следите за сегодняшними парами: статус и таймер отображаются в верхнем блоке.</li>
-          <li>Переключайте чётность недели или смотрите обе сразу через переключатель «Неделя».</li>
-          <li>Фильтры подгруппы, типа занятия и дня помогут оставить только нужные пары.</li>
-          <li>Нажмите ещё раз на выбранный фильтр, чтобы вернуться к варианту «Все».</li>
-          <li>Иконка темы переключает светлую, тёмную или системную палитру интерфейса.</li>
-        </ul>
       </footer>
     </div>
   );
@@ -628,8 +641,8 @@ function TodaySection({ info, showParityLabels }) {
   const isCurrent = info.mode === 'current';
   const entry = info.entry;
   const subgroupBadge = getSubgroupBadge(entry.subgroup);
-  const teacherLabel = (entry.teacher || '').trim();
-  const showTeacher = teacherLabel !== '' && teacherLabel !== '-' && teacherLabel !== '–';
+  const teacherLabel = formatTeacherNames(entry.teacher);
+  const showTeacher = teacherLabel !== '';
   const parityVariant = showParityLabels ? getParityVariant(entry.weeks) : null;
   const parityLabel = parityVariant ? getParityLabel(entry.weeks) : null;
   const typeVariant = getTypeVariant(entry.type);
@@ -731,8 +744,8 @@ function WeekView({ days, entries, currentKey, showParityLabels }) {
                     const subgroupBadge = getSubgroupBadge(entry.subgroup);
                     const parityVariant = showParityLabels ? getParityVariant(entry.weeks) : null;
                     const parityLabel = parityVariant ? getParityLabel(entry.weeks) : null;
-                    const teacherLabel = (entry.teacher || '').trim();
-                    const showTeacher = teacherLabel !== '' && teacherLabel !== '-' && teacherLabel !== '–';
+                    const teacherLabel = formatTeacherNames(entry.teacher);
+                    const showTeacher = teacherLabel !== '';
                     const typeVariant = getTypeVariant(entry.type);
                     const note = (entry.note || '').trim();
                     return (
@@ -995,6 +1008,56 @@ function formatRelative(ms) {
 function formatTypeLabel(value) {
   if (!value || value === '-') return 'Тип не указан';
   return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function formatTeacherNames(raw) {
+  if (!raw) return '';
+  const parts = String(raw)
+    .split(/[;,]/)
+    .map(part => formatSingleTeacher(part))
+    .filter(Boolean);
+  return parts.join(', ');
+}
+
+function formatSingleTeacher(part) {
+  if (!part) return '';
+  const trimmed = part.replace(/\s+/g, ' ').trim();
+  if (!trimmed || trimmed === '-' || trimmed === '–') {
+    return '';
+  }
+
+  const tokens = trimmed.split(' ').filter(Boolean);
+  if (tokens.length === 0) {
+    return '';
+  }
+
+  const surnameIndex = tokens.findIndex(token => /^[А-ЯЁ][а-яё-]+$/.test(token));
+  if (surnameIndex === -1) {
+    return trimmed;
+  }
+
+  const surname = tokens[surnameIndex];
+  const initialsTokens = tokens.slice(surnameIndex + 1);
+  const initials = [];
+
+  for (const token of initialsTokens) {
+    const letters = token.replace(/[^А-ЯЁ]/g, '');
+    for (const letter of letters) {
+      if (initials.length < 2) {
+        initials.push(letter);
+      }
+    }
+    if (initials.length >= 2) {
+      break;
+    }
+  }
+
+  if (initials.length === 0) {
+    return surname;
+  }
+
+  const formattedInitials = initials.map(letter => `${letter}.`).join(' ');
+  return `${surname} ${formattedInitials}`;
 }
 
 function getParityVariant(weeks) {
