@@ -730,6 +730,9 @@ function WeekView({ days, entries, currentKey, showParityLabels }) {
     if (!container) return undefined;
 
     let pointerActive = false;
+    let pointerCaptured = false;
+    let touchActive = false;
+    let gestureActive = false;
     let isDragging = false;
     let isVerticalScroll = false;
     let startX = 0;
@@ -763,75 +766,76 @@ function WeekView({ days, entries, currentKey, showParityLabels }) {
     };
 
     const capturePointer = event => {
-      if (typeof container.setPointerCapture === 'function') {
-        try {
-          container.setPointerCapture(event.pointerId);
-        } catch {
-          // ignore capture failures (e.g., Safari)
-        }
+      if (pointerCaptured || typeof container.setPointerCapture !== 'function') {
+        return;
+      }
+      try {
+        container.setPointerCapture(event.pointerId);
+        pointerCaptured = true;
+      } catch {
+        // ignore capture failures (e.g., Safari)
       }
     };
 
     const releasePointer = event => {
-      if (typeof container.releasePointerCapture === 'function') {
-        try {
-          container.releasePointerCapture(event.pointerId);
-        } catch {
-          // ignore release failures
-        }
-      }
-    };
-
-    const onPointerDown = event => {
-      if (event.pointerType === 'mouse' && event.button !== 0) {
+      if (!pointerCaptured || typeof container.releasePointerCapture !== 'function') {
+        pointerCaptured = false;
         return;
       }
-
-      pointerActive = true;
-      isDragging = false;
-      isVerticalScroll = false;
-      startX = event.clientX;
-      startY = event.clientY;
-      lastX = startX;
-      velocity = 0;
-      stopMomentum();
+      try {
+        container.releasePointerCapture(event.pointerId);
+      } catch {
+        // ignore release failures
+      }
+      pointerCaptured = false;
     };
 
-    const onPointerMove = event => {
-      if (!pointerActive) return;
+    const startGesture = (x, y) => {
+      gestureActive = true;
+      isDragging = false;
+      isVerticalScroll = false;
+      startX = x;
+      startY = y;
+      lastX = x;
+      velocity = 0;
+      stopMomentum();
+      pointerCaptured = false;
+    };
 
-      const currentX = event.clientX;
-      const currentY = event.clientY;
-      const totalX = currentX - startX;
-      const totalY = currentY - startY;
+    const moveGesture = (x, y, onDragStart) => {
+      if (!gestureActive) return false;
+
+      const totalX = x - startX;
+      const totalY = y - startY;
 
       if (!isDragging && !isVerticalScroll) {
         if (Math.abs(totalX) > DRAG_THRESHOLD && Math.abs(totalX) > Math.abs(totalY)) {
           isDragging = true;
           container.classList.add('is-dragging');
-          capturePointer(event);
+          if (typeof onDragStart === 'function') {
+            onDragStart();
+          }
         } else if (Math.abs(totalY) > DRAG_THRESHOLD) {
           isVerticalScroll = true;
-          stopMomentum();
-          return;
+          return false;
         }
       }
 
       if (!isDragging) {
-        return;
+        return false;
       }
 
-      const deltaX = currentX - lastX;
+      const deltaX = x - lastX;
       container.scrollLeft -= deltaX;
       velocity = -deltaX;
-      lastX = currentX;
-      event.preventDefault();
+      lastX = x;
+      return true;
     };
 
-    const settlePointer = event => {
-      if (!pointerActive) return;
-
-      releasePointer(event);
+    const finalizeGesture = () => {
+      if (!gestureActive) {
+        return;
+      }
 
       if (isDragging) {
         container.classList.remove('is-dragging');
@@ -844,32 +848,82 @@ function WeekView({ days, entries, currentKey, showParityLabels }) {
         stopMomentum();
       }
 
-      pointerActive = false;
+      gestureActive = false;
       isDragging = false;
       isVerticalScroll = false;
     };
 
+    const onPointerDown = event => {
+      if (event.pointerType === 'touch') {
+        return;
+      }
+      if (event.pointerType === 'mouse' && event.button !== 0) {
+        return;
+      }
+
+      pointerActive = true;
+      startGesture(event.clientX, event.clientY);
+    };
+
+    const onPointerMove = event => {
+      if (!pointerActive) return;
+      const shouldPrevent = moveGesture(event.clientX, event.clientY, () => capturePointer(event));
+      if (shouldPrevent) {
+        event.preventDefault();
+      }
+    };
+
     const onPointerUp = event => {
-      settlePointer(event);
+      if (!pointerActive) return;
+      pointerActive = false;
+      releasePointer(event);
+      finalizeGesture();
     };
 
     const onPointerLeave = event => {
       if (!pointerActive) return;
-      if (event.pointerType === 'mouse' && isDragging) {
-        settlePointer(event);
-      } else if (event.pointerType === 'mouse') {
-        pointerActive = false;
-        isDragging = false;
-        isVerticalScroll = false;
-        velocity = 0;
-        container.classList.remove('is-dragging');
-        stopMomentum();
-        releasePointer(event);
-      }
+      pointerActive = false;
+      releasePointer(event);
+      finalizeGesture();
     };
 
     const onPointerCancel = event => {
-      settlePointer(event);
+      if (!pointerActive) return;
+      pointerActive = false;
+      releasePointer(event);
+      finalizeGesture();
+    };
+
+    const onTouchStart = event => {
+      if (event.touches.length !== 1) {
+        return;
+      }
+      const touch = event.touches[0];
+      touchActive = true;
+      startGesture(touch.clientX, touch.clientY);
+    };
+
+    const onTouchMove = event => {
+      if (!touchActive || event.touches.length !== 1) {
+        return;
+      }
+      const touch = event.touches[0];
+      const shouldPrevent = moveGesture(touch.clientX, touch.clientY);
+      if (shouldPrevent && event.cancelable) {
+        event.preventDefault();
+      }
+    };
+
+    const onTouchEnd = () => {
+      if (!touchActive) return;
+      touchActive = false;
+      finalizeGesture();
+    };
+
+    const onTouchCancel = () => {
+      if (!touchActive) return;
+      touchActive = false;
+      finalizeGesture();
     };
 
     const onWheel = event => {
@@ -905,6 +959,10 @@ function WeekView({ days, entries, currentKey, showParityLabels }) {
     container.addEventListener('pointerup', onPointerUp);
     container.addEventListener('pointerleave', onPointerLeave);
     container.addEventListener('pointercancel', onPointerCancel);
+    container.addEventListener('touchstart', onTouchStart, { passive: true });
+    container.addEventListener('touchmove', onTouchMove, { passive: false });
+    container.addEventListener('touchend', onTouchEnd);
+    container.addEventListener('touchcancel', onTouchCancel);
     container.addEventListener('wheel', onWheel, { passive: false });
     container.addEventListener('keydown', onKeyDown);
 
@@ -915,6 +973,10 @@ function WeekView({ days, entries, currentKey, showParityLabels }) {
       container.removeEventListener('pointerup', onPointerUp);
       container.removeEventListener('pointerleave', onPointerLeave);
       container.removeEventListener('pointercancel', onPointerCancel);
+      container.removeEventListener('touchstart', onTouchStart);
+      container.removeEventListener('touchmove', onTouchMove);
+      container.removeEventListener('touchend', onTouchEnd);
+      container.removeEventListener('touchcancel', onTouchCancel);
       container.removeEventListener('wheel', onWheel);
       container.removeEventListener('keydown', onKeyDown);
     };
