@@ -722,23 +722,23 @@ main.app-main {
   }
 
   .week-section {
-    --week-section-padding: max(2rem, calc((100vw - 1600px) / 2 + 2rem));
-    padding-left: var(--week-section-padding);
-    padding-right: var(--week-section-padding);
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 2rem;
+    padding-right: 2rem;
   }
 
   .week-day-list {
+    --week-card-gap: 1.75rem;
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 1.75rem;
+    column-gap: var(--week-card-gap);
+    row-gap: var(--week-card-gap);
   }
 
   .week-day-card {
-    flex: 0 1 auto;
-    min-inline-size: 18.5rem;
-    inline-size: min(max-content, 26rem);
-    max-inline-size: min(100%, 26rem);
+    flex: 0 0 clamp(18rem, calc((100% - 3 * var(--week-card-gap)) / 4), 22rem);
   }
 }
 
