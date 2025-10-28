@@ -439,9 +439,8 @@ function App() {
                 </ul>
               </div>
               <div className="footer-column">
-                <h3>Поддержка</h3>
+                <h3>Дополнительно</h3>
                 <ul>
-                  <li><a href="mailto:schedule@university.local">schedule@university.local</a></li>
                   <li><a href="https://www.nntu.ru/" target="_blank" rel="noreferrer">Сайт университета</a></li>
                   <li><span>Учебная часть: будни 09:00–17:00</span></li>
                 </ul>
