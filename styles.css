@@ -99,11 +99,16 @@ header.app-header {
   background: var(--bg-soft);
   border: 1px solid var(--border);
   border-radius: 0 0 var(--radius-md) var(--radius-md);
+  box-shadow: var(--shadow-md);
+  transition: transform 0.24s ease, box-shadow 0.24s ease, padding 0.24s ease;
+  will-change: transform;
 }
 
 header.app-header.collapsed {
   gap: 0.75rem;
   padding-bottom: 1rem;
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-sm);
 }
 
 .brand-line {
@@ -232,10 +237,20 @@ header.app-header.collapsed {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 0.85rem;
+  overflow: hidden;
+  max-height: 480px;
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.22s ease, transform 0.22s ease, max-height 0.26s ease;
+  will-change: max-height, opacity, transform;
 }
 
 .filters-panel.is-collapsed {
-  display: none;
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-12px);
+  pointer-events: none;
+  visibility: hidden;
 }
 
 .filters-actions {
@@ -343,6 +358,7 @@ main.app-main {
 
 .today-card,
 .summary-card {
+  position: relative;
   background: var(--surface-strong);
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
@@ -350,34 +366,51 @@ main.app-main {
   display: grid;
   gap: 1.2rem;
   box-shadow: var(--shadow-lg);
-}
-
-.today-card.current {
-  border-color: var(--accent);
-  box-shadow: var(--shadow-lg), 0 0 0 4px var(--accent-soft);
+  z-index: 0;
 }
 
 .today-card.parity-odd {
   border-color: var(--parity-odd-border);
-  box-shadow: var(--shadow-lg), 0 0 0 3px var(--parity-odd-glow);
   background: linear-gradient(140deg, var(--parity-odd-bg), transparent), var(--surface-strong);
 }
 
 .today-card.parity-even {
   border-color: var(--parity-even-border);
-  box-shadow: var(--shadow-lg), 0 0 0 3px var(--parity-even-glow);
   background: linear-gradient(140deg, var(--parity-even-bg), transparent), var(--surface-strong);
 }
 
+.today-card.current {
+  --current-accent: var(--accent);
+  --current-shadow: rgba(37, 99, 235, 0.24);
+  --current-glow: rgba(37, 99, 235, 0.32);
+  border-color: var(--current-accent);
+  box-shadow: var(--shadow-lg), 0 18px 36px var(--current-shadow);
+}
+
+.today-card.current::after {
+  content: "";
+  position: absolute;
+  inset: -18px;
+  border-radius: inherit;
+  background: radial-gradient(circle at 50% 50%, var(--current-glow) 0%, transparent 70%);
+  opacity: 0.4;
+  transform: scale(0.96);
+  animation: currentPulseGlow 3.8s ease-in-out infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
 .today-card.current.parity-odd {
-  border-color: var(--parity-odd-strong);
-  box-shadow: var(--shadow-lg), 0 0 0 4px var(--parity-odd-glow);
+  --current-accent: var(--parity-odd-strong);
+  --current-shadow: rgba(129, 140, 248, 0.28);
+  --current-glow: var(--parity-odd-glow);
   background: linear-gradient(140deg, var(--parity-odd-bg), transparent), var(--surface-strong);
 }
 
 .today-card.current.parity-even {
-  border-color: var(--parity-even-strong);
-  box-shadow: var(--shadow-lg), 0 0 0 4px var(--parity-even-glow);
+  --current-accent: var(--parity-even-strong);
+  --current-shadow: rgba(16, 185, 129, 0.28);
+  --current-glow: var(--parity-even-glow);
   background: linear-gradient(140deg, var(--parity-even-bg), transparent), var(--surface-strong);
 }
 
@@ -640,11 +673,13 @@ main.app-main {
   position: absolute;
   top: 0;
   bottom: 0;
-  right: 0;
-  background: linear-gradient(270deg, var(--accent), #60a5fa);
+  left: 0;
+  background: linear-gradient(90deg, var(--accent), #60a5fa);
   border-radius: inherit;
   transition: width 0.4s ease;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+  transform-origin: left;
+  will-change: width;
 }
 
 .info-text {
@@ -655,7 +690,16 @@ main.app-main {
 .week-day-list {
   display: grid;
   gap: 1.5rem;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 960px) {
+  .week-day-list {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
 }
 
 .week-day-card {
@@ -713,6 +757,8 @@ main.app-main {
   display: grid;
   gap: 0.75rem;
   transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  position: relative;
+  z-index: 0;
 }
 
 [data-theme="dark"] .pair-entry {
@@ -724,9 +770,25 @@ main.app-main {
 }
 
 .pair-entry.is-current {
-  border-color: var(--accent);
-  box-shadow: var(--shadow-sm), 0 0 0 3px var(--accent-soft);
-  background: linear-gradient(140deg, rgba(37, 99, 235, 0.16), rgba(59, 130, 246, 0.12));
+  --current-accent: var(--accent);
+  --current-shadow: rgba(37, 99, 235, 0.18);
+  --current-glow: rgba(37, 99, 235, 0.26);
+  border-color: var(--current-accent);
+  box-shadow: var(--shadow-sm), 0 12px 26px var(--current-shadow);
+  background: linear-gradient(140deg, rgba(37, 99, 235, 0.16), rgba(59, 130, 246, 0.08)), var(--cell-entry-surface);
+}
+
+.pair-entry.is-current::after {
+  content: "";
+  position: absolute;
+  inset: -12px;
+  border-radius: inherit;
+  background: radial-gradient(circle at 50% 50%, var(--current-glow) 0%, transparent 70%);
+  opacity: 0.4;
+  transform: scale(0.96);
+  animation: currentPulseGlow 3.6s ease-in-out infinite;
+  pointer-events: none;
+  z-index: -1;
 }
 
 .pair-entry.parity-odd {
@@ -740,13 +802,19 @@ main.app-main {
 }
 
 .pair-entry.is-current.parity-odd {
-  border-color: var(--parity-odd-strong);
-  box-shadow: var(--shadow-sm), 0 0 0 3px var(--parity-odd-glow);
+  --current-accent: var(--parity-odd-strong);
+  --current-shadow: rgba(129, 140, 248, 0.22);
+  --current-glow: var(--parity-odd-glow);
+  border-color: var(--current-accent);
+  background: linear-gradient(140deg, var(--parity-odd-bg), transparent), var(--cell-entry-surface);
 }
 
 .pair-entry.is-current.parity-even {
-  border-color: var(--parity-even-strong);
-  box-shadow: var(--shadow-sm), 0 0 0 3px var(--parity-even-glow);
+  --current-accent: var(--parity-even-strong);
+  --current-shadow: rgba(45, 212, 191, 0.22);
+  --current-glow: var(--parity-even-glow);
+  border-color: var(--current-accent);
+  background: linear-gradient(140deg, var(--parity-even-bg), transparent), var(--cell-entry-surface);
 }
 
 .pair-entry-header {
@@ -839,85 +907,132 @@ main.app-main {
 
 footer.app-footer {
   margin-top: 3rem;
-  padding: 1.8rem;
+  padding: 2rem;
   background: var(--surface);
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
   color: var(--muted);
   font-size: 0.9rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.4rem;
   line-height: 1.5;
 }
 
-.footer-head {
+.footer-inner {
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
+  flex-direction: column;
+  gap: 1.8rem;
 }
 
-.footer-info {
-  flex: 1 1 240px;
-  min-width: 0;
+.footer-upper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.6rem 2.4rem;
+  align-items: flex-start;
+}
+
+.footer-brand {
+  flex: 1 1 260px;
   display: grid;
-  gap: 0.4rem;
+  gap: 0.6rem;
+  min-width: 0;
 }
 
 .footer-title {
   font-weight: 700;
-  font-size: 1.02rem;
+  font-size: 1.08rem;
   color: var(--text);
 }
 
-.footer-text {
+.footer-description {
   margin: 0;
   color: var(--muted);
+  line-height: 1.6;
 }
 
-.footer-theme-control {
-  display: grid;
-  gap: 0.5rem;
-  justify-items: flex-end;
-  text-align: right;
+.footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
 }
 
-.footer-theme-label {
+.footer-action-label {
   font-size: 0.78rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--muted);
 }
 
+.footer-columns {
+  display: flex;
+  flex: 1 1 320px;
+  gap: 2.4rem;
+  flex-wrap: wrap;
+}
+
+.footer-column {
+  flex: 1 1 160px;
+  min-width: 160px;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.footer-column h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.footer-column ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.footer-column a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.footer-column a:hover {
+  text-decoration: underline;
+}
+
+.footer-column span {
+  color: var(--muted);
+}
+
+.footer-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.75rem 1.2rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
 .footer-theme-button {
   width: 48px;
   height: 48px;
   font-size: 1.2rem;
+  box-shadow: var(--shadow-sm);
 }
 
-.footer-guide {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: grid;
-  gap: 0.4rem;
-}
+@keyframes currentPulseGlow {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(0.96);
+  }
 
-.footer-guide li {
-  position: relative;
-  padding-left: 1.2rem;
-}
-
-.footer-guide li::before {
-  content: '•';
-  position: absolute;
-  left: 0;
-  color: var(--accent);
-  font-size: 1.1rem;
-  line-height: 1;
+  50% {
+    opacity: 0.1;
+    transform: scale(1.05);
+  }
 }
 
 button,
@@ -966,6 +1081,19 @@ select:focus-visible {
   .week-day-list {
     grid-template-columns: minmax(0, 1fr);
   }
+
+  .footer-upper {
+    flex-direction: column;
+  }
+
+  .footer-columns {
+    width: 100%;
+  }
+
+  .footer-bottom {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 
 @media (max-width: 540px) {
@@ -995,14 +1123,14 @@ select:focus-visible {
     font-size: 1rem;
   }
 
-  .footer-theme-control {
-    justify-items: flex-start;
-    text-align: left;
-  }
-
   .footer-theme-button {
     width: 42px;
     height: 42px;
+  }
+
+  .footer-actions {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .filters-panel {
