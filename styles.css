@@ -716,15 +716,29 @@ main.app-main {
 
 @media (min-width: 1280px) {
   .app-shell {
-    max-width: 1360px;
+    max-width: 1600px;
     padding-left: 2rem;
     padding-right: 2rem;
   }
 
+  .week-section {
+    --week-section-padding: max(2rem, calc((100vw - 1600px) / 2 + 2rem));
+    padding-left: var(--week-section-padding);
+    padding-right: var(--week-section-padding);
+  }
+
   .week-day-list {
-    grid-template-columns: repeat(auto-fill, minmax(280px, 320px));
+    display: flex;
+    flex-wrap: wrap;
     justify-content: center;
     gap: 1.75rem;
+  }
+
+  .week-day-card {
+    flex: 0 1 auto;
+    min-inline-size: 18.5rem;
+    inline-size: min(max-content, 26rem);
+    max-inline-size: min(100%, 26rem);
   }
 }
 
