@@ -1,4 +1,4 @@
-const { useState, useMemo, useEffect } = React;
+const { useState, useMemo, useEffect, useCallback } = React;
 
 const SCHEDULE_ODD = [
   {day:'Понедельник', pair:3, time:'11:35-13:10', weeks:'all', type:'практика', subgroup:null, subject:'Электив по физической культуре и спорту', place:'спорткомплекс 6-го учебного корпуса', teacher:'Андронова Л. Н.', note:''},
@@ -100,7 +100,6 @@ const WEEKDAY_MAP = {
 };
 
 const MONTH_LABELS = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
-const DEFAULT_PAIRS = [1, 2, 3, 4, 5];
 const MS_IN_DAY = 86400000;
 const MOSCOW_UTC_OFFSET = 3;
 
@@ -137,12 +136,41 @@ const DAY_OPTIONS = [
   ...WEEK_DAYS.map(day => ({ value: day, label: day }))
 ];
 
+const FILTER_GROUPS = [
+  {
+    field: 'subgroup',
+    label: 'Подгруппа',
+    ariaLabel: 'Подгруппа',
+    options: SUBGROUP_OPTIONS
+  },
+  {
+    field: 'type',
+    label: 'Тип занятия',
+    ariaLabel: 'Тип занятия',
+    options: TYPE_OPTIONS
+  },
+  {
+    field: 'day',
+    label: 'День недели',
+    ariaLabel: 'День недели',
+    options: DAY_OPTIONS
+  }
+];
+
+function createDefaultFilters() {
+  return {
+    subgroup: 'all',
+    type: 'all',
+    day: 'all'
+  };
+}
+
+function isDefaultFilters(filters) {
+  const defaults = createDefaultFilters();
+  return Object.keys(defaults).every(key => filters[key] === defaults[key]);
+}
+
 const THEME_SEQUENCE = ['system', 'light', 'dark'];
-const THEME_ICONS = {
-  system: '🖥️',
-  light: '☀️',
-  dark: '🌙'
-};
 const THEME_LABELS = {
   system: 'Системная тема',
   light: 'Светлая тема',
@@ -153,33 +181,49 @@ function App() {
   const now = useMoscowNow();
 
   const [parityMode, setParityMode] = useState(() => {
-    const stored = localStorage.getItem(STORAGE_KEYS.parity);
+    const stored = readStorage(STORAGE_KEYS.parity);
     return stored === 'odd' || stored === 'even' || stored === 'auto' || stored === 'all' ? stored : 'auto';
   });
 
   const [themeMode, setThemeMode] = useState(() => {
-    const stored = localStorage.getItem(STORAGE_KEYS.theme);
+    const stored = readStorage(STORAGE_KEYS.theme);
     return stored === 'dark' || stored === 'light' || stored === 'system' ? stored : 'system';
   });
   const [systemTheme, setSystemTheme] = useState(() => getPreferredTheme());
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
 
   const [filters, setFilters] = useState(() => {
-    const storedSubgroup = localStorage.getItem(STORAGE_KEYS.subgroup);
-    const storedType = localStorage.getItem(STORAGE_KEYS.type);
-    const storedDay = localStorage.getItem(STORAGE_KEYS.day);
+    const storedSubgroup = readStorage(STORAGE_KEYS.subgroup);
+    const storedType = readStorage(STORAGE_KEYS.type);
+    const storedDay = readStorage(STORAGE_KEYS.day);
     const validSubgroups = new Set(SUBGROUP_OPTIONS.map(option => option.value));
     const validTypes = new Set(['all', ...TYPE_VALUES]);
     const validDays = new Set(DAY_OPTIONS.map(option => option.value));
     return {
+      ...createDefaultFilters(),
       subgroup: validSubgroups.has(storedSubgroup) ? storedSubgroup : 'all',
       type: validTypes.has(storedType) ? storedType : 'all',
       day: validDays.has(storedDay) ? storedDay : 'all'
     };
   });
 
+  const handleFilterChange = useCallback((field, value) => {
+    setFilters(current => {
+      const currentValue = current[field];
+      const nextValue = value === 'all' ? 'all' : (currentValue === value ? 'all' : value);
+      if (currentValue === nextValue) {
+        return current;
+      }
+      return { ...current, [field]: nextValue };
+    });
+  }, [setFilters]);
+
+  const handleResetFilters = useCallback(() => {
+    setFilters(() => createDefaultFilters());
+  }, []);
+
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.theme, themeMode);
+    writeStorage(STORAGE_KEYS.theme, themeMode);
   }, [themeMode]);
 
   useEffect(() => {
@@ -215,16 +259,58 @@ function App() {
   }, [themeMode, systemTheme]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.parity, parityMode);
+    if (typeof window === 'undefined') {
+      return undefined;
+    }
+
+    let lastY = window.scrollY;
+    let rafId = null;
+
+    const handleScroll = () => {
+      if (rafId != null) {
+        return;
+      }
+
+      rafId = window.requestAnimationFrame(() => {
+        const currentY = window.scrollY;
+        const scrollingDown = currentY > lastY;
+
+        setHeaderCollapsed(prev => {
+          if (scrollingDown && currentY > 64) {
+            return true;
+          }
+          if (!scrollingDown && currentY < 16) {
+            return false;
+          }
+          return prev;
+        });
+
+        lastY = currentY;
+        rafId = null;
+      });
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (rafId != null) {
+        window.cancelAnimationFrame(rafId);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    writeStorage(STORAGE_KEYS.parity, parityMode);
   }, [parityMode]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.subgroup, filters.subgroup);
-    localStorage.setItem(STORAGE_KEYS.type, filters.type);
-    localStorage.setItem(STORAGE_KEYS.day, filters.day);
+    writeStorage(STORAGE_KEYS.subgroup, filters.subgroup);
+    writeStorage(STORAGE_KEYS.type, filters.type);
+    writeStorage(STORAGE_KEYS.day, filters.day);
   }, [filters]);
 
-  const { parity: academicParity } = computeAcademicParity(now);
+  const { parity: academicParity, weekNumber: academicWeekNumber } = computeAcademicParity(now);
   const autoParity = academicParity;
   const effectiveParity = parityMode === 'auto' ? autoParity : parityMode;
   const scheduleSource = parityMode === 'all'
@@ -237,11 +323,11 @@ function App() {
     const parityFilter = parityMode === 'all' ? 'all' : effectiveParity;
     return scheduleSource
       .filter(entry => entry.pair !== 'вне пар')
-      .filter(entry => occursThisWeek(entry, parityFilter, now.isoWeek))
+      .filter(entry => occursThisWeek(entry, parityFilter, academicWeekNumber))
       .filter(entry => filters.day === 'all' || entry.day === filters.day)
       .filter(entry => matchesSubgroup(entry, filters.subgroup))
       .filter(entry => matchesType(entry, filters.type));
-  }, [scheduleSource, parityMode, effectiveParity, now.isoWeek, filters]);
+  }, [scheduleSource, parityMode, effectiveParity, academicWeekNumber, filters]);
 
   const todayInfo = useMemo(() => {
     const todayParity = parityMode === 'all' ? autoParity : effectiveParity;
@@ -249,12 +335,13 @@ function App() {
       schedule: scheduleSource,
       now,
       parity: todayParity,
-      isoWeek: now.isoWeek,
+      weekNumber: academicWeekNumber,
       filters
     });
-  }, [scheduleSource, now, parityMode, effectiveParity, autoParity, filters]);
+  }, [scheduleSource, now, parityMode, effectiveParity, autoParity, academicWeekNumber, filters]);
 
   const dayFilterList = filters.day === 'all' ? WEEK_DAYS : WEEK_DAYS.filter(day => day === filters.day);
+  const filtersAreDefault = isDefaultFilters(filters);
 
   return (
     <div className="app-shell">
@@ -272,16 +359,14 @@ function App() {
             <ParitySelector parityMode={parityMode} onChange={setParityMode} />
             <button
               type="button"
-              className="theme-button"
-              onClick={() => {
-                const currentIndex = THEME_SEQUENCE.indexOf(themeMode);
-                const nextIndex = (currentIndex + 1) % THEME_SEQUENCE.length;
-                setThemeMode(THEME_SEQUENCE[nextIndex]);
-              }}
-              aria-label={`Текущая тема: ${THEME_LABELS[themeMode]} (нажмите, чтобы переключить)`}
-              title={`Тема: ${THEME_LABELS[themeMode]}`}
+              className={`collapse-button${headerCollapsed ? ' collapsed' : ''}`}
+              onClick={() => setHeaderCollapsed(value => !value)}
+              aria-label={headerCollapsed ? 'Развернуть шапку' : 'Свернуть шапку'}
+              aria-expanded={!headerCollapsed}
+              aria-controls="filters-panel"
+              title={headerCollapsed ? 'Развернуть шапку' : 'Свернуть шапку'}
             >
-              {THEME_ICONS[themeMode]}
+              <ChevronIcon direction={headerCollapsed ? 'down' : 'up'} />
             </button>
             <button
               type="button"
@@ -296,9 +381,11 @@ function App() {
         </div>
         <FiltersPanel
           filters={filters}
-          onChange={setFilters}
+          onUpdateFilter={handleFilterChange}
           collapsed={headerCollapsed}
           id="filters-panel"
+          onReset={handleResetFilters}
+          resetDisabled={filtersAreDefault}
         />
       </header>
 
@@ -324,11 +411,33 @@ function App() {
       </main>
 
       <footer className="app-footer">
-        <div className="footer-title">Как пользоваться расписанием</div>
+        <div className="footer-head">
+          <div className="footer-info">
+            <div className="footer-title">Как пользоваться расписанием</div>
+            <p className="footer-text">Здесь собраны подсказки, как быстрее находить нужные пары и управлять отображением.</p>
+          </div>
+          <div className="footer-theme-control">
+            <span className="footer-theme-label">Тема интерфейса</span>
+            <button
+              type="button"
+              className="theme-button footer-theme-button"
+              onClick={() => {
+                const currentIndex = THEME_SEQUENCE.indexOf(themeMode);
+                const nextIndex = (currentIndex + 1) % THEME_SEQUENCE.length;
+                setThemeMode(THEME_SEQUENCE[nextIndex]);
+              }}
+              aria-label={`Текущая тема: ${THEME_LABELS[themeMode]} (нажмите, чтобы переключить)`}
+              title={`Тема: ${THEME_LABELS[themeMode]}`}
+            >
+              <ThemeIcon mode={themeMode} />
+            </button>
+          </div>
+        </div>
         <ul className="footer-guide">
           <li>Следите за сегодняшними парами: статус и таймер отображаются в верхнем блоке.</li>
           <li>Переключайте чётность недели или смотрите обе сразу через переключатель «Неделя».</li>
           <li>Фильтры подгруппы, типа занятия и дня помогут оставить только нужные пары.</li>
+          <li>Нажмите ещё раз на выбранный фильтр, чтобы вернуться к варианту «Все».</li>
           <li>Иконка темы переключает светлую, тёмную или системную палитру интерфейса.</li>
         </ul>
       </footer>
@@ -360,7 +469,7 @@ function ParitySelector({ parityMode, onChange }) {
   );
 }
 
-function FiltersPanel({ filters, onChange, collapsed = false, id }) {
+function FiltersPanel({ filters, onUpdateFilter, collapsed = false, id, onReset, resetDisabled = false }) {
   return (
     <div
       className={`filters-panel${collapsed ? ' is-collapsed' : ''}`}
@@ -368,64 +477,132 @@ function FiltersPanel({ filters, onChange, collapsed = false, id }) {
       aria-hidden={collapsed}
       id={id}
     >
-      <div className="filter-field">
-        <span className="filter-label">Подгруппа</span>
-        <div className="filter-buttons" role="group" aria-label="Подгруппа">
-          {SUBGROUP_OPTIONS.map(option => {
-            const active = filters.subgroup === option.value;
-            return (
-              <button
+      {FILTER_GROUPS.map(group => (
+        <div className="filter-field" key={group.field}>
+          <span className="filter-label">{group.label}</span>
+          <div className="filter-buttons" role="group" aria-label={group.ariaLabel}>
+            {group.options.map(option => (
+              <FilterOptionButton
                 key={option.value}
-                type="button"
-                className={`filter-button${active ? ' active' : ''}`}
-                aria-pressed={active}
-                onClick={() => onChange({ ...filters, subgroup: option.value })}
+                active={filters[group.field] === option.value}
+                onClick={() => onUpdateFilter(group.field, option.value)}
               >
                 {option.label}
-              </button>
-            );
-          })}
+              </FilterOptionButton>
+            ))}
+          </div>
         </div>
-      </div>
-      <div className="filter-field">
-        <span className="filter-label">Тип занятия</span>
-        <div className="filter-buttons" role="group" aria-label="Тип занятия">
-          {TYPE_OPTIONS.map(option => {
-            const active = filters.type === option.value;
-            return (
-              <button
-                key={option.value}
-                type="button"
-                className={`filter-button${active ? ' active' : ''}`}
-                aria-pressed={active}
-                onClick={() => onChange({ ...filters, type: option.value })}
-              >
-                {option.label}
-              </button>
-            );
-          })}
+      ))}
+      {typeof onReset === 'function' && (
+        <div className="filters-actions">
+          <button
+            type="button"
+            className="filter-reset-button"
+            onClick={onReset}
+            disabled={resetDisabled}
+            aria-label="Сбросить выбранные фильтры"
+            title="Сбросить фильтры"
+          >
+            Сбросить фильтры
+          </button>
         </div>
-      </div>
-      <div className="filter-field">
-        <span className="filter-label">День недели</span>
-        <div className="filter-buttons" role="group" aria-label="День недели">
-          {DAY_OPTIONS.map(option => {
-            const active = filters.day === option.value;
-            return (
-              <button
-                key={option.value}
-                type="button"
-                className={`filter-button${active ? ' active' : ''}`}
-                aria-pressed={active}
-                onClick={() => onChange({ ...filters, day: option.value })}
-              >
-                {option.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      )}
     </div>
+  );
+}
+
+function FilterOptionButton({ active, onClick, children }) {
+  return (
+    <button
+      type="button"
+      className={`filter-button${active ? ' active' : ''}`}
+      aria-pressed={active}
+      onClick={onClick}
+    >
+      {children}
+    </button>
+  );
+}
+
+function ChevronIcon({ direction }) {
+  return (
+    <svg
+      className={`icon icon-chevron icon-chevron--${direction}`}
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        d="M7 10.5l5 5 5-5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function ThemeIcon({ mode }) {
+  if (mode === 'dark') {
+    return (
+      <svg className="icon icon-theme" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path
+          d="M15 3.8a8.7 8.7 0 1 0 5.2 12.64A7 7 0 0 1 15 3.8z"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  }
+
+  if (mode === 'light') {
+    return (
+      <svg className="icon icon-theme" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <circle
+          cx="12"
+          cy="12"
+          r="4.5"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+        />
+        <path
+          d="M12 4V2m0 20v-2M5.6 5.6L4.2 4.2m15.6 15.6-1.4-1.4M4 12H2m20 0h-2M5.6 18.4 4.2 19.8m15.6-15.6-1.4 1.4"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+        />
+      </svg>
+    );
+  }
+
+  return (
+    <svg className="icon icon-theme" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <rect
+        x="4"
+        y="6.2"
+        width="16"
+        height="11.6"
+        rx="3"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.7"
+      />
+      <path
+        d="M8.5 9.2h2.5m2 0h2.5M8.5 12h8M8.5 14.8h5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 
@@ -515,113 +692,97 @@ function TodaySection({ info, showParityLabels }) {
 }
 
 function WeekView({ days, entries, currentKey, showParityLabels }) {
-  const pairNumbers = useMemo(() => {
-    const pairs = new Set();
-    entries.forEach(entry => {
-      if (typeof entry.pair === 'number') {
-        pairs.add(entry.pair);
-      }
+  const scheduleByDay = useMemo(() => {
+    return days.map(day => {
+      const dayEntries = entries
+        .filter(entry => entry.day === day && entry.pair !== 'вне пар')
+        .slice()
+        .sort(comparePairs)
+        .map(entry => ({ entry, key: createEntryKey(entry) }));
+      return { day, entries: dayEntries };
     });
-    return Array.from(pairs).sort((a, b) => a - b);
-  }, [entries]);
-
-  const displayPairs = pairNumbers.length ? pairNumbers : DEFAULT_PAIRS;
-
-  const grouped = useMemo(() => {
-    const map = {};
-    days.forEach(day => {
-      map[day] = {};
-    });
-    entries.forEach(entry => {
-      if (!map[entry.day]) return;
-      if (typeof entry.pair !== 'number') return;
-      if (!map[entry.day][entry.pair]) {
-        map[entry.day][entry.pair] = [];
-      }
-      map[entry.day][entry.pair].push(entry);
-    });
-    return map;
-  }, [entries, days]);
+  }, [days, entries]);
 
   if (!days.length) {
     return <div className="empty-state">Дни не выбраны.</div>;
   }
 
-  const hasEntries = entries.length > 0;
+  const hasEntries = scheduleByDay.some(group => group.entries.length > 0);
 
   return (
     <>
-      <div className="week-table-wrapper">
-        <table className="week-table">
-          <thead>
-            <tr>
-              <th scope="col">Пара</th>
-              {days.map(day => (
-                <th scope="col" key={day}>
-                  <span className="day-full">{day}</span>
-                  <span className="day-short">{DAY_SHORT[day]}</span>
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {displayPairs.map(pairNumber => (
-              <tr key={pairNumber}>
-                <th scope="row">{pairNumber}-я</th>
-                {days.map(day => {
-                  const dayEntries = grouped[day]?.[pairNumber] || [];
-                  return (
-                    <td key={day}>
-                      {dayEntries.length ? (
-                        <div className="cell-stack">
-                          {dayEntries.map(entry => {
-                            const entryKey = createEntryKey(entry);
-                            const isCurrent = currentKey && currentKey === entryKey;
-                            const subgroupBadge = getSubgroupBadge(entry.subgroup);
-                            const parityVariant = showParityLabels ? getParityVariant(entry.weeks) : null;
-                            const parityLabel = parityVariant ? getParityLabel(entry.weeks) : null;
-                            const teacherLabel = (entry.teacher || '').trim();
-                            const showTeacher = teacherLabel !== '' && teacherLabel !== '-' && teacherLabel !== '–';
-                            const typeVariant = getTypeVariant(entry.type);
-                            return (
-                              <div
-                                key={entryKey}
-                                className={`cell-entry${isCurrent ? ' current' : ''}${parityVariant ? ` parity-${parityVariant}` : ''}`}
-                              >
-                                <div className="cell-time-block">
-                                  <div className="cell-time-row">
-                                    <div className="cell-time">{entry.time}</div>
-                                    {subgroupBadge && (
-                                      <span className={`subgroup-badge subgroup-${subgroupBadge.variant}`}>
-                                        {subgroupBadge.label}
-                                      </span>
-                                    )}
-                                  </div>
-                                  <div className="cell-room">ауд. {entry.place}</div>
-                                </div>
-                                <div className="cell-subject">{entry.subject}</div>
-                                <div className="cell-meta">
-                                  {parityLabel && (
-                                    <span className={`meta-chip parity-chip parity-${parityVariant}`}>{parityLabel}</span>
-                                  )}
-                                  <span className={`meta-chip meta-chip-type meta-chip-type--${typeVariant}`}>{formatTypeLabel(entry.type)}</span>
-                                  {showTeacher && (
-                                    <span className="meta-chip meta-chip-muted">{teacherLabel}</span>
-                                  )}
-                                  {entry.note && <span className="meta-chip meta-chip-note">{entry.note}</span>}
-                                </div>
-                              </div>
-                            );
-                          })}
+      <div className="week-day-list">
+        {scheduleByDay.map(({ day, entries: dayEntries }) => {
+          const dayHasEntries = dayEntries.length > 0;
+          return (
+            <section
+              key={day}
+              className={`week-day-card${dayHasEntries ? '' : ' is-empty'}`}
+              aria-label={`Занятия на ${day}`}
+            >
+              <div className="week-day-header">
+                <span className="week-day-name">{day}</span>
+                <span className="week-day-short">{DAY_SHORT[day]}</span>
+              </div>
+              {dayHasEntries ? (
+                <ul className="day-pair-list">
+                  {dayEntries.map(({ entry, key }) => {
+                    const isCurrent = currentKey && currentKey === key;
+                    const subgroupBadge = getSubgroupBadge(entry.subgroup);
+                    const parityVariant = showParityLabels ? getParityVariant(entry.weeks) : null;
+                    const parityLabel = parityVariant ? getParityLabel(entry.weeks) : null;
+                    const teacherLabel = (entry.teacher || '').trim();
+                    const showTeacher = teacherLabel !== '' && teacherLabel !== '-' && teacherLabel !== '–';
+                    const typeVariant = getTypeVariant(entry.type);
+                    const note = (entry.note || '').trim();
+                    return (
+                      <li
+                        key={key}
+                        className={`pair-entry${isCurrent ? ' is-current' : ''}${parityVariant ? ` parity-${parityVariant}` : ''}`}
+                      >
+                        <div className="pair-entry-header">
+                          <div className="pair-entry-time">
+                            <span className="pair-entry-number">
+                              {typeof entry.pair === 'number' ? `${entry.pair}-я пара` : entry.pair}
+                            </span>
+                            <span className="pair-entry-clock">{entry.time}</span>
+                          </div>
+                          <div className="pair-entry-flags">
+                            {subgroupBadge && (
+                              <span className={`subgroup-badge subgroup-${subgroupBadge.variant}`}>
+                                {subgroupBadge.label}
+                              </span>
+                            )}
+                            {parityLabel && (
+                              <span className={`meta-chip parity-chip parity-${parityVariant}`}>{parityLabel}</span>
+                            )}
+                          </div>
                         </div>
-                      ) : null}
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                        <div className="pair-entry-body">
+                          <div className="pair-entry-subject">{entry.subject}</div>
+                          <div className="pair-entry-room">ауд. {entry.place}</div>
+                        </div>
+                        <div className="pair-entry-footer">
+                          <span className={`meta-chip meta-chip-type meta-chip-type--${typeVariant}`}>
+                            {formatTypeLabel(entry.type)}
+                          </span>
+                          <div className="pair-entry-tags">
+                            {showTeacher && (
+                              <span className="meta-chip meta-chip-muted">{teacherLabel}</span>
+                            )}
+                            {note && <span className="meta-chip meta-chip-note">{note}</span>}
+                          </div>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <p className="day-empty">В этот день занятий нет.</p>
+              )}
+            </section>
+          );
+        })}
       </div>
       {!hasEntries && (
         <p className="empty-table-note">По выбранным фильтрам занятия не найдены.</p>
@@ -687,9 +848,9 @@ function getISOWeek(date) {
   return Math.ceil(((target - yearStart) / 86400000 + 1) / 7);
 }
 
-function occursThisWeek(entry, parity, isoWeek) {
+function occursThisWeek(entry, parity, weekNumber) {
   const parityMatch = parity === 'all' || entry.weeks === 'all' || entry.weeks === parity;
-  const weeksListMatch = !entry.weeksList || entry.weeksList.includes(isoWeek);
+  const weeksListMatch = !entry.weeksList || entry.weeksList.includes(weekNumber);
   return parityMatch && weeksListMatch;
 }
 
@@ -710,12 +871,12 @@ function matchesType(entry, filterValue) {
   return entry.type === filterValue;
 }
 
-function computeTodayInfo({ schedule, now, parity, isoWeek, filters }) {
+function computeTodayInfo({ schedule, now, parity, weekNumber, filters }) {
   const todayName = WEEKDAY_MAP[now.weekday] || 'Воскресенье';
 
   const todayEntries = schedule
     .filter(entry => entry.day === todayName && entry.pair !== 'вне пар')
-    .filter(entry => occursThisWeek(entry, parity, isoWeek))
+    .filter(entry => occursThisWeek(entry, parity, weekNumber))
     .filter(entry => matchesSubgroup(entry, filters.subgroup))
     .filter(entry => matchesType(entry, filters.type))
     .sort(comparePairs);
@@ -912,6 +1073,35 @@ function computeAcademicParity(now) {
   const weeksFromStart = Math.floor(normalizedDays / 7);
   const parity = weeksFromStart % 2 === 0 ? 'odd' : 'even';
   return { parity, weekNumber: weeksFromStart + 1 };
+}
+
+function readStorage(key) {
+  const storage = getSafeStorage();
+  if (!storage) return null;
+  try {
+    return storage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function writeStorage(key, value) {
+  const storage = getSafeStorage();
+  if (!storage) return;
+  try {
+    storage.setItem(key, value);
+  } catch {
+    // ignore write errors (e.g., private mode)
+  }
+}
+
+function getSafeStorage() {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App />);
