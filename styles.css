@@ -238,6 +238,36 @@ header.app-header.collapsed {
   display: none;
 }
 
+.filters-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 0.25rem;
+}
+
+.filter-reset-button {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  border-radius: 999px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-reset-button:hover:not(:disabled) {
+  background: var(--accent-soft);
+  box-shadow: 0 10px 22px rgba(37, 99, 235, 0.16);
+}
+
+.filter-reset-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+  box-shadow: none;
+}
+
 .filter-field {
   display: flex;
   flex-direction: column;

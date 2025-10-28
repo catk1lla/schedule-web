@@ -157,6 +157,19 @@ const FILTER_GROUPS = [
   }
 ];
 
+function createDefaultFilters() {
+  return {
+    subgroup: 'all',
+    type: 'all',
+    day: 'all'
+  };
+}
+
+function isDefaultFilters(filters) {
+  const defaults = createDefaultFilters();
+  return Object.keys(defaults).every(key => filters[key] === defaults[key]);
+}
+
 const THEME_SEQUENCE = ['system', 'light', 'dark'];
 const THEME_LABELS = {
   system: 'Системная тема',
@@ -187,6 +200,7 @@ function App() {
     const validTypes = new Set(['all', ...TYPE_VALUES]);
     const validDays = new Set(DAY_OPTIONS.map(option => option.value));
     return {
+      ...createDefaultFilters(),
       subgroup: validSubgroups.has(storedSubgroup) ? storedSubgroup : 'all',
       type: validTypes.has(storedType) ? storedType : 'all',
       day: validDays.has(storedDay) ? storedDay : 'all'
@@ -203,6 +217,10 @@ function App() {
       return { ...current, [field]: nextValue };
     });
   }, [setFilters]);
+
+  const handleResetFilters = useCallback(() => {
+    setFilters(() => createDefaultFilters());
+  }, []);
 
   useEffect(() => {
     writeStorage(STORAGE_KEYS.theme, themeMode);
@@ -292,7 +310,7 @@ function App() {
     writeStorage(STORAGE_KEYS.day, filters.day);
   }, [filters]);
 
-  const { parity: academicParity } = computeAcademicParity(now);
+  const { parity: academicParity, weekNumber: academicWeekNumber } = computeAcademicParity(now);
   const autoParity = academicParity;
   const effectiveParity = parityMode === 'auto' ? autoParity : parityMode;
   const scheduleSource = parityMode === 'all'
@@ -305,11 +323,11 @@ function App() {
     const parityFilter = parityMode === 'all' ? 'all' : effectiveParity;
     return scheduleSource
       .filter(entry => entry.pair !== 'вне пар')
-      .filter(entry => occursThisWeek(entry, parityFilter, now.isoWeek))
+      .filter(entry => occursThisWeek(entry, parityFilter, academicWeekNumber))
       .filter(entry => filters.day === 'all' || entry.day === filters.day)
       .filter(entry => matchesSubgroup(entry, filters.subgroup))
       .filter(entry => matchesType(entry, filters.type));
-  }, [scheduleSource, parityMode, effectiveParity, now.isoWeek, filters]);
+  }, [scheduleSource, parityMode, effectiveParity, academicWeekNumber, filters]);
 
   const todayInfo = useMemo(() => {
     const todayParity = parityMode === 'all' ? autoParity : effectiveParity;
@@ -317,12 +335,13 @@ function App() {
       schedule: scheduleSource,
       now,
       parity: todayParity,
-      isoWeek: now.isoWeek,
+      weekNumber: academicWeekNumber,
       filters
     });
-  }, [scheduleSource, now, parityMode, effectiveParity, autoParity, filters]);
+  }, [scheduleSource, now, parityMode, effectiveParity, autoParity, academicWeekNumber, filters]);
 
   const dayFilterList = filters.day === 'all' ? WEEK_DAYS : WEEK_DAYS.filter(day => day === filters.day);
+  const filtersAreDefault = isDefaultFilters(filters);
 
   return (
     <div className="app-shell">
@@ -356,6 +375,8 @@ function App() {
           onUpdateFilter={handleFilterChange}
           collapsed={headerCollapsed}
           id="filters-panel"
+          onReset={handleResetFilters}
+          resetDisabled={filtersAreDefault}
         />
       </header>
 
@@ -439,7 +460,7 @@ function ParitySelector({ parityMode, onChange }) {
   );
 }
 
-function FiltersPanel({ filters, onUpdateFilter, collapsed = false, id }) {
+function FiltersPanel({ filters, onUpdateFilter, collapsed = false, id, onReset, resetDisabled = false }) {
   return (
     <div
       className={`filters-panel${collapsed ? ' is-collapsed' : ''}`}
@@ -463,6 +484,20 @@ function FiltersPanel({ filters, onUpdateFilter, collapsed = false, id }) {
           </div>
         </div>
       ))}
+      {typeof onReset === 'function' && (
+        <div className="filters-actions">
+          <button
+            type="button"
+            className="filter-reset-button"
+            onClick={onReset}
+            disabled={resetDisabled}
+            aria-label="Сбросить выбранные фильтры"
+            title="Сбросить фильтры"
+          >
+            Сбросить фильтры
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -804,9 +839,9 @@ function getISOWeek(date) {
   return Math.ceil(((target - yearStart) / 86400000 + 1) / 7);
 }
 
-function occursThisWeek(entry, parity, isoWeek) {
+function occursThisWeek(entry, parity, weekNumber) {
   const parityMatch = parity === 'all' || entry.weeks === 'all' || entry.weeks === parity;
-  const weeksListMatch = !entry.weeksList || entry.weeksList.includes(isoWeek);
+  const weeksListMatch = !entry.weeksList || entry.weeksList.includes(weekNumber);
   return parityMatch && weeksListMatch;
 }
 
@@ -827,12 +862,12 @@ function matchesType(entry, filterValue) {
   return entry.type === filterValue;
 }
 
-function computeTodayInfo({ schedule, now, parity, isoWeek, filters }) {
+function computeTodayInfo({ schedule, now, parity, weekNumber, filters }) {
   const todayName = WEEKDAY_MAP[now.weekday] || 'Воскресенье';
 
   const todayEntries = schedule
     .filter(entry => entry.day === todayName && entry.pair !== 'вне пар')
-    .filter(entry => occursThisWeek(entry, parity, isoWeek))
+    .filter(entry => occursThisWeek(entry, parity, weekNumber))
     .filter(entry => matchesSubgroup(entry, filters.subgroup))
     .filter(entry => matchesType(entry, filters.type))
     .sort(comparePairs);
