@@ -191,6 +191,7 @@ function App() {
   });
   const [systemTheme, setSystemTheme] = useState(() => getPreferredTheme());
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
+  const [headerHidden, setHeaderHidden] = useState(false);
 
   const [filters, setFilters] = useState(() => {
     const storedSubgroup = readStorage(STORAGE_KEYS.subgroup);
@@ -265,6 +266,8 @@ function App() {
 
     let lastY = window.scrollY;
     let rafId = null;
+    const DIRECTION_THRESHOLD = 12;
+    const HIDE_OFFSET = 72;
 
     const handleScroll = () => {
       if (rafId != null) {
@@ -273,17 +276,15 @@ function App() {
 
       rafId = window.requestAnimationFrame(() => {
         const currentY = window.scrollY;
-        const scrollingDown = currentY > lastY;
+        const delta = currentY - lastY;
 
-        setHeaderCollapsed(prev => {
-          if (scrollingDown && currentY > 64) {
-            return true;
-          }
-          if (!scrollingDown && currentY < 16) {
-            return false;
-          }
-          return prev;
-        });
+        if (currentY <= 0) {
+          setHeaderHidden(false);
+        } else if (delta > DIRECTION_THRESHOLD && currentY > HIDE_OFFSET) {
+          setHeaderHidden(true);
+        } else if (delta < -DIRECTION_THRESHOLD) {
+          setHeaderHidden(false);
+        }
 
         lastY = currentY;
         rafId = null;
@@ -348,7 +349,7 @@ function App() {
 
   return (
     <div className="app-shell">
-      <header className={`app-header${headerCollapsed ? ' collapsed' : ''}`}>
+      <header className={`app-header${headerCollapsed ? ' collapsed' : ''}${headerHidden ? ' is-hidden' : ''}`}>
         <div className="brand-line">
           <div className="brand-block" aria-live="polite">
             <h1>Расписание учебных пар</h1>
@@ -363,7 +364,10 @@ function App() {
             <button
               type="button"
               className={`collapse-button${headerCollapsed ? ' collapsed' : ''}`}
-              onClick={() => setHeaderCollapsed(value => !value)}
+              onClick={() => {
+                setHeaderHidden(false);
+                setHeaderCollapsed(value => !value);
+              }}
               aria-label={headerCollapsed ? 'Развернуть шапку' : 'Свернуть шапку'}
               aria-expanded={!headerCollapsed}
               aria-controls="filters-panel"

@@ -102,6 +102,9 @@ header.app-header {
   box-shadow: var(--shadow-md);
   transition: transform 0.24s ease, box-shadow 0.24s ease, padding 0.24s ease;
   will-change: transform;
+  position: sticky;
+  top: 0;
+  z-index: 20;
 }
 
 header.app-header.collapsed {
@@ -109,6 +112,15 @@ header.app-header.collapsed {
   padding-bottom: 1rem;
   transform: translateY(-8px);
   box-shadow: var(--shadow-sm);
+}
+
+header.app-header.is-hidden {
+  transform: translateY(calc(-100% - 1.5rem));
+  box-shadow: var(--shadow-sm);
+}
+
+header.app-header.is-hidden.collapsed {
+  transform: translateY(calc(-100% - 1.5rem));
 }
 
 .brand-line {
@@ -699,6 +711,20 @@ main.app-main {
 @media (min-width: 960px) {
   .week-day-list {
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  .app-shell {
+    max-width: 1360px;
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+
+  .week-day-list {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 320px));
+    justify-content: center;
+    gap: 1.75rem;
   }
 }
 
