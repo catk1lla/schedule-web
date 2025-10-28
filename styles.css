@@ -655,7 +655,16 @@ main.app-main {
 .week-day-list {
   display: grid;
   gap: 1.5rem;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 960px) {
+  .week-day-list {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
 }
 
 .week-day-card {

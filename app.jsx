@@ -711,11 +711,11 @@ function WeekView({ days, entries, currentKey, showParityLabels }) {
 
   return (
     <>
-      <div className="week-day-list">
+      <ol className="week-day-list">
         {scheduleByDay.map(({ day, entries: dayEntries }) => {
           const dayHasEntries = dayEntries.length > 0;
           return (
-            <section
+            <li
               key={day}
               className={`week-day-card${dayHasEntries ? '' : ' is-empty'}`}
               aria-label={`Занятия на ${day}`}
@@ -780,10 +780,10 @@ function WeekView({ days, entries, currentKey, showParityLabels }) {
               ) : (
                 <p className="day-empty">В этот день занятий нет.</p>
               )}
-            </section>
+            </li>
           );
         })}
-      </div>
+      </ol>
       {!hasEntries && (
         <p className="empty-table-note">По выбранным фильтрам занятия не найдены.</p>
       )}
