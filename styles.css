@@ -802,7 +802,7 @@ main.app-main {
   scrollbar-width: thin;
   scrollbar-color: rgba(148, 163, 184, 0.35) transparent;
   -webkit-overflow-scrolling: touch;
-  touch-action: pan-y pinch-zoom;
+  touch-action: pan-x pan-y pinch-zoom;
   cursor: grab;
   scroll-padding-inline: 0.9rem;
   direction: ltr;

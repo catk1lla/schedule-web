@@ -731,7 +731,6 @@ function WeekView({ days, entries, currentKey, showParityLabels }) {
 
     let pointerActive = false;
     let pointerCaptured = false;
-    let touchActive = false;
     let gestureActive = false;
     let isDragging = false;
     let isVerticalScroll = false;
@@ -808,14 +807,18 @@ function WeekView({ days, entries, currentKey, showParityLabels }) {
       const totalX = x - startX;
       const totalY = y - startY;
 
-      if (!isDragging && !isVerticalScroll) {
-        if (Math.abs(totalX) > DRAG_THRESHOLD && Math.abs(totalX) > Math.abs(totalY)) {
+      if (!isDragging) {
+        const absTotalX = Math.abs(totalX);
+        const absTotalY = Math.abs(totalY);
+
+        if (absTotalX > DRAG_THRESHOLD && absTotalX > absTotalY) {
           isDragging = true;
+          isVerticalScroll = false;
           container.classList.add('is-dragging');
           if (typeof onDragStart === 'function') {
             onDragStart();
           }
-        } else if (Math.abs(totalY) > DRAG_THRESHOLD) {
+        } else if (absTotalY > DRAG_THRESHOLD && absTotalY >= absTotalX) {
           isVerticalScroll = true;
           return false;
         }
@@ -853,11 +856,13 @@ function WeekView({ days, entries, currentKey, showParityLabels }) {
       isVerticalScroll = false;
     };
 
+    // Skip custom pointer drag for touch screens; native scrolling handles it.
     const onPointerDown = event => {
-      if (event.pointerType === 'touch') {
+      const pointerType = event.pointerType || 'mouse';
+      if (pointerType === 'mouse' && event.button !== 0) {
         return;
       }
-      if (event.pointerType === 'mouse' && event.button !== 0) {
+      if (pointerType === 'touch') {
         return;
       }
 
@@ -867,7 +872,11 @@ function WeekView({ days, entries, currentKey, showParityLabels }) {
 
     const onPointerMove = event => {
       if (!pointerActive) return;
-      const shouldPrevent = moveGesture(event.clientX, event.clientY, () => capturePointer(event));
+      const shouldPrevent = moveGesture(event.clientX, event.clientY, () => {
+        if (event.pointerType !== 'touch') {
+          capturePointer(event);
+        }
+      });
       if (shouldPrevent) {
         event.preventDefault();
       }
@@ -891,38 +900,6 @@ function WeekView({ days, entries, currentKey, showParityLabels }) {
       if (!pointerActive) return;
       pointerActive = false;
       releasePointer(event);
-      finalizeGesture();
-    };
-
-    const onTouchStart = event => {
-      if (event.touches.length !== 1) {
-        return;
-      }
-      const touch = event.touches[0];
-      touchActive = true;
-      startGesture(touch.clientX, touch.clientY);
-    };
-
-    const onTouchMove = event => {
-      if (!touchActive || event.touches.length !== 1) {
-        return;
-      }
-      const touch = event.touches[0];
-      const shouldPrevent = moveGesture(touch.clientX, touch.clientY);
-      if (shouldPrevent && event.cancelable) {
-        event.preventDefault();
-      }
-    };
-
-    const onTouchEnd = () => {
-      if (!touchActive) return;
-      touchActive = false;
-      finalizeGesture();
-    };
-
-    const onTouchCancel = () => {
-      if (!touchActive) return;
-      touchActive = false;
       finalizeGesture();
     };
 
@@ -959,10 +936,6 @@ function WeekView({ days, entries, currentKey, showParityLabels }) {
     container.addEventListener('pointerup', onPointerUp);
     container.addEventListener('pointerleave', onPointerLeave);
     container.addEventListener('pointercancel', onPointerCancel);
-    container.addEventListener('touchstart', onTouchStart, { passive: true });
-    container.addEventListener('touchmove', onTouchMove, { passive: false });
-    container.addEventListener('touchend', onTouchEnd);
-    container.addEventListener('touchcancel', onTouchCancel);
     container.addEventListener('wheel', onWheel, { passive: false });
     container.addEventListener('keydown', onKeyDown);
 
@@ -973,10 +946,6 @@ function WeekView({ days, entries, currentKey, showParityLabels }) {
       container.removeEventListener('pointerup', onPointerUp);
       container.removeEventListener('pointerleave', onPointerLeave);
       container.removeEventListener('pointercancel', onPointerCancel);
-      container.removeEventListener('touchstart', onTouchStart);
-      container.removeEventListener('touchmove', onTouchMove);
-      container.removeEventListener('touchend', onTouchEnd);
-      container.removeEventListener('touchcancel', onTouchCancel);
       container.removeEventListener('wheel', onWheel);
       container.removeEventListener('keydown', onKeyDown);
     };
