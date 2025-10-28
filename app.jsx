@@ -368,6 +368,15 @@ function App() {
             >
               <ChevronIcon direction={headerCollapsed ? 'down' : 'up'} />
             </button>
+            <button
+              type="button"
+              className={`collapse-button${headerCollapsed ? ' collapsed' : ''}`}
+              onClick={() => setHeaderCollapsed(value => !value)}
+              aria-label={headerCollapsed ? 'Развернуть шапку' : 'Свернуть шапку'}
+              aria-expanded={!headerCollapsed}
+              aria-controls="filters-panel"
+              title={headerCollapsed ? 'Развернуть шапку' : 'Свернуть шапку'}
+            ></button>
           </div>
         </div>
         <FiltersPanel
