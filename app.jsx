@@ -724,8 +724,13 @@ function WeekView({ days, entries, currentKey, showParityLabels, parityMode }) {
     });
   }, [days, entries]);
   const carouselRef = useRef(null);
+  const isMobileLayout = useMediaQuery('(max-width: 720px)');
 
   useEffect(() => {
+    if (isMobileLayout) {
+      return undefined;
+    }
+
     const container = carouselRef.current;
     if (!container) return undefined;
 
@@ -949,7 +954,7 @@ function WeekView({ days, entries, currentKey, showParityLabels, parityMode }) {
       container.removeEventListener('wheel', onWheel);
       container.removeEventListener('keydown', onKeyDown);
     };
-  }, []);
+  }, [isMobileLayout]);
 
   if (!days.length) {
     return <div className="empty-state">Дни не выбраны.</div>;
@@ -960,9 +965,9 @@ function WeekView({ days, entries, currentKey, showParityLabels, parityMode }) {
   return (
     <>
       <div
-        className="week-carousel"
+        className={`week-carousel${isMobileLayout ? ' is-mobile' : ''}`}
         ref={carouselRef}
-        tabIndex="0"
+        tabIndex={isMobileLayout ? undefined : 0}
         role="group"
         aria-label="Занятия на неделю"
       >
@@ -1049,6 +1054,35 @@ function WeekView({ days, entries, currentKey, showParityLabels, parityMode }) {
       )}
     </>
   );
+}
+
+function useMediaQuery(query, defaultValue = false) {
+  const [matches, setMatches] = useState(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+      return defaultValue;
+    }
+    return window.matchMedia(query).matches;
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+      const mediaQuery = window.matchMedia(query);
+      const handleChange = event => setMatches(event.matches);
+      setMatches(mediaQuery.matches);
+      if (typeof mediaQuery.addEventListener === 'function') {
+        mediaQuery.addEventListener('change', handleChange);
+        return () => mediaQuery.removeEventListener('change', handleChange);
+      }
+      if (typeof mediaQuery.addListener === 'function') {
+        mediaQuery.addListener(handleChange);
+        return () => mediaQuery.removeListener(handleChange);
+      }
+    }
+    setMatches(defaultValue);
+    return undefined;
+  }, [query, defaultValue]);
+
+  return matches;
 }
 
 function useMoscowNow() {

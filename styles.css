@@ -837,6 +837,32 @@ main.app-main {
   user-select: none;
 }
 
+.week-carousel.is-mobile {
+  overflow-x: visible;
+  overflow-y: visible;
+  scroll-snap-type: none;
+  cursor: auto;
+  touch-action: pan-y pinch-zoom;
+  padding-inline: 0;
+  margin-inline: 0;
+  scroll-padding-inline: 0;
+}
+
+.week-carousel.is-mobile::-webkit-scrollbar {
+  display: none;
+}
+
+.week-carousel.is-mobile .week-day-list {
+  display: grid;
+  gap: var(--week-card-gap);
+  min-width: 0;
+}
+
+.week-carousel.is-mobile .week-day-card {
+  width: 100%;
+  scroll-snap-align: unset;
+}
+
 .week-day-list {
   display: flex;
   gap: var(--week-card-gap);
@@ -1287,6 +1313,10 @@ select:focus-visible {
     --week-card-gap: 1rem;
     padding-inline: 0.75rem;
     scroll-padding-inline: 0.75rem;
+  }
+
+  .week-carousel.is-mobile {
+    padding-inline: 0;
   }
 
   .week-day-card {
