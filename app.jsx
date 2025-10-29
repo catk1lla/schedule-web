@@ -1131,14 +1131,27 @@ function matchesType(entry, filterValue) {
   return entry.type === filterValue;
 }
 
+function doesEntryMatchFilters(entry, filters) {
+  if (!entry) return false;
+  if (!filters) return true;
+  if (filters.day && filters.day !== 'all' && entry.day !== filters.day) {
+    return false;
+  }
+  if (!matchesSubgroup(entry, filters.subgroup || 'all')) {
+    return false;
+  }
+  if (!matchesType(entry, filters.type || 'all')) {
+    return false;
+  }
+  return true;
+}
+
 function computeTodayInfo({ schedule, now, parity, weekNumber, filters }) {
   const todayName = WEEKDAY_MAP[now.weekday] || 'Воскресенье';
 
   const todayEntries = schedule
     .filter(entry => entry.day === todayName && entry.pair !== 'вне пар')
     .filter(entry => occursThisWeek(entry, parity, weekNumber))
-    .filter(entry => matchesSubgroup(entry, filters.subgroup))
-    .filter(entry => matchesType(entry, filters.type))
     .sort(comparePairs);
 
   if (todayEntries.length === 0) {
@@ -1167,20 +1180,29 @@ function computeTodayInfo({ schedule, now, parity, weekNumber, filters }) {
 
   if (current) {
     const remainingMs = (current.endSeconds - nowSeconds) * 1000;
+    const hiddenByFilters = !doesEntryMatchFilters(current.entry, filters);
     return {
       mode: 'current',
       title: 'Текущая пара',
       entry: current.entry,
       countdownLabel: `До конца пары ${formatCountdown(remainingMs)}`,
       progress: computeProgress(nowSeconds, current.startSeconds, current.endSeconds),
-      currentKey: createEntryKey(current.entry)
+      currentKey: hiddenByFilters ? null : createEntryKey(current.entry),
+      message: hiddenByFilters
+        ? 'Эта пара скрыта выбранными фильтрами, но идёт прямо сейчас.'
+        : null
     };
   }
 
   if (next) {
     const remainingMs = (next.startSeconds - nowSeconds) * 1000;
     const title = previous ? 'Перерыв' : 'До первой пары';
-    const message = previous ? 'Скоро продолжим занятия.' : 'Ещё есть время подготовиться.';
+    const hiddenByFilters = !doesEntryMatchFilters(next.entry, filters);
+    const message = hiddenByFilters
+      ? 'Следующая пара скрыта выбранными фильтрами.'
+      : previous
+        ? 'Скоро продолжим занятия.'
+        : 'Ещё есть время подготовиться.';
     return {
       mode: 'upcoming',
       title,
