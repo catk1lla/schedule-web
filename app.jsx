@@ -107,7 +107,6 @@ const STORAGE_KEYS = {
   parity: 'schedule::parity',
   theme: 'schedule::theme',
   subgroup: 'schedule::subgroup',
-  type: 'schedule::type',
   day: 'schedule::day'
 };
 
@@ -195,15 +194,12 @@ function App() {
 
   const [filters, setFilters] = useState(() => {
     const storedSubgroup = readStorage(STORAGE_KEYS.subgroup);
-    const storedType = readStorage(STORAGE_KEYS.type);
     const storedDay = readStorage(STORAGE_KEYS.day);
     const validSubgroups = new Set(SUBGROUP_OPTIONS.map(option => option.value));
-    const validTypes = new Set(['all', ...TYPE_VALUES]);
     const validDays = new Set(DAY_OPTIONS.map(option => option.value));
     return {
       ...createDefaultFilters(),
       subgroup: validSubgroups.has(storedSubgroup) ? storedSubgroup : 'all',
-      type: validTypes.has(storedType) ? storedType : 'all',
       day: validDays.has(storedDay) ? storedDay : 'all'
     };
   });
@@ -307,7 +303,6 @@ function App() {
 
   useEffect(() => {
     writeStorage(STORAGE_KEYS.subgroup, filters.subgroup);
-    writeStorage(STORAGE_KEYS.type, filters.type);
     writeStorage(STORAGE_KEYS.day, filters.day);
   }, [filters]);
 
@@ -394,7 +389,11 @@ function App() {
           <div className="section-header">
             <h2>Сегодня</h2>
           </div>
-          <TodaySection info={todayInfo} showParityLabels={parityMode === 'all'} />
+          <TodaySection
+            info={todayInfo}
+            showParityLabels={parityMode === 'all'}
+            parityMode={parityMode}
+          />
         </section>
 
         <section className="week-section" id="week">
@@ -406,6 +405,7 @@ function App() {
             entries={visiblePairs}
             currentKey={todayInfo.currentKey}
             showParityLabels={parityMode === 'all'}
+            parityMode={parityMode}
           />
         </section>
       </main>
@@ -624,7 +624,7 @@ function ThemeIcon({ mode }) {
   );
 }
 
-function TodaySection({ info, showParityLabels }) {
+function TodaySection({ info, showParityLabels, parityMode }) {
   if (info.mode === 'empty') {
     return (
       <div className="summary-card" aria-live="polite">
@@ -650,7 +650,7 @@ function TodaySection({ info, showParityLabels }) {
   const showTeacher = teacherLabel !== '';
   const parityTone = getParityVariant(entry.weeks);
   const parityLabel = showParityLabels && parityTone ? getParityLabel(entry.weeks) : null;
-  const cardParityVariant = showParityLabels ? null : parityTone;
+  const cardParityVariant = (showParityLabels || parityMode !== 'all') ? null : parityTone;
   const typeVariant = getTypeVariant(entry.type);
 
   return (
@@ -712,7 +712,7 @@ function TodaySection({ info, showParityLabels }) {
   );
 }
 
-function WeekView({ days, entries, currentKey, showParityLabels }) {
+function WeekView({ days, entries, currentKey, showParityLabels, parityMode }) {
   const scheduleByDay = useMemo(() => {
     return days.map(day => {
       const dayEntries = entries
@@ -984,18 +984,18 @@ function WeekView({ days, entries, currentKey, showParityLabels }) {
                     {dayEntries.map(({ entry, key }) => {
                       const isCurrent = currentKey && currentKey === key;
                       const subgroupBadge = getSubgroupBadge(entry.subgroup);
-                    const parityTone = getParityVariant(entry.weeks);
-                    const parityLabel = showParityLabels && parityTone ? getParityLabel(entry.weeks) : null;
-                    const parityCardVariant = showParityLabels ? null : parityTone;
-                    const teacherLabel = formatTeacherNames(entry.teacher);
-                    const showTeacher = teacherLabel !== '';
-                    const typeVariant = getTypeVariant(entry.type);
-                    const note = (entry.note || '').trim();
-                    const hasTags = showTeacher || note;
-                    return (
-                      <li
-                        key={key}
-                        className={`pair-entry${isCurrent ? ' is-current' : ''}${parityCardVariant ? ` parity-${parityCardVariant}` : ''}`}
+                      const parityTone = getParityVariant(entry.weeks);
+                      const parityLabel = showParityLabels && parityTone ? getParityLabel(entry.weeks) : null;
+                      const parityCardVariant = (showParityLabels || parityMode !== 'all') ? null : parityTone;
+                      const teacherLabel = formatTeacherNames(entry.teacher);
+                      const showTeacher = teacherLabel !== '';
+                      const typeVariant = getTypeVariant(entry.type);
+                      const note = (entry.note || '').trim();
+                      const hasTags = showTeacher || note;
+                      return (
+                        <li
+                          key={key}
+                          className={`pair-entry${isCurrent ? ' is-current' : ''}${parityCardVariant ? ` parity-${parityCardVariant}` : ''}`}
                       >
                           <div className="pair-entry-header">
                             <div className="pair-entry-time">
@@ -1134,16 +1134,21 @@ function matchesType(entry, filterValue) {
 function computeTodayInfo({ schedule, now, parity, weekNumber, filters }) {
   const todayName = WEEKDAY_MAP[now.weekday] || 'Воскресенье';
 
-  const todayEntries = schedule
+  const baseEntries = schedule
     .filter(entry => entry.day === todayName && entry.pair !== 'вне пар')
     .filter(entry => occursThisWeek(entry, parity, weekNumber))
     .filter(entry => matchesSubgroup(entry, filters.subgroup))
-    .filter(entry => matchesType(entry, filters.type))
     .sort(comparePairs);
 
-  if (todayEntries.length === 0) {
+  if (baseEntries.length === 0) {
     return { mode: 'empty', currentKey: null };
   }
+
+  const typeFilteredEntries = filters.type === 'all'
+    ? baseEntries
+    : baseEntries.filter(entry => matchesType(entry, filters.type));
+
+  const todayEntries = typeFilteredEntries.length > 0 ? typeFilteredEntries : baseEntries;
 
   const nowSeconds = now.secondsOfDay;
   let current = null;
