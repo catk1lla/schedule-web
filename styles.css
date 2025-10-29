@@ -843,6 +843,11 @@ main.app-main {
   scroll-snap-type: none;
   cursor: auto;
   touch-action: pan-y pinch-zoom;
+  background: none;
+  box-shadow: none;
+  border-radius: 0;
+  border: none;
+  padding-block: 0;
   padding-inline: 0;
   margin-inline: 0;
   scroll-padding-inline: 0;
