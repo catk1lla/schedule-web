@@ -418,6 +418,12 @@ main.app-main {
   letter-spacing: -0.01em;
 }
 
+.section-subtext {
+  color: var(--muted);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
 .today-card,
 .summary-card {
   position: relative;
@@ -429,6 +435,14 @@ main.app-main {
   gap: 1rem;
   box-shadow: var(--shadow-lg);
   z-index: 0;
+}
+
+.tomorrow-card {
+  gap: 1.2rem;
+}
+
+.tomorrow-card .day-pair-list {
+  margin: 0;
 }
 
 .today-card.parity-odd {

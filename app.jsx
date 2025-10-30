@@ -336,6 +336,57 @@ function App() {
     });
   }, [scheduleSource, now, parityMode, effectiveParity, autoParity, academicWeekNumber, filters]);
 
+  const tomorrowParts = useMemo(() => {
+    const baseDate = now.isoDate instanceof Date ? now.isoDate : new Date();
+    return extractMoscowParts(new Date(baseDate.getTime() + MS_IN_DAY));
+  }, [now]);
+
+  const tomorrowInfo = useMemo(() => {
+    const { parity: tomorrowParity, weekNumber: tomorrowWeekNumber } = computeAcademicParity(tomorrowParts);
+    const occursParity = parityMode === 'auto' || parityMode === 'all' ? tomorrowParity : parityMode;
+    const scheduleForTomorrow = parityMode === 'all'
+      ? SCHEDULE_COMBINED
+      : parityMode === 'auto'
+        ? (tomorrowParity === 'odd' ? SCHEDULE_ODD : SCHEDULE_EVEN)
+        : scheduleSource;
+    const dayName = WEEKDAY_MAP[tomorrowParts.weekday] || 'Воскресенье';
+
+    const baseEntries = scheduleForTomorrow
+      .filter(entry => entry.day === dayName && entry.pair !== 'вне пар')
+      .filter(entry => occursThisWeek(entry, occursParity, tomorrowWeekNumber))
+      .filter(entry => matchesSubgroup(entry, filters.subgroup))
+      .sort(comparePairs);
+
+    const typedEntries = filters.type === 'all'
+      ? baseEntries
+      : baseEntries.filter(entry => matchesType(entry, filters.type));
+
+    if (baseEntries.length === 0) {
+      const message = dayName === 'Воскресенье'
+        ? 'Завтра можно отдохнуть — занятий не запланировано.'
+        : 'Завтра занятий не запланировано.';
+      return {
+        mode: 'empty',
+        dateLabel: formatDaySummaryLabel(tomorrowParts),
+        message
+      };
+    }
+
+    if (typedEntries.length === 0) {
+      return {
+        mode: 'filtered',
+        dateLabel: formatDaySummaryLabel(tomorrowParts),
+        message: 'По выбранным фильтрам на завтра занятий нет. Измените параметры, чтобы увидеть пары.'
+      };
+    }
+
+    return {
+      mode: 'list',
+      dateLabel: formatDaySummaryLabel(tomorrowParts),
+      entries: typedEntries.map(entry => ({ entry, key: createEntryKey(entry) }))
+    };
+  }, [tomorrowParts, parityMode, scheduleSource, filters]);
+
   const dayFilterList = filters.day === 'all' ? WEEK_DAYS : WEEK_DAYS.filter(day => day === filters.day);
   const filtersAreDefault = isDefaultFilters(filters);
 
@@ -396,6 +447,18 @@ function App() {
           />
         </section>
 
+        <section id="tomorrow">
+          <div className="section-header">
+            <h2>Завтра</h2>
+            <span className="section-subtext">{tomorrowInfo.dateLabel}</span>
+          </div>
+          <TomorrowSection
+            info={tomorrowInfo}
+            showParityLabels={parityMode === 'all'}
+            parityMode={parityMode}
+          />
+        </section>
+
         <section className="week-section" id="week">
           <div className="section-header">
             <h2>Неделя</h2>
@@ -440,6 +503,7 @@ function App() {
                 <h3>Разделы</h3>
                 <ul>
                   <li><a href="#today">Сегодня</a></li>
+                  <li><a href="#tomorrow">Завтра</a></li>
                   <li><a href="#week">Неделя</a></li>
                   <li><a href="#filters-panel">Фильтры</a></li>
                 </ul>
@@ -709,6 +773,86 @@ function TodaySection({ info, showParityLabels, parityMode }) {
         )}
       </div>
     </article>
+  );
+}
+
+function TomorrowSection({ info, showParityLabels, parityMode }) {
+  if (info.mode === 'empty') {
+    return (
+      <div className="summary-card tomorrow-card" aria-live="polite">
+        <span className="badge">Занятий нет</span>
+        <p className="info-text">{info.message}</p>
+      </div>
+    );
+  }
+
+  if (info.mode === 'filtered') {
+    return (
+      <div className="summary-card tomorrow-card" aria-live="polite">
+        <span className="badge">Фильтры активны</span>
+        <p className="info-text">{info.message}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="summary-card tomorrow-card" aria-live="polite">
+      <ul className="day-pair-list">
+        {info.entries.map(({ entry, key }) => {
+          const subgroupBadge = getSubgroupBadge(entry.subgroup);
+          const parityTone = getParityVariant(entry.weeks);
+          const parityLabel = showParityLabels && parityTone ? getParityLabel(entry.weeks) : null;
+          const parityCardVariant = (showParityLabels || parityMode !== 'all') ? null : parityTone;
+          const teacherLabel = formatTeacherNames(entry.teacher);
+          const showTeacher = teacherLabel !== '';
+          const typeVariant = getTypeVariant(entry.type);
+          const note = (entry.note || '').trim();
+          const hasTags = showTeacher || note;
+          return (
+            <li
+              key={key}
+              className={`pair-entry${parityCardVariant ? ` parity-${parityCardVariant}` : ''}`}
+            >
+              <div className="pair-entry-header">
+                <div className="pair-entry-time">
+                  <span className="pair-entry-number">
+                    {typeof entry.pair === 'number' ? `${entry.pair}-я пара` : entry.pair}
+                  </span>
+                  <span className="pair-entry-clock">{entry.time}</span>
+                </div>
+                <div className="pair-entry-flags">
+                  {subgroupBadge && (
+                    <span className={`subgroup-badge subgroup-${subgroupBadge.variant}`}>
+                      {subgroupBadge.label}
+                    </span>
+                  )}
+                  {parityLabel && parityTone && (
+                    <span className={`meta-chip parity-chip parity-${parityTone}`}>{parityLabel}</span>
+                  )}
+                </div>
+              </div>
+              <div className="pair-entry-body">
+                <div className="pair-entry-subject">{entry.subject}</div>
+                <div className="pair-entry-room">ауд. {entry.place}</div>
+              </div>
+              <div className="pair-entry-footer">
+                <span className={`meta-chip meta-chip-type meta-chip-type--${typeVariant}`}>
+                  {formatTypeLabel(entry.type)}
+                </span>
+                {hasTags && (
+                  <div className="pair-entry-tags">
+                    {showTeacher && (
+                      <span className="meta-chip meta-chip-muted">{teacherLabel}</span>
+                    )}
+                    {note && <span className="meta-chip meta-chip-note">{note}</span>}
+                  </div>
+                )}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }
 
@@ -1388,6 +1532,12 @@ function getSubgroupBadge(value) {
     return { label: '1, 2', variant: 'combined' };
   }
   return null;
+}
+
+function formatDaySummaryLabel(parts) {
+  const weekday = capitalize(WEEKDAY_MAP[parts.weekday] || parts.weekday);
+  const monthLabel = MONTH_LABELS[parts.month - 1];
+  return `${weekday}, ${parts.day} ${monthLabel} ${parts.year}`;
 }
 
 function formatDateLabel(now) {
