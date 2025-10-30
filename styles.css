@@ -409,6 +409,7 @@ main.app-main {
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
+  flex-wrap: wrap;
   margin-bottom: 1.2rem;
 }
 
@@ -418,8 +419,18 @@ main.app-main {
   letter-spacing: -0.01em;
 }
 
+.section-caption {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--muted);
+  font-weight: 500;
+  text-align: right;
+  margin-left: auto;
+}
+
 .today-card,
-.summary-card {
+.summary-card,
+.tomorrow-card {
   position: relative;
   background: var(--surface-strong);
   border-radius: var(--radius-lg);
@@ -526,6 +537,36 @@ main.app-main {
   align-items: flex-start;
   color: var(--muted);
   font-size: 0.95rem;
+}
+
+.tomorrow-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.tomorrow-dayline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: baseline;
+}
+
+.tomorrow-day-name {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.tomorrow-date {
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+.tomorrow-pair-list {
+  margin-top: 0.2rem;
 }
 
 .meta-time {
@@ -1306,7 +1347,8 @@ select:focus-visible {
   }
 
   .today-card,
-  .summary-card {
+  .summary-card,
+  .tomorrow-card {
     padding: 1.4rem;
   }
 

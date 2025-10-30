@@ -336,6 +336,39 @@ function App() {
     });
   }, [scheduleSource, now, parityMode, effectiveParity, autoParity, academicWeekNumber, filters]);
 
+  const tomorrowParts = useMemo(() => {
+    const baseDate = now.isoDate instanceof Date ? now.isoDate : new Date();
+    const tomorrowDate = new Date(baseDate.getTime() + MS_IN_DAY);
+    return extractMoscowParts(tomorrowDate);
+  }, [now]);
+
+  const { parity: tomorrowAcademicParity, weekNumber: tomorrowWeekNumber } = useMemo(() => {
+    return computeAcademicParity(tomorrowParts);
+  }, [tomorrowParts]);
+
+  const tomorrowParity = parityMode === 'all'
+    ? 'all'
+    : parityMode === 'auto'
+      ? tomorrowAcademicParity
+      : parityMode;
+
+  const tomorrowScheduleSource = parityMode === 'all'
+    ? SCHEDULE_COMBINED
+    : tomorrowParity === 'odd'
+      ? SCHEDULE_ODD
+      : SCHEDULE_EVEN;
+
+  const tomorrowEntries = useMemo(() => {
+    const tomorrowDayName = WEEKDAY_MAP[tomorrowParts.weekday] || 'Воскресенье';
+    return getEntriesForDay({
+      schedule: tomorrowScheduleSource,
+      dayName: tomorrowDayName,
+      parity: tomorrowParity,
+      weekNumber: tomorrowWeekNumber,
+      filters
+    });
+  }, [tomorrowScheduleSource, tomorrowParts, tomorrowParity, tomorrowWeekNumber, filters]);
+
   const dayFilterList = filters.day === 'all' ? WEEK_DAYS : WEEK_DAYS.filter(day => day === filters.day);
   const filtersAreDefault = isDefaultFilters(filters);
 
@@ -396,6 +429,19 @@ function App() {
           />
         </section>
 
+        <section id="tomorrow">
+          <div className="section-header">
+            <h2>Завтра</h2>
+            <span className="section-caption">{formatDayHeading(tomorrowParts)}</span>
+          </div>
+          <TomorrowSection
+            entries={tomorrowEntries}
+            dateParts={tomorrowParts}
+            showParityLabels={parityMode === 'all'}
+            parityMode={parityMode}
+          />
+        </section>
+
         <section className="week-section" id="week">
           <div className="section-header">
             <h2>Неделя</h2>
@@ -440,6 +486,7 @@ function App() {
                 <h3>Разделы</h3>
                 <ul>
                   <li><a href="#today">Сегодня</a></li>
+                  <li><a href="#tomorrow">Завтра</a></li>
                   <li><a href="#week">Неделя</a></li>
                   <li><a href="#filters-panel">Фильтры</a></li>
                 </ul>
@@ -708,6 +755,87 @@ function TodaySection({ info, showParityLabels, parityMode }) {
           </div>
         )}
       </div>
+    </article>
+  );
+}
+
+function TomorrowSection({ entries, dateParts, showParityLabels, parityMode }) {
+  const dayName = capitalize(WEEKDAY_MAP[dateParts.weekday] || dateParts.weekday || '');
+  const dateLabel = formatDayDate(dateParts);
+
+  if (!entries.length) {
+    return (
+      <div className="summary-card" aria-live="polite">
+        <span className="badge">Завтра пар нет</span>
+        <p className="info-text">Выходной день — занятия не запланированы.</p>
+      </div>
+    );
+  }
+
+  return (
+    <article className="tomorrow-card" aria-live="polite" aria-label={`Занятия на ${dayName}`}>
+      <div className="tomorrow-info">
+        <div className="tomorrow-dayline">
+          <span className="tomorrow-day-name">{dayName}</span>
+          <span className="tomorrow-date">{dateLabel}</span>
+        </div>
+      </div>
+      <ul className="day-pair-list tomorrow-pair-list">
+        {entries.map(entry => {
+          const entryKey = createEntryKey(entry);
+          const subgroupBadge = getSubgroupBadge(entry.subgroup);
+          const parityTone = getParityVariant(entry.weeks);
+          const parityLabel = showParityLabels && parityTone ? getParityLabel(entry.weeks) : null;
+          const parityCardVariant = (showParityLabels || parityMode !== 'all') ? null : parityTone;
+          const teacherLabel = formatTeacherNames(entry.teacher);
+          const showTeacher = teacherLabel !== '';
+          const typeVariant = getTypeVariant(entry.type);
+          const note = (entry.note || '').trim();
+          const hasTags = showTeacher || note;
+          return (
+            <li
+              key={entryKey}
+              className={`pair-entry${parityCardVariant ? ` parity-${parityCardVariant}` : ''}`}
+            >
+              <div className="pair-entry-header">
+                <div className="pair-entry-time">
+                  <span className="pair-entry-number">
+                    {typeof entry.pair === 'number' ? `${entry.pair}-я пара` : entry.pair}
+                  </span>
+                  <span className="pair-entry-clock">{entry.time}</span>
+                </div>
+                <div className="pair-entry-flags">
+                  {subgroupBadge && (
+                    <span className={`subgroup-badge subgroup-${subgroupBadge.variant}`}>
+                      {subgroupBadge.label}
+                    </span>
+                  )}
+                  {parityLabel && parityTone && (
+                    <span className={`meta-chip parity-chip parity-${parityTone}`}>{parityLabel}</span>
+                  )}
+                </div>
+              </div>
+              <div className="pair-entry-body">
+                <div className="pair-entry-subject">{entry.subject}</div>
+                <div className="pair-entry-room">ауд. {entry.place}</div>
+              </div>
+              <div className="pair-entry-footer">
+                <span className={`meta-chip meta-chip-type meta-chip-type--${typeVariant}`}>
+                  {formatTypeLabel(entry.type)}
+                </span>
+                {hasTags && (
+                  <div className="pair-entry-tags">
+                    {showTeacher && (
+                      <span className="meta-chip meta-chip-muted">{teacherLabel}</span>
+                    )}
+                    {note && <span className="meta-chip meta-chip-note">{note}</span>}
+                  </div>
+                )}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
     </article>
   );
 }
@@ -1165,24 +1293,44 @@ function matchesType(entry, filterValue) {
   return entry.type === filterValue;
 }
 
+function getEntriesForDay({ schedule, dayName, parity, weekNumber, filters }) {
+  const subgroupFilter = filters && typeof filters === 'object' ? filters.subgroup || 'all' : 'all';
+  const typeFilter = filters && typeof filters === 'object' ? filters.type || 'all' : 'all';
+
+  const baseEntries = schedule
+    .filter(entry => entry.day === dayName && entry.pair !== 'вне пар')
+    .filter(entry => occursThisWeek(entry, parity, weekNumber))
+    .filter(entry => matchesSubgroup(entry, subgroupFilter))
+    .sort(comparePairs);
+
+  if (baseEntries.length === 0) {
+    return [];
+  }
+
+  if (typeFilter === 'all') {
+    return baseEntries;
+  }
+
+  const typeFiltered = baseEntries.filter(entry => matchesType(entry, typeFilter));
+  return typeFiltered.length > 0 ? typeFiltered : baseEntries;
+}
+
 function computeTodayInfo({ schedule, now, parity, weekNumber, filters }) {
   const todayName = WEEKDAY_MAP[now.weekday] || 'Воскресенье';
 
-  const baseEntries = schedule
-    .filter(entry => entry.day === todayName && entry.pair !== 'вне пар')
-    .filter(entry => occursThisWeek(entry, parity, weekNumber))
-    .filter(entry => matchesSubgroup(entry, filters.subgroup))
-    .sort(comparePairs);
+  const baseEntries = getEntriesForDay({
+    schedule,
+    dayName: todayName,
+    parity,
+    weekNumber,
+    filters
+  });
 
   if (baseEntries.length === 0) {
     return { mode: 'empty', currentKey: null };
   }
 
-  const typeFilteredEntries = filters.type === 'all'
-    ? baseEntries
-    : baseEntries.filter(entry => matchesType(entry, filters.type));
-
-  const todayEntries = typeFilteredEntries.length > 0 ? typeFilteredEntries : baseEntries;
+  const todayEntries = baseEntries;
 
   const nowSeconds = now.secondsOfDay;
   let current = null;
@@ -1394,6 +1542,27 @@ function formatDateLabel(now) {
   const weekday = capitalize(WEEKDAY_MAP[now.weekday] || now.weekday);
   const datePart = `${now.day} ${MONTH_LABELS[now.month - 1]} ${now.year}`;
   return `${weekday}, ${datePart} • ${pad(now.hour)}:${pad(now.minute)} (МСК)`;
+}
+
+function formatDayHeading(parts) {
+  if (!parts) return '';
+  const weekday = capitalize(WEEKDAY_MAP[parts.weekday] || parts.weekday || '');
+  const monthIndex = (parts.month || 1) - 1;
+  const monthLabel = MONTH_LABELS[monthIndex];
+  const datePart = monthLabel
+    ? `${parts.day} ${monthLabel} ${parts.year}`
+    : `${parts.day}.${parts.month}.${parts.year}`;
+  return `${weekday}, ${datePart}`.trim();
+}
+
+function formatDayDate(parts) {
+  if (!parts) return '';
+  const monthIndex = (parts.month || 1) - 1;
+  const monthLabel = MONTH_LABELS[monthIndex];
+  if (!monthLabel) {
+    return `${parts.day}.${parts.month}`;
+  }
+  return `${parts.day} ${monthLabel}`;
 }
 
 function capitalize(value) {
