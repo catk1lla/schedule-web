@@ -883,6 +883,87 @@ function TomorrowSection({ entries, dateParts, showParityLabels, parityMode }) {
   );
 }
 
+function TomorrowSection({ entries, dateParts, showParityLabels, parityMode }) {
+  const dayName = capitalize(WEEKDAY_MAP[dateParts.weekday] || dateParts.weekday || '');
+  const dateLabel = formatDayDate(dateParts);
+
+  if (!entries.length) {
+    return (
+      <div className="summary-card" aria-live="polite">
+        <span className="badge">Завтра пар нет</span>
+        <p className="info-text">Выходной день — занятия не запланированы.</p>
+      </div>
+    );
+  }
+
+  return (
+    <article className="tomorrow-card" aria-live="polite" aria-label={`Занятия на ${dayName}`}>
+      <div className="tomorrow-info">
+        <div className="tomorrow-dayline">
+          <span className="tomorrow-day-name">{dayName}</span>
+          <span className="tomorrow-date">{dateLabel}</span>
+        </div>
+      </div>
+      <ul className="day-pair-list tomorrow-pair-list">
+        {entries.map(entry => {
+          const entryKey = createEntryKey(entry);
+          const subgroupBadge = getSubgroupBadge(entry.subgroup);
+          const parityTone = getParityVariant(entry.weeks);
+          const parityLabel = showParityLabels && parityTone ? getParityLabel(entry.weeks) : null;
+          const parityCardVariant = (showParityLabels || parityMode !== 'all') ? null : parityTone;
+          const teacherLabel = formatTeacherNames(entry.teacher);
+          const showTeacher = teacherLabel !== '';
+          const typeVariant = getTypeVariant(entry.type);
+          const note = (entry.note || '').trim();
+          const hasTags = showTeacher || note;
+          return (
+            <li
+              key={entryKey}
+              className={`pair-entry${parityCardVariant ? ` parity-${parityCardVariant}` : ''}`}
+            >
+              <div className="pair-entry-header">
+                <div className="pair-entry-time">
+                  <span className="pair-entry-number">
+                    {typeof entry.pair === 'number' ? `${entry.pair}-я пара` : entry.pair}
+                  </span>
+                  <span className="pair-entry-clock">{entry.time}</span>
+                </div>
+                <div className="pair-entry-flags">
+                  {subgroupBadge && (
+                    <span className={`subgroup-badge subgroup-${subgroupBadge.variant}`}>
+                      {subgroupBadge.label}
+                    </span>
+                  )}
+                  {parityLabel && parityTone && (
+                    <span className={`meta-chip parity-chip parity-${parityTone}`}>{parityLabel}</span>
+                  )}
+                </div>
+              </div>
+              <div className="pair-entry-body">
+                <div className="pair-entry-subject">{entry.subject}</div>
+                <div className="pair-entry-room">ауд. {entry.place}</div>
+              </div>
+              <div className="pair-entry-footer">
+                <span className={`meta-chip meta-chip-type meta-chip-type--${typeVariant}`}>
+                  {formatTypeLabel(entry.type)}
+                </span>
+                {hasTags && (
+                  <div className="pair-entry-tags">
+                    {showTeacher && (
+                      <span className="meta-chip meta-chip-muted">{teacherLabel}</span>
+                    )}
+                    {note && <span className="meta-chip meta-chip-note">{note}</span>}
+                  </div>
+                )}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </article>
+  );
+}
+
 function WeekView({ days, entries, currentKey, showParityLabels, parityMode }) {
   const scheduleByDay = useMemo(() => {
     return days.map(day => {
