@@ -442,6 +442,10 @@ main.app-main {
   z-index: 0;
 }
 
+.today-card--list {
+  gap: 1.4rem;
+}
+
 .today-card.parity-odd {
   border-color: var(--parity-odd-border);
   background: linear-gradient(140deg, var(--parity-odd-bg), transparent), var(--surface-strong);
@@ -520,6 +524,10 @@ main.app-main {
 .today-main {
   display: grid;
   gap: 0.75rem;
+}
+
+.today-pair-list {
+  margin-top: 0.35rem;
 }
 
 .today-title {
@@ -800,6 +808,8 @@ main.app-main {
   font-size: clamp(1.8rem, 4vw, 2.4rem);
   font-weight: 700;
   color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .progress-track {
@@ -1057,6 +1067,12 @@ main.app-main {
   background: linear-gradient(140deg, rgba(37, 99, 235, 0.16), rgba(59, 130, 246, 0.08)), var(--cell-entry-surface);
 }
 
+.pair-entry.is-next {
+  border-color: rgba(37, 99, 235, 0.45);
+  box-shadow: var(--shadow-sm);
+  background: linear-gradient(140deg, rgba(37, 99, 235, 0.12), transparent), var(--cell-entry-surface);
+}
+
 .pair-entry.is-current::after {
   content: "";
   position: absolute;
@@ -1096,6 +1112,21 @@ main.app-main {
   background: linear-gradient(140deg, var(--parity-even-bg), transparent), var(--cell-entry-surface);
 }
 
+.pair-entry.is-past {
+  border-style: dashed;
+  border-color: rgba(148, 163, 184, 0.45);
+  background: linear-gradient(135deg, rgba(148, 163, 184, 0.12), transparent), var(--cell-entry-surface);
+  color: var(--muted);
+}
+
+.pair-entry.is-past .pair-entry-subject {
+  color: var(--muted);
+}
+
+.pair-entry.is-past .pair-entry-clock {
+  color: var(--muted);
+}
+
 .pair-entry-header {
   display: flex;
   justify-content: space-between;
@@ -1130,6 +1161,37 @@ main.app-main {
   gap: 0.45rem;
   flex-wrap: wrap;
   justify-content: flex-end;
+}
+
+.meta-chip-status {
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 700;
+  background: rgba(37, 99, 235, 0.14);
+  border-color: rgba(37, 99, 235, 0.32);
+  color: var(--accent);
+}
+
+.meta-chip-status.status-next {
+  background: rgba(37, 99, 235, 0.18);
+  border-color: rgba(37, 99, 235, 0.4);
+}
+
+.meta-chip-status.status-current {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.meta-chip-status.status-past {
+  background: rgba(148, 163, 184, 0.16);
+  border-color: rgba(148, 163, 184, 0.32);
+  color: var(--muted);
+}
+
+[data-theme="dark"] .meta-chip-status.status-current {
+  color: #0b1220;
 }
 
 .pair-entry-body {
