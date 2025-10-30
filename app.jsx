@@ -336,6 +336,39 @@ function App() {
     });
   }, [scheduleSource, now, parityMode, effectiveParity, autoParity, academicWeekNumber, filters]);
 
+  const tomorrowParts = useMemo(() => {
+    const baseDate = now.isoDate instanceof Date ? now.isoDate : new Date();
+    const tomorrowDate = new Date(baseDate.getTime() + MS_IN_DAY);
+    return extractMoscowParts(tomorrowDate);
+  }, [now]);
+
+  const { parity: tomorrowAcademicParity, weekNumber: tomorrowWeekNumber } = useMemo(() => {
+    return computeAcademicParity(tomorrowParts);
+  }, [tomorrowParts]);
+
+  const tomorrowParity = parityMode === 'all'
+    ? 'all'
+    : parityMode === 'auto'
+      ? tomorrowAcademicParity
+      : parityMode;
+
+  const tomorrowScheduleSource = parityMode === 'all'
+    ? SCHEDULE_COMBINED
+    : tomorrowParity === 'odd'
+      ? SCHEDULE_ODD
+      : SCHEDULE_EVEN;
+
+  const tomorrowEntries = useMemo(() => {
+    const tomorrowDayName = WEEKDAY_MAP[tomorrowParts.weekday] || 'Воскресенье';
+    return getEntriesForDay({
+      schedule: tomorrowScheduleSource,
+      dayName: tomorrowDayName,
+      parity: tomorrowParity,
+      weekNumber: tomorrowWeekNumber,
+      filters
+    });
+  }, [tomorrowScheduleSource, tomorrowParts, tomorrowParity, tomorrowWeekNumber, filters]);
+
   const dayFilterList = filters.day === 'all' ? WEEK_DAYS : WEEK_DAYS.filter(day => day === filters.day);
   const filtersAreDefault = isDefaultFilters(filters);
 
@@ -396,6 +429,19 @@ function App() {
           />
         </section>
 
+        <section id="tomorrow">
+          <div className="section-header">
+            <h2>Завтра</h2>
+            <span className="section-caption">{formatDayHeading(tomorrowParts)}</span>
+          </div>
+          <TomorrowSection
+            entries={tomorrowEntries}
+            dateParts={tomorrowParts}
+            showParityLabels={parityMode === 'all'}
+            parityMode={parityMode}
+          />
+        </section>
+
         <section className="week-section" id="week">
           <div className="section-header">
             <h2>Неделя</h2>
@@ -440,6 +486,7 @@ function App() {
                 <h3>Разделы</h3>
                 <ul>
                   <li><a href="#today">Сегодня</a></li>
+                  <li><a href="#tomorrow">Завтра</a></li>
                   <li><a href="#week">Неделя</a></li>
                   <li><a href="#filters-panel">Фильтры</a></li>
                 </ul>
@@ -634,80 +681,204 @@ function TodaySection({ info, showParityLabels, parityMode }) {
     );
   }
 
-  if (info.mode === 'done') {
+  const { summary, entries, highlightParity } = info;
+  const isCurrent = summary.state === 'current';
+  const cardParityVariant = (showParityLabels || parityMode !== 'all') ? null : highlightParity;
+
+  return (
+    <article
+      className={`today-card today-card--list${isCurrent ? ' current' : ''}${cardParityVariant ? ` parity-${cardParityVariant}` : ''}`}
+      aria-live="polite"
+    >
+      <div className="today-head">
+        <span className="badge">{summary.badge}</span>
+      </div>
+      <div className="today-main">
+        <h3 className="today-title">{summary.title}</h3>
+        {summary.message && <p className="info-text">{summary.message}</p>}
+      </div>
+      {summary.countdownLabel && (
+        <div className="countdown-line">
+          <div
+            className="countdown-value"
+            role={summary.countdownRole || undefined}
+            aria-live={summary.countdownLive || undefined}
+            aria-label={summary.countdownAria || undefined}
+            aria-atomic={summary.countdownLive ? 'true' : undefined}
+          >
+            {summary.countdownLabel}
+          </div>
+          {summary.state === 'current' && (
+            <div
+              className="progress-track"
+              role="progressbar"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow={Math.round(summary.progress)}
+              aria-valuetext={`Осталось ${Math.round(summary.progress)}% времени пары`}
+            >
+              <div className="progress-fill" style={{ width: `${summary.progress}%` }}></div>
+            </div>
+          )}
+        </div>
+      )}
+      <ul className="day-pair-list today-pair-list" aria-label="Пары на сегодня">
+        {entries.map(item => {
+          const entry = item.entry;
+          const entryKey = item.key;
+          const subgroupBadge = getSubgroupBadge(entry.subgroup);
+          const parityTone = getParityVariant(entry.weeks);
+          const parityLabel = showParityLabels && parityTone ? getParityLabel(entry.weeks) : null;
+          const parityCardVariant = (showParityLabels || parityMode !== 'all') ? null : parityTone;
+          const teacherLabel = formatTeacherNames(entry.teacher);
+          const showTeacher = teacherLabel !== '';
+          const note = (entry.note || '').trim();
+          const typeVariant = getTypeVariant(entry.type);
+          const hasTags = showTeacher || note;
+          const statusClass = item.status === 'current'
+            ? ' is-current'
+            : item.status === 'next'
+              ? ' is-next'
+              : item.status === 'past'
+                ? ' is-past'
+                : '';
+          const showStatusChip = item.status === 'current' || item.status === 'next' || item.status === 'past';
+          const statusLabel = item.status === 'current'
+            ? 'Сейчас'
+            : item.status === 'next'
+              ? 'Следующая'
+              : 'Завершена';
+          return (
+            <li
+              key={entryKey}
+              className={`pair-entry${statusClass}${parityCardVariant ? ` parity-${parityCardVariant}` : ''}`}
+              aria-current={item.status === 'current' ? 'true' : undefined}
+            >
+              <div className="pair-entry-header">
+                <div className="pair-entry-time">
+                  <span className="pair-entry-number">
+                    {typeof entry.pair === 'number' ? `${entry.pair}-я пара` : entry.pair}
+                  </span>
+                  <span className="pair-entry-clock">{entry.time}</span>
+                </div>
+                <div className="pair-entry-flags">
+                  {showStatusChip && (
+                    <span className={`meta-chip meta-chip-status status-${item.status}`}>
+                      {statusLabel}
+                    </span>
+                  )}
+                  {subgroupBadge && (
+                    <span className={`subgroup-badge subgroup-${subgroupBadge.variant}`}>
+                      {subgroupBadge.label}
+                    </span>
+                  )}
+                  {parityLabel && parityTone && (
+                    <span className={`meta-chip parity-chip parity-${parityTone}`}>{parityLabel}</span>
+                  )}
+                </div>
+              </div>
+              <div className="pair-entry-body">
+                <div className="pair-entry-subject">{entry.subject}</div>
+                <div className="pair-entry-room">ауд. {entry.place}</div>
+              </div>
+              <div className="pair-entry-footer">
+                <span className={`meta-chip meta-chip-type meta-chip-type--${typeVariant}`}>
+                  {formatTypeLabel(entry.type)}
+                </span>
+                {hasTags && (
+                  <div className="pair-entry-tags">
+                    {showTeacher && (
+                      <span className="meta-chip meta-chip-muted">{teacherLabel}</span>
+                    )}
+                    {note && <span className="meta-chip meta-chip-note">{note}</span>}
+                  </div>
+                )}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </article>
+  );
+}
+
+function TomorrowSection({ entries, dateParts, showParityLabels, parityMode }) {
+  const dayName = capitalize(WEEKDAY_MAP[dateParts.weekday] || dateParts.weekday || '');
+  const dateLabel = formatDayDate(dateParts);
+
+  if (!entries.length) {
     return (
       <div className="summary-card" aria-live="polite">
-        <span className="badge">Учебный день завершён</span>
-        <p className="info-text">Хорошего отдыха! Следующие занятия начнутся в другой день.</p>
+        <span className="badge">Завтра пар нет</span>
+        <p className="info-text">Выходной день — занятия не запланированы.</p>
       </div>
     );
   }
 
-  const isCurrent = info.mode === 'current';
-  const entry = info.entry;
-  const subgroupBadge = getSubgroupBadge(entry.subgroup);
-  const teacherLabel = formatTeacherNames(entry.teacher);
-  const showTeacher = teacherLabel !== '';
-  const parityTone = getParityVariant(entry.weeks);
-  const parityLabel = showParityLabels && parityTone ? getParityLabel(entry.weeks) : null;
-  const cardParityVariant = (showParityLabels || parityMode !== 'all') ? null : parityTone;
-  const typeVariant = getTypeVariant(entry.type);
-
   return (
-    <article
-      className={`today-card${isCurrent ? ' current' : ''}${cardParityVariant ? ` parity-${cardParityVariant}` : ''}`}
-      aria-live="polite"
-    >
-      <div className="today-head">
-        <span className="badge">{info.title}</span>
-        {subgroupBadge && (
-          <span className={`subgroup-badge subgroup-${subgroupBadge.variant} today-subgroup-badge`}>
-            {subgroupBadge.label}
-          </span>
-        )}
-      </div>
-      <div className="today-main">
-        <h3 className="today-title">{entry.subject}</h3>
-        <div className="today-meta">
-          <div className="meta-time">
-            <span className="meta-time-value">{entry.time}</span>
-            <span className="meta-room-value">ауд. {entry.place}</span>
-          </div>
-          <div className="meta-tags">
-            {parityLabel && parityTone && (
-              <span className={`meta-chip parity-chip parity-${parityTone}`}>{parityLabel}</span>
-            )}
-            <span className={`meta-chip meta-chip-type meta-chip-type--${typeVariant}`}>
-              {formatTypeLabel(entry.type)}
-            </span>
-            {showTeacher && (
-              <span className="meta-chip meta-chip-muted">{teacherLabel}</span>
-            )}
-          </div>
+    <article className="tomorrow-card" aria-live="polite" aria-label={`Занятия на ${dayName}`}>
+      <div className="tomorrow-info">
+        <div className="tomorrow-dayline">
+          <span className="tomorrow-day-name">{dayName}</span>
+          <span className="tomorrow-date">{dateLabel}</span>
         </div>
-        {info.message && <p className="info-text">{info.message}</p>}
       </div>
-      <div className="countdown-line">
-        <div
-          className="countdown-value"
-          role="timer"
-          aria-label={isCurrent ? 'До конца пары' : 'До начала пары'}
-        >
-          {info.countdownLabel}
-        </div>
-        {isCurrent && (
-          <div
-            className="progress-track"
-            role="progressbar"
-            aria-valuemin="0"
-            aria-valuemax="100"
-            aria-valuenow={Math.round(info.progress)}
-            aria-valuetext={`Осталось ${Math.round(info.progress)}% времени пары`}
-          >
-            <div className="progress-fill" style={{ width: `${info.progress}%` }}></div>
-          </div>
-        )}
-      </div>
+      <ul className="day-pair-list tomorrow-pair-list">
+        {entries.map(entry => {
+          const entryKey = createEntryKey(entry);
+          const subgroupBadge = getSubgroupBadge(entry.subgroup);
+          const parityTone = getParityVariant(entry.weeks);
+          const parityLabel = showParityLabels && parityTone ? getParityLabel(entry.weeks) : null;
+          const parityCardVariant = (showParityLabels || parityMode !== 'all') ? null : parityTone;
+          const teacherLabel = formatTeacherNames(entry.teacher);
+          const showTeacher = teacherLabel !== '';
+          const typeVariant = getTypeVariant(entry.type);
+          const note = (entry.note || '').trim();
+          const hasTags = showTeacher || note;
+          return (
+            <li
+              key={entryKey}
+              className={`pair-entry${parityCardVariant ? ` parity-${parityCardVariant}` : ''}`}
+            >
+              <div className="pair-entry-header">
+                <div className="pair-entry-time">
+                  <span className="pair-entry-number">
+                    {typeof entry.pair === 'number' ? `${entry.pair}-я пара` : entry.pair}
+                  </span>
+                  <span className="pair-entry-clock">{entry.time}</span>
+                </div>
+                <div className="pair-entry-flags">
+                  {subgroupBadge && (
+                    <span className={`subgroup-badge subgroup-${subgroupBadge.variant}`}>
+                      {subgroupBadge.label}
+                    </span>
+                  )}
+                  {parityLabel && parityTone && (
+                    <span className={`meta-chip parity-chip parity-${parityTone}`}>{parityLabel}</span>
+                  )}
+                </div>
+              </div>
+              <div className="pair-entry-body">
+                <div className="pair-entry-subject">{entry.subject}</div>
+                <div className="pair-entry-room">ауд. {entry.place}</div>
+              </div>
+              <div className="pair-entry-footer">
+                <span className={`meta-chip meta-chip-type meta-chip-type--${typeVariant}`}>
+                  {formatTypeLabel(entry.type)}
+                </span>
+                {hasTags && (
+                  <div className="pair-entry-tags">
+                    {showTeacher && (
+                      <span className="meta-chip meta-chip-muted">{teacherLabel}</span>
+                    )}
+                    {note && <span className="meta-chip meta-chip-note">{note}</span>}
+                  </div>
+                )}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
     </article>
   );
 }
@@ -1165,73 +1336,147 @@ function matchesType(entry, filterValue) {
   return entry.type === filterValue;
 }
 
+function getEntriesForDay({ schedule, dayName, parity, weekNumber, filters }) {
+  const subgroupFilter = filters && typeof filters === 'object' ? filters.subgroup || 'all' : 'all';
+  const typeFilter = filters && typeof filters === 'object' ? filters.type || 'all' : 'all';
+
+  const baseEntries = schedule
+    .filter(entry => entry.day === dayName && entry.pair !== 'вне пар')
+    .filter(entry => occursThisWeek(entry, parity, weekNumber))
+    .filter(entry => matchesSubgroup(entry, subgroupFilter))
+    .sort(comparePairs);
+
+  if (baseEntries.length === 0) {
+    return [];
+  }
+
+  if (typeFilter === 'all') {
+    return baseEntries;
+  }
+
+  const typeFiltered = baseEntries.filter(entry => matchesType(entry, typeFilter));
+  return typeFiltered.length > 0 ? typeFiltered : baseEntries;
+}
+
 function computeTodayInfo({ schedule, now, parity, weekNumber, filters }) {
   const todayName = WEEKDAY_MAP[now.weekday] || 'Воскресенье';
 
-  const baseEntries = schedule
-    .filter(entry => entry.day === todayName && entry.pair !== 'вне пар')
-    .filter(entry => occursThisWeek(entry, parity, weekNumber))
-    .filter(entry => matchesSubgroup(entry, filters.subgroup))
-    .sort(comparePairs);
+  const baseEntries = getEntriesForDay({
+    schedule,
+    dayName: todayName,
+    parity,
+    weekNumber,
+    filters
+  });
 
   if (baseEntries.length === 0) {
     return { mode: 'empty', currentKey: null };
   }
 
-  const typeFilteredEntries = filters.type === 'all'
-    ? baseEntries
-    : baseEntries.filter(entry => matchesType(entry, filters.type));
-
-  const todayEntries = typeFilteredEntries.length > 0 ? typeFilteredEntries : baseEntries;
-
   const nowSeconds = now.secondsOfDay;
+  const entries = [];
   let current = null;
   let next = null;
-  let previous = null;
 
-  for (const entry of todayEntries) {
+  for (const entry of baseEntries) {
     const range = parseTimeRange(entry.time);
-    if (!range) continue;
-    const { startSeconds, endSeconds } = range;
-    if (nowSeconds >= startSeconds && nowSeconds < endSeconds) {
-      current = { entry, startSeconds, endSeconds };
-      break;
-    }
-    if (nowSeconds < startSeconds) {
+    const startSeconds = range ? range.startSeconds : null;
+    const endSeconds = range ? range.endSeconds : null;
+    let status = 'upcoming';
+
+    if (range) {
+      if (nowSeconds >= endSeconds) {
+        status = 'past';
+      } else if (nowSeconds >= startSeconds) {
+        status = 'current';
+        current = { entry, startSeconds, endSeconds };
+      } else if (!next) {
+        status = 'next';
+        next = { entry, startSeconds, endSeconds };
+      }
+    } else if (!next && !current) {
+      status = 'next';
       next = { entry, startSeconds, endSeconds };
-      break;
     }
-    previous = { entry, startSeconds, endSeconds };
+
+    if (status === 'upcoming' && !next && !current && range && nowSeconds < startSeconds) {
+      status = 'next';
+      next = { entry, startSeconds, endSeconds };
+    }
+
+    entries.push({
+      entry,
+      status,
+      key: createEntryKey(entry)
+    });
   }
 
-  if (current) {
-    const remainingMs = (current.endSeconds - nowSeconds) * 1000;
-    return {
-      mode: 'current',
-      title: 'Текущая пара',
-      entry: current.entry,
-      countdownLabel: `До конца пары ${formatCountdown(remainingMs)}`,
-      progress: computeProgress(nowSeconds, current.startSeconds, current.endSeconds),
-      currentKey: createEntryKey(current.entry)
-    };
-  }
+  const hasPastEntries = entries.some(item => item.status === 'past');
+  const highlightEntry = current ? current.entry : next ? next.entry : null;
+  const highlightParity = highlightEntry ? getParityVariant(highlightEntry.weeks) : null;
 
-  if (next) {
-    const remainingMs = (next.startSeconds - nowSeconds) * 1000;
-    const title = previous ? 'Перерыв' : 'До первой пары';
-    const message = previous ? 'Скоро продолжим занятия.' : 'Ещё есть время подготовиться.';
+  if (!current && !next) {
     return {
-      mode: 'upcoming',
-      title,
-      entry: next.entry,
-      countdownLabel: `Через ${formatRelative(remainingMs)}`,
-      message,
+      mode: 'list',
+      summary: {
+        state: 'done',
+        badge: 'Учебный день завершён',
+        title: 'На сегодня занятий больше нет',
+        message: 'Хорошего отдыха! Следующие занятия начнутся в другой день.',
+        countdownLabel: null,
+        countdownAria: null,
+        countdownRole: null,
+        countdownLive: null,
+        progress: null
+      },
+      entries,
+      highlightParity,
       currentKey: null
     };
   }
 
+  if (current) {
+    return {
+      mode: 'list',
+      summary: {
+        state: 'current',
+        badge: 'Текущая пара',
+        title: current.entry.subject,
+        message: 'Сейчас идёт занятие. Удачного обучения!',
+        countdownLabel: 'Пара идёт',
+        countdownAria: 'Занятие в процессе',
+        countdownRole: 'status',
+        countdownLive: 'polite',
+        progress: computeProgress(nowSeconds, current.startSeconds, current.endSeconds)
+      },
+      entries,
+      highlightParity,
+      currentKey: createEntryKey(current.entry)
+    };
+  }
+
+  const remainingMs = (next.startSeconds - nowSeconds) * 1000;
+  const nextStartLabel = typeof next.entry.time === 'string'
+    ? next.entry.time.split('-')[0]
+    : '';
+  const nextMessagePrefix = nextStartLabel ? `Начало в ${nextStartLabel}.` : 'Начало совсем скоро.';
+  const nextMessageSuffix = hasPastEntries ? ' Скоро продолжим занятия.' : ' Ещё есть время подготовиться.';
+
   return {
-    mode: 'done',
+    mode: 'list',
+    summary: {
+      state: 'next',
+      badge: hasPastEntries ? 'Перерыв' : 'До первой пары',
+      title: next.entry.subject,
+      message: `${nextMessagePrefix}${nextMessageSuffix}`,
+      countdownLabel: `До начала: ${formatCountdown(remainingMs)}`,
+      countdownAria: formatCountdownAria(remainingMs),
+      countdownRole: 'timer',
+      countdownLive: 'polite',
+      progress: null
+    },
+    entries,
+    highlightParity,
     currentKey: null
   };
 }
@@ -1272,23 +1517,26 @@ function computeProgress(nowSeconds, startSeconds, endSeconds) {
 
 function formatCountdown(ms) {
   const totalSeconds = Math.max(0, Math.floor(ms / 1000));
-  const minutes = Math.floor(totalSeconds / 60);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
-  return `${pad(minutes)}:${pad(seconds)}`;
+  return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
 }
 
-function formatRelative(ms) {
-  const totalMinutes = Math.max(0, Math.round(ms / 60000));
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
+function formatCountdownAria(ms) {
+  const { hours, minutes, seconds } = splitDuration(ms);
   const parts = [];
   if (hours > 0) {
-    parts.push(`${hours} ч`);
+    parts.push(`${hours} ${declineRus(hours, ['час', 'часа', 'часов'])}`);
   }
-  if (minutes > 0 || parts.length === 0) {
-    parts.push(`${minutes} мин`);
+  if (minutes > 0 || hours > 0) {
+    parts.push(`${minutes} ${declineRus(minutes, ['минута', 'минуты', 'минут'])}`);
   }
-  return parts.join(' ');
+  if (seconds > 0 || parts.length === 0) {
+    parts.push(`${seconds} ${declineRus(seconds, ['секунда', 'секунды', 'секунд'])}`);
+  }
+  const duration = parts.join(' ');
+  return `До начала пары осталось ${duration}`;
 }
 
 function formatTypeLabel(value) {
@@ -1346,6 +1594,26 @@ function formatSingleTeacher(part) {
   return `${surname} ${formattedInitials}`;
 }
 
+function splitDuration(ms) {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  return { hours, minutes, seconds };
+}
+
+function declineRus(value, [one, few, many]) {
+  const mod10 = value % 10;
+  const mod100 = value % 100;
+  if (mod10 === 1 && mod100 !== 11) {
+    return one;
+  }
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) {
+    return few;
+  }
+  return many;
+}
+
 function getParityVariant(weeks) {
   if (weeks === 'odd') return 'odd';
   if (weeks === 'even') return 'even';
@@ -1394,6 +1662,27 @@ function formatDateLabel(now) {
   const weekday = capitalize(WEEKDAY_MAP[now.weekday] || now.weekday);
   const datePart = `${now.day} ${MONTH_LABELS[now.month - 1]} ${now.year}`;
   return `${weekday}, ${datePart} • ${pad(now.hour)}:${pad(now.minute)} (МСК)`;
+}
+
+function formatDayHeading(parts) {
+  if (!parts) return '';
+  const weekday = capitalize(WEEKDAY_MAP[parts.weekday] || parts.weekday || '');
+  const monthIndex = (parts.month || 1) - 1;
+  const monthLabel = MONTH_LABELS[monthIndex];
+  const datePart = monthLabel
+    ? `${parts.day} ${monthLabel} ${parts.year}`
+    : `${parts.day}.${parts.month}.${parts.year}`;
+  return `${weekday}, ${datePart}`.trim();
+}
+
+function formatDayDate(parts) {
+  if (!parts) return '';
+  const monthIndex = (parts.month || 1) - 1;
+  const monthLabel = MONTH_LABELS[monthIndex];
+  if (!monthLabel) {
+    return `${parts.day}.${parts.month}`;
+  }
+  return `${parts.day} ${monthLabel}`;
 }
 
 function capitalize(value) {
