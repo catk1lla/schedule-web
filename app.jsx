@@ -802,10 +802,6 @@ function TodaySection({ info, showParityLabels, parityMode }) {
   );
 }
 
-function TomorrowSection({ entries, dateParts, showParityLabels, parityMode }) {
-  const dayName = capitalize(WEEKDAY_MAP[dateParts.weekday] || dateParts.weekday || '');
-  const dateLabel = formatDayDate(dateParts);
-
   if (!entries.length) {
     return (
       <div className="summary-card" aria-live="polite">
