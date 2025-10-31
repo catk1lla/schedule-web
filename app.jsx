@@ -1516,25 +1516,67 @@ function computeProgress(nowSeconds, startSeconds, endSeconds) {
 }
 
 function formatCountdown(ms) {
-  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-  return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+  const { totalSeconds, days, hours, minutes, seconds } = splitDuration(ms);
+  if (totalSeconds === 0) {
+    return '0 сек';
+  }
+
+  const units = [
+    { value: days, label: 'д' },
+    { value: hours, label: 'ч' },
+    { value: minutes, label: 'мин' },
+    { value: seconds, label: 'сек' }
+  ];
+
+  const parts = [];
+  const firstIndex = units.findIndex(unit => unit.value > 0);
+  if (firstIndex === -1) {
+    return '0 сек';
+  }
+
+  parts.push(`${units[firstIndex].value} ${units[firstIndex].label}`);
+
+  for (let index = firstIndex + 1; index < units.length; index += 1) {
+    const unit = units[index];
+    if (unit.value > 0) {
+      parts.push(`${unit.value} ${unit.label}`);
+      break;
+    }
+  }
+
+  return parts.join(' ');
 }
 
 function formatCountdownAria(ms) {
-  const { hours, minutes, seconds } = splitDuration(ms);
+  const { totalSeconds, days, hours, minutes, seconds } = splitDuration(ms);
+  if (totalSeconds === 0) {
+    return 'До начала пары осталось 0 секунд';
+  }
+
+  const units = [
+    { value: days, forms: ['день', 'дня', 'дней'] },
+    { value: hours, forms: ['час', 'часа', 'часов'] },
+    { value: minutes, forms: ['минута', 'минуты', 'минут'] },
+    { value: seconds, forms: ['секунда', 'секунды', 'секунд'] }
+  ];
+
   const parts = [];
-  if (hours > 0) {
-    parts.push(`${hours} ${declineRus(hours, ['час', 'часа', 'часов'])}`);
+  const firstIndex = units.findIndex(unit => unit.value > 0);
+  if (firstIndex === -1) {
+    return 'До начала пары осталось 0 секунд';
   }
-  if (minutes > 0 || hours > 0) {
-    parts.push(`${minutes} ${declineRus(minutes, ['минута', 'минуты', 'минут'])}`);
+
+  const firstUnit = units[firstIndex];
+  parts.push(`${firstUnit.value} ${declineRus(firstUnit.value, firstUnit.forms)}`);
+
+  for (let index = firstIndex + 1; index < units.length; index += 1) {
+    const unit = units[index];
+    if (unit.value > 0) {
+      parts.push(`${unit.value} ${declineRus(unit.value, unit.forms)}`);
+      break;
+    }
   }
-  if (seconds > 0 || parts.length === 0) {
-    parts.push(`${seconds} ${declineRus(seconds, ['секунда', 'секунды', 'секунд'])}`);
-  }
+
   const duration = parts.join(' ');
   return `До начала пары осталось ${duration}`;
 }
@@ -1596,10 +1638,13 @@ function formatSingleTeacher(part) {
 
 function splitDuration(ms) {
   const totalSeconds = Math.max(0, Math.floor(ms / 1000));
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-  return { hours, minutes, seconds };
+  const days = Math.floor(totalSeconds / 86400);
+  const remainderAfterDays = totalSeconds % 86400;
+  const hours = Math.floor(remainderAfterDays / 3600);
+  const remainderAfterHours = remainderAfterDays % 3600;
+  const minutes = Math.floor(remainderAfterHours / 60);
+  const seconds = remainderAfterHours % 60;
+  return { totalSeconds, days, hours, minutes, seconds };
 }
 
 function declineRus(value, [one, few, many]) {
