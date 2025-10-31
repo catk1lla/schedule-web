@@ -1,5 +1,7 @@
 # Schedule Web
 
+> Полная документация на русском: см. `README.ru.md`.
+
 Adaptive single-page schedule viewer for alternating parity weeks. The app runs directly in the browser via the CDN-hosted React 18 runtime and uses inline Babel compilation for JSX. It keeps a compact footprint while offering persistent filters, theme controls, and multilingual UI copy.
 
 ## Highlights
