@@ -1,4 +1,4 @@
-const { useState, useMemo, useEffect, useCallback, useRef } = React;
+const { useState, useMemo, useEffect, useCallback, useRef, useContext } = React;
 
 const SCHEDULE_ODD = [
   {day:'Понедельник', pair:3, time:'11:35-13:10', weeks:'all', type:'практика', subgroup:null, subject:'Электив по физической культуре и спорту', place:'спорткомплекс 6-го учебного корпуса', teacher:'Андронова Л. Н.', note:''},
@@ -78,16 +78,380 @@ const SCHEDULE_COMBINED = (() => {
   return merged;
 })();
 
-const WEEK_DAYS = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
-const DAY_SHORT = {
-  'Понедельник': 'Пн',
-  'Вторник': 'Вт',
-  'Среда': 'Ср',
-  'Четверг': 'Чт',
-  'Пятница': 'Пт',
-  'Суббота': 'Сб',
-  'Воскресенье': 'Вс'
+const SUPPORTED_LANGUAGES = ['ru', 'en'];
+const DEFAULT_LANGUAGE = 'ru';
+
+const LANGUAGE_OPTIONS = [
+  { value: 'ru', label: 'Русский' },
+  { value: 'en', label: 'English' }
+];
+
+const TRANSLATIONS = {
+  ru: {
+    languageName: 'Русский',
+    languageToggle: 'Язык интерфейса',
+    theme: {
+      system: 'Системная тема',
+      light: 'Светлая тема',
+      dark: 'Тёмная тема'
+    },
+    brand: {
+      title: 'Расписание учебных пар',
+      tagline: 'Учебный ритм под контролем',
+      description: 'Следите за текущими и предстоящими парами, фильтруйте подгруппы и выбирайте удобную тему оформления.',
+      academicWeek: weekNumber => `Академическая неделя №${weekNumber}`,
+      autoDetection: parityLabel => `Автоопределение: ${parityLabel} неделя`
+    },
+    sections: {
+      today: 'Сегодня',
+      tomorrow: 'Завтра',
+      week: 'Неделя',
+      filters: 'Фильтры'
+    },
+    parity: {
+      label: 'Чётность недели',
+      auto: 'Авто',
+      all: 'Все',
+      odd: 'Нечётная',
+      even: 'Чётная',
+      autoOdd: 'нечётная',
+      autoEven: 'чётная'
+    },
+    filters: {
+      heading: 'Фильтры',
+      subgroup: 'Подгруппа',
+      type: 'Тип занятия',
+      day: 'День недели',
+      reset: 'Сбросить фильтры',
+      subgroupOptions: {
+        all: 'Все подгруппы',
+        '1': 'Подгруппа 1',
+        '2': 'Подгруппа 2'
+      },
+      typeOptions: {
+        all: 'Все типы'
+      },
+      dayOptions: {
+        all: 'Все дни'
+      }
+    },
+    controls: {
+      collapseHeader: 'Свернуть шапку',
+      expandHeader: 'Развернуть шапку'
+    },
+    today: {
+      noPairsBadge: 'Сегодня пар нет',
+      noPairsMessage: 'Можно посвятить день отдыху или самостоятельной подготовке.',
+      dayDoneBadge: 'Учебный день завершён',
+      dayDoneTitle: 'На сегодня занятий больше нет',
+      dayDoneMessage: 'Хорошего отдыха! Следующие занятия начнутся в другой день.',
+      currentBadge: 'Текущая пара',
+      currentMessage: 'Сейчас идёт занятие. Удачного обучения!',
+      countdownLabel: 'Пара идёт',
+      countdownAria: 'Занятие в процессе',
+      breakBadge: 'Перерыв',
+      firstBadge: 'До первой пары',
+      breakMessageSuffix: ' Скоро продолжим занятия.',
+      firstMessageSuffix: ' Ещё есть время подготовиться.',
+      listAria: 'Пары на сегодня',
+      progressAria: value => `Осталось ${value}% времени пары`
+    },
+    tomorrow: {
+      noPairsBadge: 'Завтра пар нет',
+      noPairsMessage: 'Выходной день — занятия не запланированы.',
+      listAria: dayLabel => `Занятия на ${dayLabel}`
+    },
+    statuses: {
+      current: 'Сейчас',
+      next: 'Следующая',
+      past: 'Завершена'
+    },
+    pair: {
+      roomPrefix: 'ауд.',
+      numberLabel: value => `${value}-я пара`
+    },
+    week: {
+      listAria: 'Занятия на неделю',
+      dayAria: dayLabel => `Занятия на ${dayLabel}`,
+      emptyNote: 'По выбранным фильтрам занятия не найдены.',
+      noDaysSelected: 'Дни не выбраны.',
+      dayEmpty: 'В этот день занятий нет.'
+    },
+    footer: {
+      themeLabel: 'Тема интерфейса',
+      themeButtonLabel: theme => `Текущая тема: ${theme} (нажмите, чтобы переключить)`,
+      themeButtonTitle: theme => `Тема: ${theme}`,
+      navHeading: 'Разделы',
+      extrasHeading: 'Дополнительно',
+      nav: {
+        today: 'Сегодня',
+        tomorrow: 'Завтра',
+        week: 'Неделя',
+        filters: 'Фильтры'
+      },
+      universityLink: 'Сайт университета',
+      updateInfo: 'Обновление расписания: еженедельно',
+      copyright: year => `© ${year} Расписание учебных пар`,
+      lastUpdated: 'Последнее обновление по московскому времени'
+    },
+    countdown: {
+      zero: '0 сек',
+      running: 'Пара идёт',
+      labelPrefix: 'До начала: {duration}',
+      ariaPrefix: 'До начала пары осталось {duration}',
+      secondsZero: 'До начала пары осталось 0 секунд',
+      startPrefixWithTime: time => `Начало в ${time}.`,
+      startPrefixSoon: 'Начало совсем скоро.',
+      startSuffixAfterClasses: ' Скоро продолжим занятия.',
+      startSuffixBeforeClasses: ' Ещё есть время подготовиться.',
+      unitsShort: {
+        days: 'д',
+        hours: 'ч',
+        minutes: 'мин',
+        seconds: 'сек'
+      },
+      unitsLong: {
+        days: ['день', 'дня', 'дней'],
+        hours: ['час', 'часа', 'часов'],
+        minutes: ['минута', 'минуты', 'минут'],
+        seconds: ['секунда', 'секунды', 'секунд']
+      }
+    },
+    parityLabels: {
+      odd: 'Нечётная неделя',
+      even: 'Чётная неделя',
+      all: 'Все недели'
+    },
+    typeLabels: {
+      '-': 'Тип не указан',
+      'лекция': 'Лекция',
+      'практика': 'Практика',
+      'лабораторная': 'Лабораторная'
+    },
+    dayNames: {
+      full: {
+        'Понедельник': 'Понедельник',
+        'Вторник': 'Вторник',
+        'Среда': 'Среда',
+        'Четверг': 'Четверг',
+        'Пятница': 'Пятница',
+        'Суббота': 'Суббота',
+        'Воскресенье': 'Воскресенье'
+      },
+      short: {
+        'Понедельник': 'Пн',
+        'Вторник': 'Вт',
+        'Среда': 'Ср',
+        'Четверг': 'Чт',
+        'Пятница': 'Пт',
+        'Суббота': 'Сб',
+        'Воскресенье': 'Вс'
+      }
+    },
+    monthNames: ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'],
+    timezoneLabel: '(МСК)',
+    errors: {
+      fallbackTitle: 'Не удалось загрузить расписание',
+      fallbackMessage: 'Попробуйте обновить страницу или зайдите позже.'
+    }
+  },
+  en: {
+    languageName: 'English',
+    languageToggle: 'Interface language',
+    theme: {
+      system: 'System theme',
+      light: 'Light theme',
+      dark: 'Dark theme'
+    },
+    brand: {
+      title: 'Class schedule',
+      tagline: 'Stay on top of your studies',
+      description: 'Track current and upcoming classes, filter by subgroup, and choose the interface theme you prefer.',
+      academicWeek: weekNumber => `Academic week #${weekNumber}`,
+      autoDetection: parityLabel => `Auto detection: ${parityLabel} week`
+    },
+    sections: {
+      today: 'Today',
+      tomorrow: 'Tomorrow',
+      week: 'Week',
+      filters: 'Filters'
+    },
+    parity: {
+      label: 'Week parity',
+      auto: 'Auto',
+      all: 'All',
+      odd: 'Odd',
+      even: 'Even',
+      autoOdd: 'odd',
+      autoEven: 'even'
+    },
+    filters: {
+      heading: 'Filters',
+      subgroup: 'Subgroup',
+      type: 'Class type',
+      day: 'Weekday',
+      reset: 'Reset filters',
+      subgroupOptions: {
+        all: 'All subgroups',
+        '1': 'Subgroup 1',
+        '2': 'Subgroup 2'
+      },
+      typeOptions: {
+        all: 'All types'
+      },
+      dayOptions: {
+        all: 'All days'
+      }
+    },
+    controls: {
+      collapseHeader: 'Collapse header',
+      expandHeader: 'Expand header'
+    },
+    today: {
+      noPairsBadge: 'No classes today',
+      noPairsMessage: 'Use the time to rest or study on your own.',
+      dayDoneBadge: 'Day completed',
+      dayDoneTitle: 'No classes left today',
+      dayDoneMessage: 'Great work! The next classes will be on another day.',
+      currentBadge: 'In progress',
+      currentMessage: 'A class is running right now. You have got this!',
+      countdownLabel: 'Class in progress',
+      countdownAria: 'Class in progress',
+      breakBadge: 'Break',
+      firstBadge: 'Before the first class',
+      breakMessageSuffix: ' Classes resume soon.',
+      firstMessageSuffix: ' Still time to prepare.',
+      listAria: 'Classes for today',
+      progressAria: value => `${value}% of the class remaining`
+    },
+    tomorrow: {
+      noPairsBadge: 'No classes tomorrow',
+      noPairsMessage: 'It is a day off — no classes scheduled.',
+      listAria: dayLabel => `Classes on ${dayLabel}`
+    },
+    statuses: {
+      current: 'Now',
+      next: 'Next',
+      past: 'Finished'
+    },
+    pair: {
+      roomPrefix: 'room',
+      numberLabel: value => `Class ${value}`
+    },
+    week: {
+      listAria: 'Classes for the week',
+      dayAria: dayLabel => `Classes on ${dayLabel}`,
+      emptyNote: 'No classes match the selected filters.',
+      noDaysSelected: 'No days selected.',
+      dayEmpty: 'No classes scheduled for this day.'
+    },
+    footer: {
+      themeLabel: 'Theme',
+      themeButtonLabel: theme => `Current theme: ${theme} (press to toggle)`,
+      themeButtonTitle: theme => `Theme: ${theme}`,
+      navHeading: 'Sections',
+      extrasHeading: 'More',
+      nav: {
+        today: 'Today',
+        tomorrow: 'Tomorrow',
+        week: 'Week',
+        filters: 'Filters'
+      },
+      universityLink: 'University website',
+      updateInfo: 'Schedule updates every week',
+      copyright: year => `© ${year} Class schedule`,
+      lastUpdated: 'Last update in Moscow time'
+    },
+    countdown: {
+      zero: '0 s',
+      running: 'Class in progress',
+      labelPrefix: 'Starts in: {duration}',
+      ariaPrefix: 'Class starts in {duration}',
+      secondsZero: 'Class starts in 0 seconds',
+      startPrefixWithTime: time => `Starts at ${time}.`,
+      startPrefixSoon: 'Starting very soon.',
+      startSuffixAfterClasses: ' Classes restart shortly.',
+      startSuffixBeforeClasses: ' Plenty of time to prepare.',
+      unitsShort: {
+        days: 'd',
+        hours: 'h',
+        minutes: 'min',
+        seconds: 's'
+      },
+      unitsLong: {
+        days: ['day', 'days'],
+        hours: ['hour', 'hours'],
+        minutes: ['minute', 'minutes'],
+        seconds: ['second', 'seconds']
+      }
+    },
+    parityLabels: {
+      odd: 'Odd week',
+      even: 'Even week',
+      all: 'All weeks'
+    },
+    typeLabels: {
+      '-': 'Type not specified',
+      'лекция': 'Lecture',
+      'практика': 'Practical class',
+      'лабораторная': 'Laboratory class'
+    },
+    dayNames: {
+      full: {
+        'Понедельник': 'Monday',
+        'Вторник': 'Tuesday',
+        'Среда': 'Wednesday',
+        'Четверг': 'Thursday',
+        'Пятница': 'Friday',
+        'Суббота': 'Saturday',
+        'Воскресенье': 'Sunday'
+      },
+      short: {
+        'Понедельник': 'Mon',
+        'Вторник': 'Tue',
+        'Среда': 'Wed',
+        'Четверг': 'Thu',
+        'Пятница': 'Fri',
+        'Суббота': 'Sat',
+        'Воскресенье': 'Sun'
+      }
+    },
+    monthNames: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+    timezoneLabel: '(MSK)',
+    errors: {
+      fallbackTitle: 'Unable to load the schedule',
+      fallbackMessage: 'Refresh the page or try again later.'
+    }
+  }
 };
+
+const TranslationContext = React.createContext({
+  language: DEFAULT_LANGUAGE,
+  texts: TRANSLATIONS[DEFAULT_LANGUAGE],
+  setLanguage: () => {}
+});
+
+function useTranslation() {
+  return useContext(TranslationContext);
+}
+
+function getTranslations(language) {
+  if (language && TRANSLATIONS[language]) {
+    return TRANSLATIONS[language];
+  }
+  return TRANSLATIONS[DEFAULT_LANGUAGE];
+}
+
+function normalizeLanguage(raw) {
+  if (SUPPORTED_LANGUAGES.includes(raw)) {
+    return raw;
+  }
+  const value = String(raw || '').toLowerCase();
+  const match = SUPPORTED_LANGUAGES.find(lang => value.startsWith(lang));
+  return match || DEFAULT_LANGUAGE;
+}
+
+const WEEK_DAYS = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
 
 const WEEKDAY_MAP = {
   'понедельник': 'Понедельник',
@@ -99,62 +463,26 @@ const WEEKDAY_MAP = {
   'воскресенье': 'Воскресенье'
 };
 
-const MONTH_LABELS = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
 const MS_IN_DAY = 86400000;
 const MOSCOW_UTC_OFFSET = 3;
+let moscowDateTimeFormatter;
 
 const STORAGE_KEYS = {
   parity: 'schedule::parity',
   theme: 'schedule::theme',
   subgroup: 'schedule::subgroup',
-  day: 'schedule::day'
+  type: 'schedule::type',
+  day: 'schedule::day',
+  language: 'schedule::language'
 };
 
 const ALL_TYPES = Array.from(new Set([...SCHEDULE_ODD, ...SCHEDULE_EVEN].map(item => item.type)))
   .filter(type => type && type !== '-');
 const TYPE_VALUES = ALL_TYPES.map(type => String(type));
 
-const SUBGROUP_OPTIONS = [
-  { value: 'all', label: 'Все подгруппы' },
-  { value: '1', label: 'Подгруппа 1' },
-  { value: '2', label: 'Подгруппа 2' }
-];
-
+const SUBGROUP_VALUES = ['all', '1', '2'];
+const DAY_OPTION_VALUES = ['all', ...WEEK_DAYS];
 const COMBINED_SUBGROUP_VALUES = ['1-2', 'Подгруппы 1, 2'];
-
-const TYPE_OPTIONS = [
-  { value: 'all', label: 'Все типы' },
-  ...TYPE_VALUES.map(value => ({
-    value,
-    label: formatTypeLabel(value)
-  }))
-];
-
-const DAY_OPTIONS = [
-  { value: 'all', label: 'Все дни' },
-  ...WEEK_DAYS.map(day => ({ value: day, label: day }))
-];
-
-const FILTER_GROUPS = [
-  {
-    field: 'subgroup',
-    label: 'Подгруппа',
-    ariaLabel: 'Подгруппа',
-    options: SUBGROUP_OPTIONS
-  },
-  {
-    field: 'type',
-    label: 'Тип занятия',
-    ariaLabel: 'Тип занятия',
-    options: TYPE_OPTIONS
-  },
-  {
-    field: 'day',
-    label: 'День недели',
-    ariaLabel: 'День недели',
-    options: DAY_OPTIONS
-  }
-];
 
 function createDefaultFilters() {
   return {
@@ -169,15 +497,75 @@ function isDefaultFilters(filters) {
   return Object.keys(defaults).every(key => filters[key] === defaults[key]);
 }
 
+function buildFilterGroups(texts) {
+  const subgroupOptions = SUBGROUP_VALUES.map(value => ({
+    value,
+    label: value === 'all'
+      ? texts.filters.subgroupOptions.all
+      : texts.filters.subgroupOptions[value] || value
+  }));
+
+  const typeOptions = [
+    { value: 'all', label: texts.filters.typeOptions.all },
+    ...TYPE_VALUES.map(value => ({
+      value,
+      label: formatTypeLabel(value, texts)
+    }))
+  ];
+
+  const dayOptions = [
+    { value: 'all', label: texts.filters.dayOptions.all },
+    ...WEEK_DAYS.map(day => ({
+      value: day,
+      label: texts.dayNames.full[day] || day
+    }))
+  ];
+
+  return [
+    {
+      field: 'subgroup',
+      label: texts.filters.subgroup,
+      ariaLabel: texts.filters.subgroup,
+      options: subgroupOptions
+    },
+    {
+      field: 'type',
+      label: texts.filters.type,
+      ariaLabel: texts.filters.type,
+      options: typeOptions
+    },
+    {
+      field: 'day',
+      label: texts.filters.day,
+      ariaLabel: texts.filters.day,
+      options: dayOptions
+    }
+  ];
+}
+
 const THEME_SEQUENCE = ['system', 'light', 'dark'];
-const THEME_LABELS = {
-  system: 'Системная тема',
-  light: 'Светлая тема',
-  dark: 'Тёмная тема'
-};
 
 function App() {
   const now = useMoscowNow();
+
+  const [language, setLanguage] = useState(() => {
+    const stored = readStorage(STORAGE_KEYS.language);
+    if (stored) {
+      return normalizeLanguage(stored);
+    }
+    if (typeof navigator !== 'undefined') {
+      const browserLanguage = Array.isArray(navigator.languages) && navigator.languages.length > 0
+        ? navigator.languages[0]
+        : navigator.language || navigator.userLanguage;
+      if (browserLanguage) {
+        return normalizeLanguage(browserLanguage);
+      }
+    }
+    return DEFAULT_LANGUAGE;
+  });
+
+  const translations = useMemo(() => getTranslations(language), [language]);
+  const filterGroups = useMemo(() => buildFilterGroups(translations), [translations]);
 
   const [parityMode, setParityMode] = useState(() => {
     const stored = readStorage(STORAGE_KEYS.parity);
@@ -195,12 +583,15 @@ function App() {
   const [filters, setFilters] = useState(() => {
     const storedSubgroup = readStorage(STORAGE_KEYS.subgroup);
     const storedDay = readStorage(STORAGE_KEYS.day);
-    const validSubgroups = new Set(SUBGROUP_OPTIONS.map(option => option.value));
-    const validDays = new Set(DAY_OPTIONS.map(option => option.value));
+    const storedType = readStorage(STORAGE_KEYS.type);
+    const validSubgroups = new Set(SUBGROUP_VALUES);
+    const validDays = new Set(DAY_OPTION_VALUES);
+    const validTypes = new Set(['all', ...TYPE_VALUES]);
     return {
       ...createDefaultFilters(),
       subgroup: validSubgroups.has(storedSubgroup) ? storedSubgroup : 'all',
-      day: validDays.has(storedDay) ? storedDay : 'all'
+      day: validDays.has(storedDay) ? storedDay : 'all',
+      type: validTypes.has(storedType) ? storedType : 'all'
     };
   });
 
@@ -256,6 +647,22 @@ function App() {
   }, [themeMode, systemTheme]);
 
   useEffect(() => {
+    if (typeof document !== 'undefined' && document.documentElement) {
+      document.documentElement.setAttribute('lang', language);
+    }
+  }, [language]);
+
+  useEffect(() => {
+    writeStorage(STORAGE_KEYS.language, language);
+  }, [language]);
+
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.title = translations.brand.title;
+    }
+  }, [translations]);
+
+  useEffect(() => {
     if (typeof window === 'undefined') {
       return undefined;
     }
@@ -304,6 +711,7 @@ function App() {
   useEffect(() => {
     writeStorage(STORAGE_KEYS.subgroup, filters.subgroup);
     writeStorage(STORAGE_KEYS.day, filters.day);
+    writeStorage(STORAGE_KEYS.type, filters.type);
   }, [filters]);
 
   const { parity: academicParity, weekNumber: academicWeekNumber } = computeAcademicParity(now);
@@ -332,9 +740,11 @@ function App() {
       now,
       parity: todayParity,
       weekNumber: academicWeekNumber,
-      filters
+      filters,
+      texts: translations,
+      language
     });
-  }, [scheduleSource, now, parityMode, effectiveParity, autoParity, academicWeekNumber, filters]);
+  }, [scheduleSource, now, parityMode, effectiveParity, autoParity, academicWeekNumber, filters, translations, language]);
 
   const tomorrowParts = useMemo(() => {
     const baseDate = now.isoDate instanceof Date ? now.isoDate : new Date();
@@ -369,27 +779,36 @@ function App() {
     });
   }, [tomorrowScheduleSource, tomorrowParts, tomorrowParity, tomorrowWeekNumber, filters]);
 
-  const dayFilterList = filters.day === 'all' ? WEEK_DAYS : WEEK_DAYS.filter(day => day === filters.day);
-  const filtersAreDefault = isDefaultFilters(filters);
+const dayFilterList = filters.day === 'all' ? WEEK_DAYS : WEEK_DAYS.filter(day => day === filters.day);
+const filtersAreDefault = isDefaultFilters(filters);
 
-  const currentYear = now.year;
-  const themeLabel = THEME_LABELS[themeMode];
+const currentYear = now.year;
+const themeLabel = translations.theme[themeMode] || themeMode;
+const autoParityLabel = autoParity === 'odd' ? translations.parity.autoOdd : translations.parity.autoEven;
+const translationContextValue = useMemo(() => ({
+  language,
+  texts: translations,
+  setLanguage
+}), [language, translations]);
+const collapseLabel = headerCollapsed ? translations.controls.expandHeader : translations.controls.collapseHeader;
 
-  return (
+return (
+  <TranslationContext.Provider value={translationContextValue}>
     <div className="app-shell">
       <header className={`app-header${headerCollapsed ? ' collapsed' : ''}${headerHidden ? ' is-hidden' : ''}`}>
         <div className="brand-line">
           <div className="brand-block" aria-live="polite">
-            <h1>Расписание учебных пар</h1>
+            <h1>{translations.brand.title}</h1>
             <div className="brand-meta">
-              <span className="brand-meta-primary">{formatDateLabel(now)}</span>
+              <span className="brand-meta-primary">{formatDateLabel(now, translations)}</span>
               <div className="brand-meta-secondary">
-                <span>Академическая неделя №{academicWeekNumber}</span>
-                <span>Автоопределение: {autoParity === 'odd' ? 'нечётная' : 'чётная'} неделя</span>
+                <span>{translations.brand.academicWeek(academicWeekNumber)}</span>
+                <span>{translations.brand.autoDetection(autoParityLabel)}</span>
               </div>
             </div>
           </div>
           <div className="control-block">
+            <LanguageSelector />
             <ParitySelector parityMode={parityMode} onChange={setParityMode} />
             <button
               type="button"
@@ -398,10 +817,10 @@ function App() {
                 setHeaderHidden(false);
                 setHeaderCollapsed(value => !value);
               }}
-              aria-label={headerCollapsed ? 'Развернуть шапку' : 'Свернуть шапку'}
+              aria-label={collapseLabel}
               aria-expanded={!headerCollapsed}
               aria-controls="filters-panel"
-              title={headerCollapsed ? 'Развернуть шапку' : 'Свернуть шапку'}
+              title={collapseLabel}
             >
               <ChevronIcon direction={headerCollapsed ? 'down' : 'up'} />
             </button>
@@ -409,6 +828,7 @@ function App() {
         </div>
         <FiltersPanel
           filters={filters}
+          groups={filterGroups}
           onUpdateFilter={handleFilterChange}
           collapsed={headerCollapsed}
           id="filters-panel"
@@ -420,7 +840,7 @@ function App() {
       <main className="app-main">
         <section id="today">
           <div className="section-header">
-            <h2>Сегодня</h2>
+            <h2>{translations.sections.today}</h2>
           </div>
           <TodaySection
             info={todayInfo}
@@ -431,8 +851,8 @@ function App() {
 
         <section id="tomorrow">
           <div className="section-header">
-            <h2>Завтра</h2>
-            <span className="section-caption">{formatDayHeading(tomorrowParts)}</span>
+            <h2>{translations.sections.tomorrow}</h2>
+            <span className="section-caption">{formatDayHeading(tomorrowParts, translations)}</span>
           </div>
           <TomorrowSection
             entries={tomorrowEntries}
@@ -444,7 +864,7 @@ function App() {
 
         <section className="week-section" id="week">
           <div className="section-header">
-            <h2>Неделя</h2>
+            <h2>{translations.sections.week}</h2>
           </div>
           <WeekView
             days={dayFilterList}
@@ -457,69 +877,89 @@ function App() {
       </main>
 
       <footer className="app-footer">
-        <div className="footer-inner">
-          <div className="footer-upper">
-            <div className="footer-brand">
-              <div className="footer-title">Учебный ритм под контролем</div>
-              <p className="footer-description">
-                Следите за текущими и предстоящими парами, фильтруйте подгруппы и выбирайте удобную тему оформления.
-              </p>
-              <div className="footer-actions">
-                <span className="footer-action-label">Тема интерфейса</span>
-                <button
-                  type="button"
-                  className="theme-button footer-theme-button"
-                  onClick={() => {
-                    const currentIndex = THEME_SEQUENCE.indexOf(themeMode);
-                    const nextIndex = (currentIndex + 1) % THEME_SEQUENCE.length;
-                    setThemeMode(THEME_SEQUENCE[nextIndex]);
-                  }}
-                  aria-label={`Текущая тема: ${themeLabel} (нажмите, чтобы переключить)`}
-                  title={`Тема: ${themeLabel}`}
-                >
-                  <ThemeIcon mode={themeMode} />
-                </button>
-              </div>
-            </div>
-            <div className="footer-columns">
-              <div className="footer-column">
-                <h3>Разделы</h3>
-                <ul>
-                  <li><a href="#today">Сегодня</a></li>
-                  <li><a href="#tomorrow">Завтра</a></li>
-                  <li><a href="#week">Неделя</a></li>
-                  <li><a href="#filters-panel">Фильтры</a></li>
-                </ul>
-              </div>
-              <div className="footer-column">
-                <h3>Дополнительно</h3>
-                <ul>
-                  <li><a href="https://www.nntu.ru/" target="_blank" rel="noreferrer">Сайт университета</a></li>
-                  <li><span>Обновление расписания: еженедельно</span></li>
-                </ul>
-              </div>
+      <div className="footer-inner">
+        <div className="footer-upper">
+          <div className="footer-brand">
+            <div className="footer-title">{translations.brand.tagline}</div>
+            <p className="footer-description">
+              {translations.brand.description}
+            </p>
+            <div className="footer-actions">
+              <span className="footer-action-label">{translations.footer.themeLabel}</span>
+              <button
+                type="button"
+                className="theme-button footer-theme-button"
+                onClick={() => {
+                  const currentIndex = THEME_SEQUENCE.indexOf(themeMode);
+                  const nextIndex = (currentIndex + 1) % THEME_SEQUENCE.length;
+                  setThemeMode(THEME_SEQUENCE[nextIndex]);
+                }}
+                aria-label={translations.footer.themeButtonLabel(themeLabel)}
+                title={translations.footer.themeButtonTitle(themeLabel)}
+              >
+                <ThemeIcon mode={themeMode} />
+              </button>
             </div>
           </div>
-          <div className="footer-bottom">
-            <small>© {currentYear} Расписание учебных пар</small>
-            <small>Последнее обновление по московскому времени</small>
+          <div className="footer-columns">
+            <div className="footer-column">
+              <h3>{translations.footer.navHeading}</h3>
+              <ul>
+                <li><a href="#today">{translations.footer.nav.today}</a></li>
+                <li><a href="#tomorrow">{translations.footer.nav.tomorrow}</a></li>
+                <li><a href="#week">{translations.footer.nav.week}</a></li>
+                <li><a href="#filters-panel">{translations.footer.nav.filters}</a></li>
+              </ul>
+            </div>
+            <div className="footer-column">
+              <h3>{translations.footer.extrasHeading}</h3>
+              <ul>
+                <li><a href="https://www.nntu.ru/" target="_blank" rel="noopener noreferrer">{translations.footer.universityLink}</a></li>
+                <li><span>{translations.footer.updateInfo}</span></li>
+              </ul>
+            </div>
           </div>
         </div>
-      </footer>
+        <div className="footer-bottom">
+          <small>{translations.footer.copyright(currentYear)}</small>
+          <small>{translations.footer.lastUpdated}</small>
+        </div>
+      </div>
+    </footer>
+    </div>
+  </TranslationContext.Provider>
+);
+}
+
+function LanguageSelector() {
+  const { language, texts, setLanguage } = useTranslation();
+  return (
+    <div className="language-switch" role="group" aria-label={texts.languageToggle}>
+      {LANGUAGE_OPTIONS.map(option => (
+        <button
+          key={option.value}
+          type="button"
+          aria-pressed={language === option.value}
+          onClick={() => setLanguage(normalizeLanguage(option.value))}
+        >
+          {option.label}
+        </button>
+      ))}
     </div>
   );
 }
 
 function ParitySelector({ parityMode, onChange }) {
+  const { texts } = useTranslation();
   const options = [
-    { value: 'auto', label: 'Авто' },
-    { value: 'all', label: 'Все' },
-    { value: 'odd', label: 'Нечётная' },
-    { value: 'even', label: 'Чётная' }
+    { value: 'auto', label: texts.parity.auto },
+    { value: 'all', label: texts.parity.all },
+    { value: 'odd', label: texts.parity.odd },
+    { value: 'even', label: texts.parity.even }
   ];
 
   return (
-    <div className="parity-switch" role="group" aria-label="Чётность недели">
+    <div className="parity-switch" role="group" aria-label={texts.parity.label}>
       {options.map(option => (
         <button
           key={option.value}
@@ -534,15 +974,16 @@ function ParitySelector({ parityMode, onChange }) {
   );
 }
 
-function FiltersPanel({ filters, onUpdateFilter, collapsed = false, id, onReset, resetDisabled = false }) {
+function FiltersPanel({ filters, groups = [], onUpdateFilter, collapsed = false, id, onReset, resetDisabled = false }) {
+  const { texts } = useTranslation();
   return (
     <div
       className={`filters-panel${collapsed ? ' is-collapsed' : ''}`}
-      aria-label="Фильтры"
+      aria-label={texts.filters.heading}
       aria-hidden={collapsed}
       id={id}
     >
-      {FILTER_GROUPS.map(group => (
+      {groups.map(group => (
         <div className="filter-field" key={group.field}>
           <span className="filter-label">{group.label}</span>
           <div className="filter-buttons" role="group" aria-label={group.ariaLabel}>
@@ -565,10 +1006,10 @@ function FiltersPanel({ filters, onUpdateFilter, collapsed = false, id, onReset,
             className="filter-reset-button"
             onClick={onReset}
             disabled={resetDisabled}
-            aria-label="Сбросить выбранные фильтры"
-            title="Сбросить фильтры"
+            aria-label={texts.filters.reset}
+            title={texts.filters.reset}
           >
-            Сбросить фильтры
+            {texts.filters.reset}
           </button>
         </div>
       )}
@@ -672,11 +1113,12 @@ function ThemeIcon({ mode }) {
 }
 
 function TodaySection({ info, showParityLabels, parityMode }) {
+  const { texts } = useTranslation();
   if (info.mode === 'empty') {
     return (
       <div className="summary-card" aria-live="polite">
-        <span className="badge">Сегодня пар нет</span>
-        <p className="info-text">Можно посвятить день отдыху или самостоятельной подготовке.</p>
+        <span className="badge">{texts.today.noPairsBadge}</span>
+        <p className="info-text">{texts.today.noPairsMessage}</p>
       </div>
     );
   }
@@ -684,6 +1126,7 @@ function TodaySection({ info, showParityLabels, parityMode }) {
   const { summary, entries, highlightParity } = info;
   const isCurrent = summary.state === 'current';
   const cardParityVariant = (showParityLabels || parityMode !== 'all') ? null : highlightParity;
+  const progressValue = summary.progress != null ? Math.round(summary.progress) : 0;
 
   return (
     <article
@@ -714,21 +1157,21 @@ function TodaySection({ info, showParityLabels, parityMode }) {
               role="progressbar"
               aria-valuemin="0"
               aria-valuemax="100"
-              aria-valuenow={Math.round(summary.progress)}
-              aria-valuetext={`Осталось ${Math.round(summary.progress)}% времени пары`}
+              aria-valuenow={progressValue}
+              aria-valuetext={texts.today.progressAria(progressValue)}
             >
               <div className="progress-fill" style={{ width: `${summary.progress}%` }}></div>
             </div>
           )}
         </div>
       )}
-      <ul className="day-pair-list today-pair-list" aria-label="Пары на сегодня">
+      <ul className="day-pair-list today-pair-list" aria-label={texts.today.listAria}>
         {entries.map(item => {
           const entry = item.entry;
           const entryKey = item.key;
           const subgroupBadge = getSubgroupBadge(entry.subgroup);
           const parityTone = getParityVariant(entry.weeks);
-          const parityLabel = showParityLabels && parityTone ? getParityLabel(entry.weeks) : null;
+          const parityLabel = showParityLabels && parityTone ? getParityLabel(entry.weeks, texts) : null;
           const parityCardVariant = (showParityLabels || parityMode !== 'all') ? null : parityTone;
           const teacherLabel = formatTeacherNames(entry.teacher);
           const showTeacher = teacherLabel !== '';
@@ -744,10 +1187,10 @@ function TodaySection({ info, showParityLabels, parityMode }) {
                 : '';
           const showStatusChip = item.status === 'current' || item.status === 'next' || item.status === 'past';
           const statusLabel = item.status === 'current'
-            ? 'Сейчас'
+            ? texts.statuses.current
             : item.status === 'next'
-              ? 'Следующая'
-              : 'Завершена';
+              ? texts.statuses.next
+              : texts.statuses.past;
           return (
             <li
               key={entryKey}
@@ -757,7 +1200,7 @@ function TodaySection({ info, showParityLabels, parityMode }) {
               <div className="pair-entry-header">
                 <div className="pair-entry-time">
                   <span className="pair-entry-number">
-                    {typeof entry.pair === 'number' ? `${entry.pair}-я пара` : entry.pair}
+                    {typeof entry.pair === 'number' ? texts.pair.numberLabel(entry.pair) : entry.pair}
                   </span>
                   <span className="pair-entry-clock">{entry.time}</span>
                 </div>
@@ -779,11 +1222,11 @@ function TodaySection({ info, showParityLabels, parityMode }) {
               </div>
               <div className="pair-entry-body">
                 <div className="pair-entry-subject">{entry.subject}</div>
-                <div className="pair-entry-room">ауд. {entry.place}</div>
+                <div className="pair-entry-room">{`${texts.pair.roomPrefix} ${entry.place}`}</div>
               </div>
               <div className="pair-entry-footer">
                 <span className={`meta-chip meta-chip-type meta-chip-type--${typeVariant}`}>
-                  {formatTypeLabel(entry.type)}
+                  {formatTypeLabel(entry.type, texts)}
                 </span>
                 {hasTags && (
                   <div className="pair-entry-tags">
@@ -803,20 +1246,22 @@ function TodaySection({ info, showParityLabels, parityMode }) {
 }
 
 function TomorrowSection({ entries, dateParts, showParityLabels, parityMode }) {
-  const dayName = capitalize(WEEKDAY_MAP[dateParts.weekday] || dateParts.weekday || '');
-  const dateLabel = formatDayDate(dateParts);
+  const { texts } = useTranslation();
+  const baseDayName = WEEKDAY_MAP[dateParts.weekday] || dateParts.weekday || '';
+  const dayName = texts.dayNames.full[baseDayName] || capitalize(baseDayName);
+  const dateLabel = formatDayDate(dateParts, texts);
 
   if (!entries.length) {
     return (
       <div className="summary-card" aria-live="polite">
-        <span className="badge">Завтра пар нет</span>
-        <p className="info-text">Выходной день — занятия не запланированы.</p>
+        <span className="badge">{texts.tomorrow.noPairsBadge}</span>
+        <p className="info-text">{texts.tomorrow.noPairsMessage}</p>
       </div>
     );
   }
 
   return (
-    <article className="tomorrow-card" aria-live="polite" aria-label={`Занятия на ${dayName}`}>
+    <article className="tomorrow-card" aria-live="polite" aria-label={texts.tomorrow.listAria(dayName)}>
       <div className="tomorrow-info">
         <div className="tomorrow-dayline">
           <span className="tomorrow-day-name">{dayName}</span>
@@ -828,7 +1273,7 @@ function TomorrowSection({ entries, dateParts, showParityLabels, parityMode }) {
           const entryKey = createEntryKey(entry);
           const subgroupBadge = getSubgroupBadge(entry.subgroup);
           const parityTone = getParityVariant(entry.weeks);
-          const parityLabel = showParityLabels && parityTone ? getParityLabel(entry.weeks) : null;
+          const parityLabel = showParityLabels && parityTone ? getParityLabel(entry.weeks, texts) : null;
           const parityCardVariant = (showParityLabels || parityMode !== 'all') ? null : parityTone;
           const teacherLabel = formatTeacherNames(entry.teacher);
           const showTeacher = teacherLabel !== '';
@@ -843,7 +1288,7 @@ function TomorrowSection({ entries, dateParts, showParityLabels, parityMode }) {
               <div className="pair-entry-header">
                 <div className="pair-entry-time">
                   <span className="pair-entry-number">
-                    {typeof entry.pair === 'number' ? `${entry.pair}-я пара` : entry.pair}
+                    {typeof entry.pair === 'number' ? texts.pair.numberLabel(entry.pair) : entry.pair}
                   </span>
                   <span className="pair-entry-clock">{entry.time}</span>
                 </div>
@@ -860,11 +1305,11 @@ function TomorrowSection({ entries, dateParts, showParityLabels, parityMode }) {
               </div>
               <div className="pair-entry-body">
                 <div className="pair-entry-subject">{entry.subject}</div>
-                <div className="pair-entry-room">ауд. {entry.place}</div>
+                <div className="pair-entry-room">{`${texts.pair.roomPrefix} ${entry.place}`}</div>
               </div>
               <div className="pair-entry-footer">
                 <span className={`meta-chip meta-chip-type meta-chip-type--${typeVariant}`}>
-                  {formatTypeLabel(entry.type)}
+                  {formatTypeLabel(entry.type, texts)}
                 </span>
                 {hasTags && (
                   <div className="pair-entry-tags">
@@ -882,8 +1327,8 @@ function TomorrowSection({ entries, dateParts, showParityLabels, parityMode }) {
     </article>
   );
 }
-
 function WeekView({ days, entries, currentKey, showParityLabels, parityMode }) {
+  const { texts } = useTranslation();
   const scheduleByDay = useMemo(() => {
     return days.map(day => {
       const dayEntries = entries
@@ -891,9 +1336,11 @@ function WeekView({ days, entries, currentKey, showParityLabels, parityMode }) {
         .slice()
         .sort(comparePairs)
         .map(entry => ({ entry, key: createEntryKey(entry) }));
-      return { day, entries: dayEntries };
+      const displayName = texts.dayNames.full[day] || day;
+      const shortLabel = texts.dayNames.short[day] || day.slice(0, 2);
+      return { day, displayName, shortLabel, entries: dayEntries };
     });
-  }, [days, entries]);
+  }, [days, entries, texts]);
   const carouselRef = useRef(null);
   const isMobileLayout = useMediaQuery('(max-width: 720px)');
 
@@ -1128,7 +1575,7 @@ function WeekView({ days, entries, currentKey, showParityLabels, parityMode }) {
   }, [isMobileLayout]);
 
   if (!days.length) {
-    return <div className="empty-state">Дни не выбраны.</div>;
+    return <div className="empty-state">{texts.week.noDaysSelected}</div>;
   }
 
   const hasEntries = scheduleByDay.some(group => group.entries.length > 0);
@@ -1140,20 +1587,20 @@ function WeekView({ days, entries, currentKey, showParityLabels, parityMode }) {
         ref={carouselRef}
         tabIndex={isMobileLayout ? undefined : 0}
         role="group"
-        aria-label="Занятия на неделю"
+        aria-label={texts.week.listAria}
       >
         <ol className="week-day-list">
-          {scheduleByDay.map(({ day, entries: dayEntries }) => {
+          {scheduleByDay.map(({ day, displayName, shortLabel, entries: dayEntries }) => {
             const dayHasEntries = dayEntries.length > 0;
             return (
               <li
                 key={day}
                 className={`week-day-card${dayHasEntries ? '' : ' is-empty'}`}
-                aria-label={`Занятия на ${day}`}
+                aria-label={texts.week.dayAria(displayName)}
               >
                 <div className="week-day-header">
-                  <span className="week-day-name">{day}</span>
-                  <span className="week-day-short">{DAY_SHORT[day]}</span>
+                  <span className="week-day-name">{displayName}</span>
+                  <span className="week-day-short">{shortLabel}</span>
                 </div>
                 {dayHasEntries ? (
                   <ul className="day-pair-list">
@@ -1161,7 +1608,7 @@ function WeekView({ days, entries, currentKey, showParityLabels, parityMode }) {
                       const isCurrent = currentKey && currentKey === key;
                       const subgroupBadge = getSubgroupBadge(entry.subgroup);
                       const parityTone = getParityVariant(entry.weeks);
-                      const parityLabel = showParityLabels && parityTone ? getParityLabel(entry.weeks) : null;
+                      const parityLabel = showParityLabels && parityTone ? getParityLabel(entry.weeks, texts) : null;
                       const parityCardVariant = (showParityLabels || parityMode !== 'all') ? null : parityTone;
                       const teacherLabel = formatTeacherNames(entry.teacher);
                       const showTeacher = teacherLabel !== '';
@@ -1176,7 +1623,7 @@ function WeekView({ days, entries, currentKey, showParityLabels, parityMode }) {
                           <div className="pair-entry-header">
                             <div className="pair-entry-time">
                               <span className="pair-entry-number">
-                                {typeof entry.pair === 'number' ? `${entry.pair}-я пара` : entry.pair}
+                                {typeof entry.pair === 'number' ? texts.pair.numberLabel(entry.pair) : entry.pair}
                               </span>
                               <span className="pair-entry-clock">{entry.time}</span>
                             </div>
@@ -1193,11 +1640,11 @@ function WeekView({ days, entries, currentKey, showParityLabels, parityMode }) {
                           </div>
                           <div className="pair-entry-body">
                             <div className="pair-entry-subject">{entry.subject}</div>
-                            <div className="pair-entry-room">ауд. {entry.place}</div>
+                            <div className="pair-entry-room">{`${texts.pair.roomPrefix} ${entry.place}`}</div>
                           </div>
                           <div className="pair-entry-footer">
                             <span className={`meta-chip meta-chip-type meta-chip-type--${typeVariant}`}>
-                              {formatTypeLabel(entry.type)}
+                              {formatTypeLabel(entry.type, texts)}
                             </span>
                             {hasTags && (
                               <div className="pair-entry-tags">
@@ -1213,7 +1660,7 @@ function WeekView({ days, entries, currentKey, showParityLabels, parityMode }) {
                     })}
                   </ul>
                 ) : (
-                  <p className="day-empty">В этот день занятий нет.</p>
+                  <p className="day-empty">{texts.week.dayEmpty}</p>
                 )}
               </li>
             );
@@ -1221,7 +1668,7 @@ function WeekView({ days, entries, currentKey, showParityLabels, parityMode }) {
         </ol>
       </div>
       {!hasEntries && (
-        <p className="empty-table-note">По выбранным фильтрам занятия не найдены.</p>
+        <p className="empty-table-note">{texts.week.emptyNote}</p>
       )}
     </>
   );
@@ -1269,18 +1716,25 @@ function useMoscowNow() {
   return now;
 }
 
+function getMoscowDateTimeFormatter() {
+  if (!moscowDateTimeFormatter) {
+    moscowDateTimeFormatter = new Intl.DateTimeFormat('ru-RU', {
+      timeZone: 'Europe/Moscow',
+      hour12: false,
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric',
+      weekday: 'long',
+      hour: 'numeric',
+      minute: 'numeric',
+      second: 'numeric'
+    });
+  }
+  return moscowDateTimeFormatter;
+}
+
 function extractMoscowParts(refDate) {
-  const formatter = new Intl.DateTimeFormat('ru-RU', {
-    timeZone: 'Europe/Moscow',
-    hour12: false,
-    year: 'numeric',
-    month: 'numeric',
-    day: 'numeric',
-    weekday: 'long',
-    hour: 'numeric',
-    minute: 'numeric',
-    second: 'numeric'
-  });
+  const formatter = getMoscowDateTimeFormatter();
   const parts = formatter.formatToParts(refDate);
   const map = Object.fromEntries(parts.map(part => [part.type, part.value]));
   const year = Number(map.year);
@@ -1358,7 +1812,7 @@ function getEntriesForDay({ schedule, dayName, parity, weekNumber, filters }) {
   return typeFiltered.length > 0 ? typeFiltered : baseEntries;
 }
 
-function computeTodayInfo({ schedule, now, parity, weekNumber, filters }) {
+function computeTodayInfo({ schedule, now, parity, weekNumber, filters, texts, language }) {
   const todayName = WEEKDAY_MAP[now.weekday] || 'Воскресенье';
 
   const baseEntries = getEntriesForDay({
@@ -1420,9 +1874,9 @@ function computeTodayInfo({ schedule, now, parity, weekNumber, filters }) {
       mode: 'list',
       summary: {
         state: 'done',
-        badge: 'Учебный день завершён',
-        title: 'На сегодня занятий больше нет',
-        message: 'Хорошего отдыха! Следующие занятия начнутся в другой день.',
+        badge: texts.today.dayDoneBadge,
+        title: texts.today.dayDoneTitle,
+        message: texts.today.dayDoneMessage,
         countdownLabel: null,
         countdownAria: null,
         countdownRole: null,
@@ -1440,11 +1894,11 @@ function computeTodayInfo({ schedule, now, parity, weekNumber, filters }) {
       mode: 'list',
       summary: {
         state: 'current',
-        badge: 'Текущая пара',
+        badge: texts.today.currentBadge,
         title: current.entry.subject,
-        message: 'Сейчас идёт занятие. Удачного обучения!',
-        countdownLabel: 'Пара идёт',
-        countdownAria: 'Занятие в процессе',
+        message: texts.today.currentMessage,
+        countdownLabel: texts.today.countdownLabel,
+        countdownAria: texts.today.countdownAria,
         countdownRole: 'status',
         countdownLive: 'polite',
         progress: computeProgress(nowSeconds, current.startSeconds, current.endSeconds)
@@ -1459,18 +1913,25 @@ function computeTodayInfo({ schedule, now, parity, weekNumber, filters }) {
   const nextStartLabel = typeof next.entry.time === 'string'
     ? next.entry.time.split('-')[0]
     : '';
-  const nextMessagePrefix = nextStartLabel ? `Начало в ${nextStartLabel}.` : 'Начало совсем скоро.';
-  const nextMessageSuffix = hasPastEntries ? ' Скоро продолжим занятия.' : ' Ещё есть время подготовиться.';
+  const prefix = nextStartLabel
+    ? texts.countdown.startPrefixWithTime(nextStartLabel)
+    : texts.countdown.startPrefixSoon;
+  const suffix = hasPastEntries
+    ? texts.countdown.startSuffixAfterClasses
+    : texts.countdown.startSuffixBeforeClasses;
+  const countdownValue = formatCountdown(remainingMs, texts);
+  const countdownLabel = texts.countdown.labelPrefix.replace('{duration}', countdownValue);
+  const countdownAria = formatCountdownAria(remainingMs, texts, language);
 
   return {
     mode: 'list',
     summary: {
       state: 'next',
-      badge: hasPastEntries ? 'Перерыв' : 'До первой пары',
+      badge: hasPastEntries ? texts.today.breakBadge : texts.today.firstBadge,
       title: next.entry.subject,
-      message: `${nextMessagePrefix}${nextMessageSuffix}`,
-      countdownLabel: `До начала: ${formatCountdown(remainingMs)}`,
-      countdownAria: formatCountdownAria(remainingMs),
+      message: `${prefix}${suffix}`,
+      countdownLabel,
+      countdownAria,
       countdownRole: 'timer',
       countdownLive: 'polite',
       progress: null
@@ -1515,23 +1976,23 @@ function computeProgress(nowSeconds, startSeconds, endSeconds) {
   return Math.min(100, Math.max(0, (remaining / total) * 100));
 }
 
-function formatCountdown(ms) {
+function formatCountdown(ms, texts) {
   const { totalSeconds, days, hours, minutes, seconds } = splitDuration(ms);
   if (totalSeconds === 0) {
-    return '0 сек';
+    return texts.countdown.zero;
   }
 
   const units = [
-    { value: days, label: 'д' },
-    { value: hours, label: 'ч' },
-    { value: minutes, label: 'мин' },
-    { value: seconds, label: 'сек' }
+    { value: days, label: texts.countdown.unitsShort.days },
+    { value: hours, label: texts.countdown.unitsShort.hours },
+    { value: minutes, label: texts.countdown.unitsShort.minutes },
+    { value: seconds, label: texts.countdown.unitsShort.seconds }
   ];
 
   const parts = [];
   const firstIndex = units.findIndex(unit => unit.value > 0);
   if (firstIndex === -1) {
-    return '0 сек';
+    return texts.countdown.zero;
   }
 
   parts.push(`${units[firstIndex].value} ${units[firstIndex].label}`);
@@ -1547,43 +2008,52 @@ function formatCountdown(ms) {
   return parts.join(' ');
 }
 
-function formatCountdownAria(ms) {
+function formatCountdownAria(ms, texts, language) {
   const { totalSeconds, days, hours, minutes, seconds } = splitDuration(ms);
   if (totalSeconds === 0) {
-    return 'До начала пары осталось 0 секунд';
+    return texts.countdown.secondsZero;
   }
 
   const units = [
-    { value: days, forms: ['день', 'дня', 'дней'] },
-    { value: hours, forms: ['час', 'часа', 'часов'] },
-    { value: minutes, forms: ['минута', 'минуты', 'минут'] },
-    { value: seconds, forms: ['секунда', 'секунды', 'секунд'] }
+    { value: days, forms: texts.countdown.unitsLong.days },
+    { value: hours, forms: texts.countdown.unitsLong.hours },
+    { value: minutes, forms: texts.countdown.unitsLong.minutes },
+    { value: seconds, forms: texts.countdown.unitsLong.seconds }
   ];
 
   const parts = [];
   const firstIndex = units.findIndex(unit => unit.value > 0);
   if (firstIndex === -1) {
-    return 'До начала пары осталось 0 секунд';
+    return texts.countdown.secondsZero;
   }
 
   const firstUnit = units[firstIndex];
-  parts.push(`${firstUnit.value} ${declineRus(firstUnit.value, firstUnit.forms)}`);
+  parts.push(`${firstUnit.value} ${formatUnitLabel(firstUnit.value, firstUnit.forms, language)}`);
 
   for (let index = firstIndex + 1; index < units.length; index += 1) {
     const unit = units[index];
     if (unit.value > 0) {
-      parts.push(`${unit.value} ${declineRus(unit.value, unit.forms)}`);
+      parts.push(`${unit.value} ${formatUnitLabel(unit.value, unit.forms, language)}`);
       break;
     }
   }
 
   const duration = parts.join(' ');
-  return `До начала пары осталось ${duration}`;
+  return texts.countdown.ariaPrefix.replace('{duration}', duration);
 }
 
-function formatTypeLabel(value) {
-  if (!value || value === '-') return 'Тип не указан';
-  return value.charAt(0).toUpperCase() + value.slice(1);
+function formatTypeLabel(value, texts) {
+  if (!value || value === '-') {
+    return texts.typeLabels['-'];
+  }
+  const normalized = String(value).toLowerCase();
+  if (texts.typeLabels[normalized]) {
+    return texts.typeLabels[normalized];
+  }
+  if (texts.typeLabels[value]) {
+    return texts.typeLabels[value];
+  }
+  return capitalize(value);
 }
 
 function formatTeacherNames(raw) {
@@ -1647,6 +2117,19 @@ function splitDuration(ms) {
   return { totalSeconds, days, hours, minutes, seconds };
 }
 
+function formatUnitLabel(value, forms, language) {
+  if (language === 'ru' && Array.isArray(forms) && forms.length === 3) {
+    return declineRus(value, forms);
+  }
+  if (Array.isArray(forms) && forms.length >= 2) {
+    return value === 1 ? forms[0] : forms[1];
+  }
+  if (Array.isArray(forms) && forms.length === 1) {
+    return forms[0];
+  }
+  return String(forms);
+}
+
 function declineRus(value, [one, few, many]) {
   const mod10 = value % 10;
   const mod100 = value % 100;
@@ -1665,9 +2148,10 @@ function getParityVariant(weeks) {
   return null;
 }
 
-function getParityLabel(weeks) {
-  if (weeks === 'odd') return 'Нечётная неделя';
-  if (weeks === 'even') return 'Чётная неделя';
+function getParityLabel(weeks, texts) {
+  if (weeks === 'odd') return texts.parityLabels.odd;
+  if (weeks === 'even') return texts.parityLabels.even;
+  if (weeks === 'all') return texts.parityLabels.all;
   return null;
 }
 
@@ -1678,6 +2162,38 @@ function getTypeVariant(type) {
   if (value.includes('лекц')) return 'lecture';
   if (value.includes('семинар')) return 'seminar';
   return 'other';
+}
+
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, info) {
+    console.error('Unhandled error in schedule app', error, info);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <ErrorFallback />;
+    }
+    return this.props.children;
+  }
+}
+
+function ErrorFallback() {
+  const { texts } = useTranslation();
+  return (
+    <div className="error-fallback" role="alert">
+      <h2>{texts.errors.fallbackTitle}</h2>
+      <p>{texts.errors.fallbackMessage}</p>
+    </div>
+  );
 }
 
 function getPreferredTheme() {
@@ -1703,27 +2219,29 @@ function getSubgroupBadge(value) {
   return null;
 }
 
-function formatDateLabel(now) {
-  const weekday = capitalize(WEEKDAY_MAP[now.weekday] || now.weekday);
-  const datePart = `${now.day} ${MONTH_LABELS[now.month - 1]} ${now.year}`;
-  return `${weekday}, ${datePart} • ${pad(now.hour)}:${pad(now.minute)} (МСК)`;
+function formatDateLabel(now, texts) {
+  const baseWeekday = WEEKDAY_MAP[now.weekday] || now.weekday;
+  const weekday = texts.dayNames.full[baseWeekday] || capitalize(baseWeekday);
+  const monthLabel = texts.monthNames[now.month - 1] || now.month;
+  return `${weekday}, ${now.day} ${monthLabel} ${now.year} • ${pad(now.hour)}:${pad(now.minute)} ${texts.timezoneLabel}`;
 }
 
-function formatDayHeading(parts) {
+function formatDayHeading(parts, texts) {
   if (!parts) return '';
-  const weekday = capitalize(WEEKDAY_MAP[parts.weekday] || parts.weekday || '');
+  const baseWeekday = WEEKDAY_MAP[parts.weekday] || parts.weekday || '';
+  const weekday = texts.dayNames.full[baseWeekday] || capitalize(baseWeekday);
   const monthIndex = (parts.month || 1) - 1;
-  const monthLabel = MONTH_LABELS[monthIndex];
+  const monthLabel = texts.monthNames[monthIndex];
   const datePart = monthLabel
     ? `${parts.day} ${monthLabel} ${parts.year}`
     : `${parts.day}.${parts.month}.${parts.year}`;
   return `${weekday}, ${datePart}`.trim();
 }
 
-function formatDayDate(parts) {
+function formatDayDate(parts, texts) {
   if (!parts) return '';
   const monthIndex = (parts.month || 1) - 1;
-  const monthLabel = MONTH_LABELS[monthIndex];
+  const monthLabel = texts.monthNames[monthIndex];
   if (!monthLabel) {
     return `${parts.day}.${parts.month}`;
   }
@@ -1787,4 +2305,8 @@ function getSafeStorage() {
   }
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <ErrorBoundary>
+    <App />
+  </ErrorBoundary>
+);
