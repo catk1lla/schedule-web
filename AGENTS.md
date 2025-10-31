@@ -1,16 +1,34 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-Keep `index.html` lean; it mounts React 18 via CDN, loads Babel for inline JSX, and should only reference additional scripts with `type="text/babel"`. Core logic lives in `app.jsx`, which houses `SCHEDULE_ODD`, `SCHEDULE_EVEN`, hooks, and UI components; keep helpers near the top-level hooks for discoverability. Global design tokens, responsive tweaks, and layout rules belong in `styles.css`; extend existing CSS variables before adding new colors.
+- `index.html` bootstraps the SPA, pins CDN React/Babel versions, and mounts `app.jsx`.
+- `app.jsx` holds schedule data arrays, UI hooks, and translation dictionaries; keep helper hooks near their consumers.
+- `styles.css` defines the theme tokens, responsive layout, and reduced-motion guards; reuse existing custom properties.
+- `favicon.ico` ships the tab icon; update it alongside any branding tweaks.
 
 ## Build, Test, and Development Commands
-Serve the app locally with `npx serve . --listen 5173` for live-reload friendly caching, or run `python3 -m http.server 5173` for a zero-dependency alternative. After edits, hard-refresh the browser so Babel recompiles inline JSX and surfaces console warnings. No bundling step currently exists; the project relies on the CDN-delivered React runtime.
+- `npx serve . --listen 5173` launches a local static server with hot reload on save.
+- `python3 -m http.server 5173` offers an alternative when Node.js is unavailable.
+- `npm install --global serve` installs the Node CLI once; prefer pinned ports so saved filters persist across reloads.
 
 ## Coding Style & Naming Conventions
-Use two-space indentation, retain trailing semicolons, and prefer single quotes within data arrays. Follow `PascalCase` for React components, `camelCase` for hooks and helpers, and reserve `UPPER_SNAKE_CASE` for shared constants such as filter options. Mirror existing object property order (`day`, `pair`, `time`, etc.) to keep diffs readable. Match surrounding JSX formatting and keep new comments purposeful—only where logic is non-obvious.
+- Respect `.editorconfig`: LF endings, UTF-8, two-space indentation, trailing semicolons in JSX.
+- Use single quotes for string literals inside schedule objects and maintain property order (`day`, `pair`, `time`, …) to keep diffs readable.
+- New UI text must be added to both language dictionaries in `app.jsx`; reference keys through `useTranslation()` helpers.
+- Keep CSS class names kebab-case and reuse existing CSS custom properties instead of hard-coded colors.
 
 ## Testing Guidelines
-Manual verification only: open `http://localhost:5173`, toggle parity modes (`Авто`, `Чёт`, `Нечёт`, `Все`), switch themes, and apply each filter group to confirm state persistence across reloads. Review subgroup-specific entries and week-specific notes for accuracy. Check the browser console for React warnings about keys or hook dependencies and treat any new warning as a blocker.
+- No automated test suite exists; run a manual pass before merging.
+- Verify parity toggles (`Авто`, `Все`, `Нечётная`, `Чётная`) update the list and survive reloads.
+- Exercise subgroup, class-type, and weekday filters in both languages; confirm theme switching (System → Light → Dark) on desktop and mobile.
+- Watch the browser console for React or accessibility warnings; treat any new warning as a blocker and document findings.
 
 ## Commit & Pull Request Guidelines
-Commits follow short, imperative statements (e.g., “Refine widescreen week layout”) and should cover a single logical change. Pull requests must describe UX-visible updates, mention any data range adjustments, and include before/after visuals when layout changes. Reference related issues or discussions and list manual test steps so reviewers can reproduce verification quickly.
+- Write short, imperative commit messages modelled on the existing log (`Add language toggle to header`).
+- Update `CHANGELOG.md` with every user-visible change and note the manual QA you performed.
+- Pull requests should describe the change set, link to tracking issues when available, and include screenshots or GIFs for UI updates.
+- Highlight localisation impacts and note whether filters or persistence logic require special attention during review.
+
+## Localization & Content Updates
+- When editing schedule entries, mirror changes across odd/even arrays and keep subgroup/type labels consistent.
+- Provide English and Russian strings together, and audit ARIA labels after content changes to ensure screen readers remain accurate.
