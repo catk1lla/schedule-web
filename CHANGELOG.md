@@ -1,5 +1,24 @@
 # Changelog
 
+## 2025-11-07 – Restore favicon bundle
+
+- Recreated the `icons/` assets from the new `favicon.ico` and wired the document head to the regenerated PNG set.
+- Dropped stale SVG mask links so browsers no longer fetch missing assets while keeping PWA manifest references intact.
+
+### Verification
+
+- Manual QA: not run (favicon asset wiring in CLI environment)
+
+## 2025-11-06 – Refresh site icon
+
+- Replaced the favicon set with a glassmorphism-inspired mark aligned to the schedule palette and regenerated 16–512px assets plus an SVG source.
+- Added a PWA manifest with maskable icons, provided an Apple touch icon, and wired svg/png/ico links in the document head.
+- Switched theme-color metadata to respect `prefers-color-scheme` for accurate browser chrome tinting.
+
+### Verification
+
+- Manual QA: not run (icon asset update in CLI environment)
+
 ## 2025-11-05 – End-of-class countdown
 
 - Added countdown-to-end timer for the active class with shared formatting, accessibility text, and parity-aware progress.
