@@ -1,4 +1,9 @@
 const { useState, useMemo, useEffect, useCallback, useRef, useContext } = React;
+const { formatCountdown, formatCountdownAria } = (typeof CountdownUtils !== 'undefined' && CountdownUtils) || {};
+
+if (typeof formatCountdown !== 'function' || typeof formatCountdownAria !== 'function') {
+  throw new Error('Countdown utilities are not available.');
+}
 
 const SCHEDULE_ODD = [
   {day:'Понедельник', pair:3, time:'11:35-13:10', weeks:'all', type:'практика', subgroup:null, subject:'Электив по физической культуре и спорту', place:'спорткомплекс 6-го учебного корпуса', teacher:'Андронова Л. Н.', note:''},
@@ -136,8 +141,14 @@ const TRANSLATIONS = {
       }
     },
     controls: {
-      collapseHeader: 'Свернуть шапку',
-      expandHeader: 'Развернуть шапку'
+      showFilters: 'Показать фильтры',
+      hideFilters: 'Скрыть фильтры',
+      filtersButtonAria: (actionLabel, count) => {
+        if (count > 0) {
+          return `${actionLabel}. Активных фильтров: ${count}.`;
+        }
+        return actionLabel;
+      }
     },
     today: {
       noPairsBadge: 'Сегодня пар нет',
@@ -198,8 +209,11 @@ const TRANSLATIONS = {
       zero: '0 сек',
       running: 'Пара идёт',
       labelPrefix: 'До начала: {duration}',
+      endLabelPrefix: 'До конца: {duration}',
       ariaPrefix: 'До начала пары осталось {duration}',
+      ariaEndPrefix: 'До конца пары осталось {duration}',
       secondsZero: 'До начала пары осталось 0 секунд',
+      endSecondsZero: 'До конца пары осталось 0 секунд',
       startPrefixWithTime: time => `Начало в ${time}.`,
       startPrefixSoon: 'Начало совсем скоро.',
       startSuffixAfterClasses: ' Скоро продолжим занятия.',
@@ -304,8 +318,14 @@ const TRANSLATIONS = {
       }
     },
     controls: {
-      collapseHeader: 'Collapse header',
-      expandHeader: 'Expand header'
+      showFilters: 'Show filters',
+      hideFilters: 'Hide filters',
+      filtersButtonAria: (actionLabel, count) => {
+        if (count > 0) {
+          return `${actionLabel}. Active filters: ${count}.`;
+        }
+        return actionLabel;
+      }
     },
     today: {
       noPairsBadge: 'No classes today',
@@ -366,8 +386,11 @@ const TRANSLATIONS = {
       zero: '0 s',
       running: 'Class in progress',
       labelPrefix: 'Starts in: {duration}',
+      endLabelPrefix: 'Ends in: {duration}',
       ariaPrefix: 'Class starts in {duration}',
+      ariaEndPrefix: 'Class ends in {duration}',
       secondsZero: 'Class starts in 0 seconds',
+      endSecondsZero: 'Class ends in 0 seconds',
       startPrefixWithTime: time => `Starts at ${time}.`,
       startPrefixSoon: 'Starting very soon.',
       startSuffixAfterClasses: ' Classes restart shortly.',
@@ -433,6 +456,15 @@ const TranslationContext = React.createContext({
 
 function useTranslation() {
   return useContext(TranslationContext);
+}
+
+function Container({ as: Component = 'div', className = '', children, ...props }) {
+  const combinedClassName = className ? `app-container ${className}` : 'app-container';
+  return (
+    <Component className={combinedClassName} {...props}>
+      {children}
+    </Component>
+  );
 }
 
 function getTranslations(language) {
@@ -577,8 +609,8 @@ function App() {
     return stored === 'dark' || stored === 'light' || stored === 'system' ? stored : 'system';
   });
   const [systemTheme, setSystemTheme] = useState(() => getPreferredTheme());
-  const [headerCollapsed, setHeaderCollapsed] = useState(false);
   const [headerHidden, setHeaderHidden] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const [filters, setFilters] = useState(() => {
     const storedSubgroup = readStorage(STORAGE_KEYS.subgroup);
@@ -681,6 +713,13 @@ function App() {
         const currentY = window.scrollY;
         const delta = currentY - lastY;
 
+        if (filtersOpen) {
+          setHeaderHidden(false);
+          lastY = currentY;
+          rafId = null;
+          return;
+        }
+
         if (currentY <= 0) {
           setHeaderHidden(false);
         } else if (delta > DIRECTION_THRESHOLD && currentY > HIDE_OFFSET) {
@@ -702,7 +741,13 @@ function App() {
         window.cancelAnimationFrame(rafId);
       }
     };
-  }, []);
+  }, [filtersOpen]);
+
+  useEffect(() => {
+    if (filtersOpen) {
+      setHeaderHidden(false);
+    }
+  }, [filtersOpen]);
 
   useEffect(() => {
     writeStorage(STORAGE_KEYS.parity, parityMode);
@@ -781,6 +826,9 @@ function App() {
 
 const dayFilterList = filters.day === 'all' ? WEEK_DAYS : WEEK_DAYS.filter(day => day === filters.day);
 const filtersAreDefault = isDefaultFilters(filters);
+const activeFilterCount = Object.values(filters).reduce((total, value) => {
+  return value === 'all' ? total : total + 1;
+}, 0);
 
 const currentYear = now.year;
 const themeLabel = translations.theme[themeMode] || themeMode;
@@ -790,55 +838,68 @@ const translationContextValue = useMemo(() => ({
   texts: translations,
   setLanguage
 }), [language, translations]);
-const collapseLabel = headerCollapsed ? translations.controls.expandHeader : translations.controls.collapseHeader;
+const filterButtonActionLabel = filtersOpen ? translations.controls.hideFilters : translations.controls.showFilters;
+const filterButtonAria = translations.controls.filtersButtonAria(filterButtonActionLabel, activeFilterCount);
 
 return (
   <TranslationContext.Provider value={translationContextValue}>
-    <div className="app-shell">
-      <header className={`app-header${headerCollapsed ? ' collapsed' : ''}${headerHidden ? ' is-hidden' : ''}`}>
-        <div className="brand-line">
-          <div className="brand-block" aria-live="polite">
-            <h1>{translations.brand.title}</h1>
-            <div className="brand-meta">
-              <span className="brand-meta-primary">{formatDateLabel(now, translations)}</span>
-              <div className="brand-meta-secondary">
-                <span>{translations.brand.academicWeek(academicWeekNumber)}</span>
-                <span>{translations.brand.autoDetection(autoParityLabel)}</span>
+    <div className={`app-shell${filtersOpen ? ' filters-open' : ''}`}>
+      <header className={`app-header${headerHidden ? ' is-hidden' : ''}`}>
+        <Container className="header-inner">
+          <div className="brand-line">
+            <div className="brand-block" aria-live="polite">
+              <h1>{translations.brand.title}</h1>
+              <div className="brand-meta">
+                <span className="brand-meta-primary">{formatDateLabel(now, translations)}</span>
+                <div className="brand-meta-secondary">
+                  <span>{translations.brand.academicWeek(academicWeekNumber)}</span>
+                  <span>{translations.brand.autoDetection(autoParityLabel)}</span>
+                </div>
               </div>
             </div>
+            <div className="control-block">
+              <ParitySelector parityMode={parityMode} onChange={setParityMode} />
+              <button
+                type="button"
+                className={`filters-toggle-button${filtersOpen ? ' is-open' : ''}${activeFilterCount > 0 ? ' has-active' : ''}`}
+                onClick={() => {
+                  setHeaderHidden(false);
+                  setFiltersOpen(value => !value);
+                }}
+                aria-label={filterButtonAria}
+                aria-expanded={filtersOpen}
+                aria-controls="filters-panel"
+                title={filterButtonActionLabel}
+              >
+                <FilterIcon />
+                <span className="filters-toggle-label">{translations.sections.filters}</span>
+                {activeFilterCount > 0 && (
+                  <span className="filters-toggle-count" aria-hidden="true">{activeFilterCount}</span>
+                )}
+              </button>
+            </div>
           </div>
-          <div className="control-block">
-            <LanguageSelector />
-            <ParitySelector parityMode={parityMode} onChange={setParityMode} />
-            <button
-              type="button"
-              className={`collapse-button${headerCollapsed ? ' collapsed' : ''}`}
-              onClick={() => {
-                setHeaderHidden(false);
-                setHeaderCollapsed(value => !value);
-              }}
-              aria-label={collapseLabel}
-              aria-expanded={!headerCollapsed}
-              aria-controls="filters-panel"
-              title={collapseLabel}
-            >
-              <ChevronIcon direction={headerCollapsed ? 'down' : 'up'} />
-            </button>
-          </div>
-        </div>
-        <FiltersPanel
-          filters={filters}
-          groups={filterGroups}
-          onUpdateFilter={handleFilterChange}
-          collapsed={headerCollapsed}
-          id="filters-panel"
-          onReset={handleResetFilters}
-          resetDisabled={filtersAreDefault}
-        />
+        </Container>
       </header>
+      <div
+        className={`filters-region${filtersOpen ? ' is-open' : ''}`}
+        aria-hidden={!filtersOpen}
+        id="filters-panel"
+      >
+        <Container className="filters-region-inner">
+          <FiltersPanel
+            filters={filters}
+            groups={filterGroups}
+            onUpdateFilter={handleFilterChange}
+            isOpen={filtersOpen}
+            onReset={handleResetFilters}
+            resetDisabled={filtersAreDefault}
+          />
+        </Container>
+      </div>
 
       <main className="app-main">
-        <section id="today">
+        <Container as="section" id="today" className="app-section">
           <div className="section-header">
             <h2>{translations.sections.today}</h2>
           </div>
@@ -847,9 +908,9 @@ return (
             showParityLabels={parityMode === 'all'}
             parityMode={parityMode}
           />
-        </section>
+        </Container>
 
-        <section id="tomorrow">
+        <Container as="section" id="tomorrow" className="app-section">
           <div className="section-header">
             <h2>{translations.sections.tomorrow}</h2>
             <span className="section-caption">{formatDayHeading(tomorrowParts, translations)}</span>
@@ -860,9 +921,9 @@ return (
             showParityLabels={parityMode === 'all'}
             parityMode={parityMode}
           />
-        </section>
+        </Container>
 
-        <section className="week-section" id="week">
+        <Container as="section" className="app-section week-section" id="week">
           <div className="section-header">
             <h2>{translations.sections.week}</h2>
           </div>
@@ -873,19 +934,21 @@ return (
             showParityLabels={parityMode === 'all'}
             parityMode={parityMode}
           />
-        </section>
+        </Container>
       </main>
 
       <footer className="app-footer">
-      <div className="footer-inner">
-        <div className="footer-upper">
-          <div className="footer-brand">
-            <div className="footer-title">{translations.brand.tagline}</div>
-            <p className="footer-description">
-              {translations.brand.description}
-            </p>
-            <div className="footer-actions">
-              <span className="footer-action-label">{translations.footer.themeLabel}</span>
+        <Container className="footer-inner">
+          <div className="footer-main">
+            <div className="footer-brand">
+              <div className="footer-site-name">{translations.brand.title}</div>
+              <div className="footer-meta-line">
+                <span className="footer-meta-item">{translations.footer.updateInfo}</span>
+                <span className="footer-meta-item">{translations.footer.lastUpdated}</span>
+              </div>
+            </div>
+            <div className="footer-controls">
+              <LanguageSelector />
               <button
                 type="button"
                 className="theme-button footer-theme-button"
@@ -901,31 +964,11 @@ return (
               </button>
             </div>
           </div>
-          <div className="footer-columns">
-            <div className="footer-column">
-              <h3>{translations.footer.navHeading}</h3>
-              <ul>
-                <li><a href="#today">{translations.footer.nav.today}</a></li>
-                <li><a href="#tomorrow">{translations.footer.nav.tomorrow}</a></li>
-                <li><a href="#week">{translations.footer.nav.week}</a></li>
-                <li><a href="#filters-panel">{translations.footer.nav.filters}</a></li>
-              </ul>
-            </div>
-            <div className="footer-column">
-              <h3>{translations.footer.extrasHeading}</h3>
-              <ul>
-                <li><a href="https://www.nntu.ru/" target="_blank" rel="noopener noreferrer">{translations.footer.universityLink}</a></li>
-                <li><span>{translations.footer.updateInfo}</span></li>
-              </ul>
-            </div>
+          <div className="footer-bottom">
+            <small>{translations.footer.copyright(currentYear)}</small>
           </div>
-        </div>
-        <div className="footer-bottom">
-          <small>{translations.footer.copyright(currentYear)}</small>
-          <small>{translations.footer.lastUpdated}</small>
-        </div>
-      </div>
-    </footer>
+        </Container>
+      </footer>
     </div>
   </TranslationContext.Provider>
 );
@@ -934,17 +977,22 @@ return (
 function LanguageSelector() {
   const { language, texts, setLanguage } = useTranslation();
   return (
-    <div className="language-switch" role="group" aria-label={texts.languageToggle}>
-      {LANGUAGE_OPTIONS.map(option => (
-        <button
-          key={option.value}
-          type="button"
-          aria-pressed={language === option.value}
-          onClick={() => setLanguage(normalizeLanguage(option.value))}
-        >
-          {option.label}
-        </button>
-      ))}
+    <div className="language-switch">
+      <span className="language-switch-icon" aria-hidden="true">
+        <GlobeIcon />
+      </span>
+      <div className="language-switch-buttons" role="group" aria-label={texts.languageToggle}>
+        {LANGUAGE_OPTIONS.map(option => (
+          <button
+            key={option.value}
+            type="button"
+            aria-pressed={language === option.value}
+            onClick={() => setLanguage(normalizeLanguage(option.value))}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
@@ -974,14 +1022,12 @@ function ParitySelector({ parityMode, onChange }) {
   );
 }
 
-function FiltersPanel({ filters, groups = [], onUpdateFilter, collapsed = false, id, onReset, resetDisabled = false }) {
+function FiltersPanel({ filters, groups = [], onUpdateFilter, isOpen = false, onReset, resetDisabled = false }) {
   const { texts } = useTranslation();
   return (
     <div
-      className={`filters-panel${collapsed ? ' is-collapsed' : ''}`}
+      className={`filters-panel${isOpen ? ' is-open' : ''}`}
       aria-label={texts.filters.heading}
-      aria-hidden={collapsed}
-      id={id}
     >
       {groups.map(group => (
         <div className="filter-field" key={group.field}>
@@ -992,6 +1038,7 @@ function FiltersPanel({ filters, groups = [], onUpdateFilter, collapsed = false,
                 key={option.value}
                 active={filters[group.field] === option.value}
                 onClick={() => onUpdateFilter(group.field, option.value)}
+                disabled={!isOpen}
               >
                 {option.label}
               </FilterOptionButton>
@@ -1005,7 +1052,8 @@ function FiltersPanel({ filters, groups = [], onUpdateFilter, collapsed = false,
             type="button"
             className="filter-reset-button"
             onClick={onReset}
-            disabled={resetDisabled}
+            disabled={!isOpen || resetDisabled}
+            tabIndex={isOpen ? 0 : -1}
             aria-label={texts.filters.reset}
             title={texts.filters.reset}
           >
@@ -1017,29 +1065,25 @@ function FiltersPanel({ filters, groups = [], onUpdateFilter, collapsed = false,
   );
 }
 
-function FilterOptionButton({ active, onClick, children }) {
+function FilterOptionButton({ active, onClick, disabled = false, children }) {
   return (
     <button
       type="button"
       className={`filter-button${active ? ' active' : ''}`}
       aria-pressed={active}
       onClick={onClick}
+      disabled={disabled}
     >
       {children}
     </button>
   );
 }
 
-function ChevronIcon({ direction }) {
+function FilterIcon() {
   return (
-    <svg
-      className={`icon icon-chevron icon-chevron--${direction}`}
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      focusable="false"
-    >
+    <svg className="icon icon-filter" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
       <path
-        d="M7 10.5l5 5 5-5"
+        d="M4 5.5h16M7.5 11.5h9M10.5 17.5h3"
         fill="none"
         stroke="currentColor"
         strokeWidth="1.8"
@@ -1107,6 +1151,33 @@ function ThemeIcon({ mode }) {
         strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function GlobeIcon() {
+  return (
+    <svg className="icon icon-globe" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path
+        d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+      />
+      <path
+        d="M3.6 9h16.8M3.6 15h16.8M12 3v18"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M12 3c2.5 2.7 3.8 6 3.8 9S14.5 18.3 12 21m0-18c-2.5 2.7-3.8 6-3.8 9s1.3 6.3 3.8 9"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        strokeLinecap="round"
       />
     </svg>
   );
@@ -1581,7 +1652,7 @@ function WeekView({ days, entries, currentKey, showParityLabels, parityMode }) {
   const hasEntries = scheduleByDay.some(group => group.entries.length > 0);
 
   return (
-    <>
+    <div className="week-surface">
       <div
         className={`week-carousel${isMobileLayout ? ' is-mobile' : ''}`}
         ref={carouselRef}
@@ -1619,7 +1690,7 @@ function WeekView({ days, entries, currentKey, showParityLabels, parityMode }) {
                         <li
                           key={key}
                           className={`pair-entry${isCurrent ? ' is-current' : ''}${parityCardVariant ? ` parity-${parityCardVariant}` : ''}`}
-                      >
+                        >
                           <div className="pair-entry-header">
                             <div className="pair-entry-time">
                               <span className="pair-entry-number">
@@ -1670,7 +1741,7 @@ function WeekView({ days, entries, currentKey, showParityLabels, parityMode }) {
       {!hasEntries && (
         <p className="empty-table-note">{texts.week.emptyNote}</p>
       )}
-    </>
+    </div>
   );
 }
 
@@ -1890,6 +1961,22 @@ function computeTodayInfo({ schedule, now, parity, weekNumber, filters, texts, l
   }
 
   if (current) {
+    let countdownLabel = texts.today.countdownLabel;
+    let countdownAria = texts.today.countdownAria;
+    let countdownRole = 'status';
+    const countdownLive = 'polite';
+
+    if (typeof current.endSeconds === 'number' && nowSeconds < current.endSeconds) {
+      const remainingMs = (current.endSeconds - nowSeconds) * 1000;
+      const countdownValue = formatCountdown(remainingMs, texts);
+      countdownLabel = texts.countdown.endLabelPrefix.replace('{duration}', countdownValue);
+      countdownAria = formatCountdownAria(remainingMs, texts, language, {
+        prefix: texts.countdown.ariaEndPrefix,
+        zero: texts.countdown.endSecondsZero
+      });
+      countdownRole = 'timer';
+    }
+
     return {
       mode: 'list',
       summary: {
@@ -1897,10 +1984,10 @@ function computeTodayInfo({ schedule, now, parity, weekNumber, filters, texts, l
         badge: texts.today.currentBadge,
         title: current.entry.subject,
         message: texts.today.currentMessage,
-        countdownLabel: texts.today.countdownLabel,
-        countdownAria: texts.today.countdownAria,
-        countdownRole: 'status',
-        countdownLive: 'polite',
+        countdownLabel,
+        countdownAria,
+        countdownRole,
+        countdownLive,
         progress: computeProgress(nowSeconds, current.startSeconds, current.endSeconds)
       },
       entries,
@@ -1976,72 +2063,6 @@ function computeProgress(nowSeconds, startSeconds, endSeconds) {
   return Math.min(100, Math.max(0, (remaining / total) * 100));
 }
 
-function formatCountdown(ms, texts) {
-  const { totalSeconds, days, hours, minutes, seconds } = splitDuration(ms);
-  if (totalSeconds === 0) {
-    return texts.countdown.zero;
-  }
-
-  const units = [
-    { value: days, label: texts.countdown.unitsShort.days },
-    { value: hours, label: texts.countdown.unitsShort.hours },
-    { value: minutes, label: texts.countdown.unitsShort.minutes },
-    { value: seconds, label: texts.countdown.unitsShort.seconds }
-  ];
-
-  const parts = [];
-  const firstIndex = units.findIndex(unit => unit.value > 0);
-  if (firstIndex === -1) {
-    return texts.countdown.zero;
-  }
-
-  parts.push(`${units[firstIndex].value} ${units[firstIndex].label}`);
-
-  for (let index = firstIndex + 1; index < units.length; index += 1) {
-    const unit = units[index];
-    if (unit.value > 0) {
-      parts.push(`${unit.value} ${unit.label}`);
-      break;
-    }
-  }
-
-  return parts.join(' ');
-}
-
-function formatCountdownAria(ms, texts, language) {
-  const { totalSeconds, days, hours, minutes, seconds } = splitDuration(ms);
-  if (totalSeconds === 0) {
-    return texts.countdown.secondsZero;
-  }
-
-  const units = [
-    { value: days, forms: texts.countdown.unitsLong.days },
-    { value: hours, forms: texts.countdown.unitsLong.hours },
-    { value: minutes, forms: texts.countdown.unitsLong.minutes },
-    { value: seconds, forms: texts.countdown.unitsLong.seconds }
-  ];
-
-  const parts = [];
-  const firstIndex = units.findIndex(unit => unit.value > 0);
-  if (firstIndex === -1) {
-    return texts.countdown.secondsZero;
-  }
-
-  const firstUnit = units[firstIndex];
-  parts.push(`${firstUnit.value} ${formatUnitLabel(firstUnit.value, firstUnit.forms, language)}`);
-
-  for (let index = firstIndex + 1; index < units.length; index += 1) {
-    const unit = units[index];
-    if (unit.value > 0) {
-      parts.push(`${unit.value} ${formatUnitLabel(unit.value, unit.forms, language)}`);
-      break;
-    }
-  }
-
-  const duration = parts.join(' ');
-  return texts.countdown.ariaPrefix.replace('{duration}', duration);
-}
-
 function formatTypeLabel(value, texts) {
   if (!value || value === '-') {
     return texts.typeLabels['-'];
@@ -2104,42 +2125,6 @@ function formatSingleTeacher(part) {
 
   const formattedInitials = initials.map(letter => `${letter}.`).join(' ');
   return `${surname} ${formattedInitials}`;
-}
-
-function splitDuration(ms) {
-  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
-  const days = Math.floor(totalSeconds / 86400);
-  const remainderAfterDays = totalSeconds % 86400;
-  const hours = Math.floor(remainderAfterDays / 3600);
-  const remainderAfterHours = remainderAfterDays % 3600;
-  const minutes = Math.floor(remainderAfterHours / 60);
-  const seconds = remainderAfterHours % 60;
-  return { totalSeconds, days, hours, minutes, seconds };
-}
-
-function formatUnitLabel(value, forms, language) {
-  if (language === 'ru' && Array.isArray(forms) && forms.length === 3) {
-    return declineRus(value, forms);
-  }
-  if (Array.isArray(forms) && forms.length >= 2) {
-    return value === 1 ? forms[0] : forms[1];
-  }
-  if (Array.isArray(forms) && forms.length === 1) {
-    return forms[0];
-  }
-  return String(forms);
-}
-
-function declineRus(value, [one, few, many]) {
-  const mod10 = value % 10;
-  const mod100 = value % 100;
-  if (mod10 === 1 && mod100 !== 11) {
-    return one;
-  }
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) {
-    return few;
-  }
-  return many;
 }
 
 function getParityVariant(weeks) {

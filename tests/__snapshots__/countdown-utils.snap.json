@@ -1,0 +1,10 @@
+{
+  "ru_endCountdown": {
+    "label": "До конца: 1 мин 5 сек",
+    "aria": "До конца пары осталось 1 минута 5 секунд"
+  },
+  "en_endCountdown": {
+    "label": "Ends in: 1 min 5 s",
+    "aria": "Class ends in 1 minute 5 seconds"
+  }
+}

@@ -1,5 +1,26 @@
 # Changelog
 
+## 2025-11-05 – End-of-class countdown
+
+- Added countdown-to-end timer for the active class with shared formatting, accessibility text, and parity-aware progress.
+- Localised new countdown strings in Russian and English; factored reusable timer utilities for shared use.
+- Introduced lightweight unit and snapshot tests covering countdown formatting behaviour.
+
+### Verification
+
+- `node tests/countdown-utils.test.js`
+- Manual QA: not run (CLI environment)
+
+## 2025-11-02 – Simplify header and filters layout
+
+- Made the header static with auto-hide behaviour, removed manual collapse controls, and kept week parity toggles alongside a new filters button.
+- Moved subgroup/day/type filters into a collapsible panel beneath the header with active-state indicators and persistence of filter logic.
+- Relocated the language selector to a globe-accented footer, streamlined footer content, and reduced global side padding for a lighter layout.
+
+### Verification
+
+- Manual QA: not run (CLI environment)
+
 ## 2025-10-31 – Final Polish
 
 - Added bilingual UI with persistent language toggle, updated copy, and document `lang` syncing.
