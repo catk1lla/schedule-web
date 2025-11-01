@@ -1,5 +1,15 @@
 # Changelog
 
+## 2025-11-08 – Align daily headers and footer copy
+
+- Moved the today heading date next to the section title and removed live time from the masthead for a calmer header.
+- Replaced the auto-detection label with a single parity badge and trimmed footer metadata down to a fixed © 2025 line.
+- Centered the footer baseline text to keep spacing cohesive after the copy changes.
+
+### Verification
+
+- Manual QA: not run (CLI environment)
+
 ## 2025-11-07 – Restore favicon bundle
 
 - Recreated the `icons/` assets from the new `favicon.ico` and wired the document head to the regenerated PNG set.

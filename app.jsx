@@ -830,9 +830,10 @@ const activeFilterCount = Object.values(filters).reduce((total, value) => {
   return value === 'all' ? total : total + 1;
 }, 0);
 
-const currentYear = now.year;
 const themeLabel = translations.theme[themeMode] || themeMode;
-const autoParityLabel = autoParity === 'odd' ? translations.parity.autoOdd : translations.parity.autoEven;
+const parityKey = autoParity === 'even' ? 'even' : 'odd';
+const parityLabel = translations.parityLabels[parityKey] || '';
+const todayHeading = formatDayHeading(now, translations);
 const translationContextValue = useMemo(() => ({
   language,
   texts: translations,
@@ -851,10 +852,11 @@ return (
               <h1>{translations.brand.title}</h1>
               <div className="brand-meta">
                 <span className="brand-meta-primary">{formatDateLabel(now, translations)}</span>
-                <div className="brand-meta-secondary">
-                  <span>{translations.brand.academicWeek(academicWeekNumber)}</span>
-                  <span>{translations.brand.autoDetection(autoParityLabel)}</span>
-                </div>
+                {parityLabel && (
+                  <div className="brand-meta-secondary">
+                    <span>{parityLabel}</span>
+                  </div>
+                )}
               </div>
             </div>
             <div className="control-block">
@@ -902,6 +904,7 @@ return (
         <Container as="section" id="today" className="app-section">
           <div className="section-header">
             <h2>{translations.sections.today}</h2>
+            <span className="section-caption">{todayHeading}</span>
           </div>
           <TodaySection
             info={todayInfo}
@@ -942,10 +945,6 @@ return (
           <div className="footer-main">
             <div className="footer-brand">
               <div className="footer-site-name">{translations.brand.title}</div>
-              <div className="footer-meta-line">
-                <span className="footer-meta-item">{translations.footer.updateInfo}</span>
-                <span className="footer-meta-item">{translations.footer.lastUpdated}</span>
-              </div>
             </div>
             <div className="footer-controls">
               <LanguageSelector />
@@ -965,7 +964,7 @@ return (
             </div>
           </div>
           <div className="footer-bottom">
-            <small>{translations.footer.copyright(currentYear)}</small>
+            <small>© 2025</small>
           </div>
         </Container>
       </footer>
@@ -2208,7 +2207,7 @@ function formatDateLabel(now, texts) {
   const baseWeekday = WEEKDAY_MAP[now.weekday] || now.weekday;
   const weekday = texts.dayNames.full[baseWeekday] || capitalize(baseWeekday);
   const monthLabel = texts.monthNames[now.month - 1] || now.month;
-  return `${weekday}, ${now.day} ${monthLabel} ${now.year} • ${pad(now.hour)}:${pad(now.minute)} ${texts.timezoneLabel}`;
+  return `${weekday}, ${now.day} ${monthLabel} ${now.year}`;
 }
 
 function formatDayHeading(parts, texts) {
