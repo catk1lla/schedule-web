@@ -1,5 +1,14 @@
 # Changelog
 
+## 2025-11-08 – Fix mobile countdown overflow
+
+- Stacked the timer label and progress bar on narrow screens and allow the countdown text to wrap so the header content no longer stretches beyond the viewport when the timer is present.
+- Relaxed the progress track width on phones to keep it fluid and prevent horizontal scrolling when the countdown renders.
+
+### Verification
+
+- Manual QA: not run (CLI environment)
+
 ## 2025-11-07 – Restore favicon bundle
 
 - Recreated the `icons/` assets from the new `favicon.ico` and wired the document head to the regenerated PNG set.

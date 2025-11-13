@@ -1624,6 +1624,22 @@ select:focus-visible {
     justify-content: flex-start;
     width: 100%;
   }
+
+  .countdown-line {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .countdown-value {
+    white-space: normal;
+    width: 100%;
+  }
+
+  .progress-track {
+    min-width: 0;
+    width: 100%;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   *,
