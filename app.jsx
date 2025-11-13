@@ -179,7 +179,12 @@ const TRANSLATIONS = {
     },
     pair: {
       roomPrefix: 'ауд.',
-      numberLabel: value => `${value}-я пара`
+      numberLabel: value => `${value}-я пара`,
+      subgroupLabels: {
+        first: '1-я подгруппа',
+        second: '2-я подгруппа',
+        combined: '1-я и 2-я подгруппы'
+      }
     },
     week: {
       listAria: 'Занятия на неделю',
@@ -356,7 +361,12 @@ const TRANSLATIONS = {
     },
     pair: {
       roomPrefix: 'room',
-      numberLabel: value => `Class ${value}`
+      numberLabel: value => `Class ${value}`,
+      subgroupLabels: {
+        first: '1st subgroup',
+        second: '2nd subgroup',
+        combined: '1st & 2nd subgroups'
+      }
     },
     week: {
       listAria: 'Classes for the week',
@@ -852,7 +862,6 @@ return (
             <div className="brand-block" aria-live="polite">
               <h1>{translations.brand.title}</h1>
               <div className="brand-meta">
-                <span className="brand-meta-primary">{formatDateLabel(now, translations)}</span>
                 <div className="brand-meta-secondary">
                   <span className="brand-meta-text">{translations.brand.academicWeek(academicWeekNumber)}</span>
                   <span
@@ -1261,7 +1270,7 @@ function TodaySection({ info, showParityLabels, parityMode }) {
         {entries.map(item => {
           const entry = item.entry;
           const entryKey = item.key;
-          const subgroupBadge = getSubgroupBadge(entry.subgroup);
+          const subgroupBadge = getSubgroupBadge(entry.subgroup, texts);
           const parityTone = getParityVariant(entry.weeks);
           const parityLabel = showParityLabels && parityTone ? getParityLabel(entry.weeks, texts) : null;
           const parityCardVariant = (showParityLabels || parityMode !== 'all') ? null : parityTone;
@@ -1363,7 +1372,7 @@ function TomorrowSection({ entries, dateParts, showParityLabels, parityMode }) {
       <ul className="day-pair-list tomorrow-pair-list">
         {entries.map(entry => {
           const entryKey = createEntryKey(entry);
-          const subgroupBadge = getSubgroupBadge(entry.subgroup);
+          const subgroupBadge = getSubgroupBadge(entry.subgroup, texts);
           const parityTone = getParityVariant(entry.weeks);
           const parityLabel = showParityLabels && parityTone ? getParityLabel(entry.weeks, texts) : null;
           const parityCardVariant = (showParityLabels || parityMode !== 'all') ? null : parityTone;
@@ -1698,7 +1707,7 @@ function WeekView({ days, entries, currentKey, showParityLabels, parityMode }) {
                   <ul className="day-pair-list">
                     {dayEntries.map(({ entry, key }) => {
                       const isCurrent = currentKey && currentKey === key;
-                      const subgroupBadge = getSubgroupBadge(entry.subgroup);
+                      const subgroupBadge = getSubgroupBadge(entry.subgroup, texts);
                       const parityTone = getParityVariant(entry.weeks);
                       const parityLabel = showParityLabels && parityTone ? getParityLabel(entry.weeks, texts) : null;
                       const parityCardVariant = (showParityLabels || parityMode !== 'all') ? null : parityTone;
@@ -2217,27 +2226,22 @@ function getPreferredTheme() {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
-function getSubgroupBadge(value) {
+function getSubgroupBadge(value, texts) {
   if (value == null || value === '' || value === 'all') {
     return null;
   }
+  const subgroupLabels = texts && texts.pair && texts.pair.subgroupLabels ? texts.pair.subgroupLabels : null;
+  const labelFor = (key, fallback) => (subgroupLabels && subgroupLabels[key]) || fallback;
   if (value === 1 || value === '1') {
-    return { label: '1', variant: 'first' };
+    return { label: labelFor('first', '1'), variant: 'first' };
   }
   if (value === 2 || value === '2') {
-    return { label: '2', variant: 'second' };
+    return { label: labelFor('second', '2'), variant: 'second' };
   }
   if (value === '1-2' || COMBINED_SUBGROUP_VALUES.includes(value)) {
-    return { label: '1, 2', variant: 'combined' };
+    return { label: labelFor('combined', '1, 2'), variant: 'combined' };
   }
   return null;
-}
-
-function formatDateLabel(now, texts) {
-  const baseWeekday = WEEKDAY_MAP[now.weekday] || now.weekday;
-  const weekday = texts.dayNames.full[baseWeekday] || capitalize(baseWeekday);
-  const monthLabel = texts.monthNames[now.month - 1] || now.month;
-  return `${weekday}, ${now.day} ${monthLabel} ${now.year} • ${pad(now.hour)}:${pad(now.minute)} ${texts.timezoneLabel}`;
 }
 
 function formatDayHeading(parts, texts) {

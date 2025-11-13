@@ -1,5 +1,23 @@
 # Changelog
 
+## 2025-11-14 – Load Manrope from Google Fonts
+
+- Linked the document head to Google Fonts with preconnect hints so the Manrope family loads consistently for all declared weights.
+
+### Verification
+
+- Manual QA: not run (CLI environment)
+
+## 2025-11-14 – Clarify subgroup badges and countdown label
+
+- Added localized "1st subgroup" / "2nd subgroup" text to the subgroup chips so cards no longer show lone digits.
+- Restyled the "Before start" countdown label into a compact pill stacked above the timer to keep the prefix readable on all screens.
+- Removed the live Moscow date/time line from the header hero to reduce visual noise above the filters.
+
+### Verification
+
+- Manual QA: not run (CLI environment)
+
 ## 2025-11-14 – Polish hero meta and countdown
 
 - Added the live Moscow date to the Today section header and mirrored Tomorrow’s caption treatment so the hero cards line up visually.
