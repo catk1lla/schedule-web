@@ -1,5 +1,23 @@
 # Changelog
 
+## 2025-11-14 – Polish hero meta and countdown
+
+- Added the live Moscow date to the Today section header and mirrored Tomorrow’s caption treatment so the hero cards line up visually.
+- Replaced the “auto detection” text with a parity pill that reuses odd/even colors and better communicates the current week at a glance.
+- Split the countdown label into prefix/time/suffix parts and restyled the timer row so only the duration is highlighted, matching the rest of the UI accents.
+
+### Verification
+
+- Manual QA: not run (CLI environment)
+
+## 2025-11-14 – Remove mobile footer gap
+
+- Dropped the oversized bottom padding of `.app-shell` on phones and limited it to safe-area insets so the footer now sits flush with the viewport without a trailing blank strip.
+
+### Verification
+
+- Manual QA: not run (CLI environment)
+
 ## 2025-11-08 – Fix mobile countdown overflow
 
 - Stacked the timer label and progress bar on narrow screens and allow the countdown text to wrap so the header content no longer stretches beyond the viewport when the timer is present.

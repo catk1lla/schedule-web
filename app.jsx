@@ -833,6 +833,7 @@ const activeFilterCount = Object.values(filters).reduce((total, value) => {
 const currentYear = now.year;
 const themeLabel = translations.theme[themeMode] || themeMode;
 const autoParityLabel = autoParity === 'odd' ? translations.parity.autoOdd : translations.parity.autoEven;
+const parityChipText = getParityLabel(autoParity, translations) || autoParityLabel;
 const translationContextValue = useMemo(() => ({
   language,
   texts: translations,
@@ -840,6 +841,7 @@ const translationContextValue = useMemo(() => ({
 }), [language, translations]);
 const filterButtonActionLabel = filtersOpen ? translations.controls.hideFilters : translations.controls.showFilters;
 const filterButtonAria = translations.controls.filtersButtonAria(filterButtonActionLabel, activeFilterCount);
+const todayHeading = useMemo(() => formatDayHeading(now, translations), [now, translations]);
 
 return (
   <TranslationContext.Provider value={translationContextValue}>
@@ -852,8 +854,13 @@ return (
               <div className="brand-meta">
                 <span className="brand-meta-primary">{formatDateLabel(now, translations)}</span>
                 <div className="brand-meta-secondary">
-                  <span>{translations.brand.academicWeek(academicWeekNumber)}</span>
-                  <span>{translations.brand.autoDetection(autoParityLabel)}</span>
+                  <span className="brand-meta-text">{translations.brand.academicWeek(academicWeekNumber)}</span>
+                  <span
+                    className={`brand-parity-chip brand-parity-chip--${autoParity}`}
+                    aria-label={translations.brand.autoDetection(parityChipText)}
+                  >
+                    {parityChipText}
+                  </span>
                 </div>
               </div>
             </div>
@@ -902,6 +909,7 @@ return (
         <Container as="section" id="today" className="app-section">
           <div className="section-header">
             <h2>{translations.sections.today}</h2>
+            <span className="section-caption">{todayHeading}</span>
           </div>
           <TodaySection
             info={todayInfo}
@@ -1198,6 +1206,7 @@ function TodaySection({ info, showParityLabels, parityMode }) {
   const isCurrent = summary.state === 'current';
   const cardParityVariant = (showParityLabels || parityMode !== 'all') ? null : highlightParity;
   const progressValue = summary.progress != null ? Math.round(summary.progress) : 0;
+  const countdownDisplay = summary.countdownDisplay;
 
   return (
     <article
@@ -1220,7 +1229,19 @@ function TodaySection({ info, showParityLabels, parityMode }) {
             aria-label={summary.countdownAria || undefined}
             aria-atomic={summary.countdownLive ? 'true' : undefined}
           >
-            {summary.countdownLabel}
+            {countdownDisplay ? (
+              <>
+                {countdownDisplay.prefix && (
+                  <span className="countdown-label-text">{countdownDisplay.prefix}</span>
+                )}
+                <span className="countdown-time">{countdownDisplay.value}</span>
+                {countdownDisplay.suffix && (
+                  <span className="countdown-label-text">{countdownDisplay.suffix}</span>
+                )}
+              </>
+            ) : (
+              <span className="countdown-time">{summary.countdownLabel}</span>
+            )}
           </div>
           {summary.state === 'current' && (
             <div
@@ -1952,7 +1973,8 @@ function computeTodayInfo({ schedule, now, parity, weekNumber, filters, texts, l
         countdownAria: null,
         countdownRole: null,
         countdownLive: null,
-        progress: null
+        progress: null,
+        countdownDisplay: null
       },
       entries,
       highlightParity,
@@ -1965,16 +1987,19 @@ function computeTodayInfo({ schedule, now, parity, weekNumber, filters, texts, l
     let countdownAria = texts.today.countdownAria;
     let countdownRole = 'status';
     const countdownLive = 'polite';
+    let countdownDisplay = null;
 
     if (typeof current.endSeconds === 'number' && nowSeconds < current.endSeconds) {
       const remainingMs = (current.endSeconds - nowSeconds) * 1000;
+      const countdownTemplate = texts.countdown.endLabelPrefix;
       const countdownValue = formatCountdown(remainingMs, texts);
-      countdownLabel = texts.countdown.endLabelPrefix.replace('{duration}', countdownValue);
+      countdownLabel = countdownTemplate.replace('{duration}', countdownValue);
       countdownAria = formatCountdownAria(remainingMs, texts, language, {
         prefix: texts.countdown.ariaEndPrefix,
         zero: texts.countdown.endSecondsZero
       });
       countdownRole = 'timer';
+      countdownDisplay = createCountdownDisplay(countdownTemplate, countdownValue);
     }
 
     return {
@@ -1985,6 +2010,7 @@ function computeTodayInfo({ schedule, now, parity, weekNumber, filters, texts, l
         title: current.entry.subject,
         message: texts.today.currentMessage,
         countdownLabel,
+        countdownDisplay,
         countdownAria,
         countdownRole,
         countdownLive,
@@ -2007,8 +2033,10 @@ function computeTodayInfo({ schedule, now, parity, weekNumber, filters, texts, l
     ? texts.countdown.startSuffixAfterClasses
     : texts.countdown.startSuffixBeforeClasses;
   const countdownValue = formatCountdown(remainingMs, texts);
-  const countdownLabel = texts.countdown.labelPrefix.replace('{duration}', countdownValue);
+  const countdownTemplate = texts.countdown.labelPrefix;
+  const countdownLabel = countdownTemplate.replace('{duration}', countdownValue);
   const countdownAria = formatCountdownAria(remainingMs, texts, language);
+  const countdownDisplay = createCountdownDisplay(countdownTemplate, countdownValue);
 
   return {
     mode: 'list',
@@ -2018,6 +2046,7 @@ function computeTodayInfo({ schedule, now, parity, weekNumber, filters, texts, l
       title: next.entry.subject,
       message: `${prefix}${suffix}`,
       countdownLabel,
+      countdownDisplay,
       countdownAria,
       countdownRole: 'timer',
       countdownLive: 'polite',
@@ -2231,6 +2260,26 @@ function formatDayDate(parts, texts) {
     return `${parts.day}.${parts.month}`;
   }
   return `${parts.day} ${monthLabel}`;
+}
+
+function createCountdownDisplay(template, value) {
+  if (!template || typeof template !== 'string') {
+    return null;
+  }
+  if (!value) {
+    return null;
+  }
+  if (!template.includes('{duration}')) {
+    return null;
+  }
+  const parts = template.split('{duration}');
+  const prefix = parts[0] || '';
+  const suffix = parts.slice(1).join('{duration}') || '';
+  return {
+    prefix,
+    suffix,
+    value
+  };
 }
 
 function capitalize(value) {

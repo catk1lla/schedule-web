@@ -191,6 +191,44 @@ header.app-header.is-hidden {
   margin-inline: 0.35rem;
 }
 
+.brand-meta-text {
+  color: inherit;
+}
+
+.brand-parity-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.9rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background: color-mix(in srgb, var(--surface-strong) 80%, transparent);
+  border: 1px solid var(--border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.brand-parity-chip--odd {
+  color: var(--parity-odd-strong);
+  border-color: var(--parity-odd-border);
+  background: linear-gradient(120deg, var(--parity-odd-bg), transparent),
+    color-mix(in srgb, var(--surface-strong) 70%, transparent);
+}
+
+.brand-parity-chip--even {
+  color: var(--parity-even-strong);
+  border-color: var(--parity-even-border);
+  background: linear-gradient(120deg, var(--parity-even-bg), transparent),
+    color-mix(in srgb, var(--surface-strong) 70%, transparent);
+}
+
+.brand-meta-secondary .brand-parity-chip::before {
+  content: none;
+  margin: 0;
+}
+
 .control-block {
   display: flex;
   gap: 0.75rem;
@@ -967,10 +1005,25 @@ main.app-main {
 }
 
 .countdown-value {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.countdown-label-text {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: -0.01em;
+}
+
+.countdown-time {
   font-size: clamp(1.8rem, 4vw, 2.4rem);
   font-weight: 700;
   color: var(--accent);
-  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
   white-space: nowrap;
 }
 
@@ -1520,7 +1573,13 @@ select:focus-visible {
   }
 
   .app-shell {
-    padding-bottom: var(--space-3xl);
+    padding-bottom: 0;
+  }
+
+  @supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .app-shell {
+      padding-bottom: env(safe-area-inset-bottom);
+    }
   }
 
   .today-card,
