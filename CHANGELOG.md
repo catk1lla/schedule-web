@@ -1,5 +1,14 @@
 # Changelog
 
+## 2025-11-14 – Scroll filters into view
+
+- Ensure opening the filters button while scrolled down reveals the header area by automatically scrolling the toggle into view and honoring reduced-motion preferences.
+- Keep the auto-hide header visible when the filters expand, preventing the perception that the filters failed to open.
+
+### Verification
+
+- Manual QA: not run (CLI environment)
+
 ## 2025-11-14 – Rebuild responsive icon bundle
 
 - Added `scripts/generate_icons.py` to regenerate icons with bilinear scaling and smooth rounded corners directly from `icon.png`.

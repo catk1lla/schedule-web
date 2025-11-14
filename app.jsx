@@ -621,6 +621,10 @@ function App() {
   const [systemTheme, setSystemTheme] = useState(() => getPreferredTheme());
   const [headerHidden, setHeaderHidden] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
+  const filtersToggleRef = useRef(null);
+  const filtersRegionRef = useRef(null);
+  const lastFiltersOpenRef = useRef(false);
 
   const [filters, setFilters] = useState(() => {
     const storedSubgroup = readStorage(STORAGE_KEYS.subgroup);
@@ -760,6 +764,32 @@ function App() {
   }, [filtersOpen]);
 
   useEffect(() => {
+    const wasPreviouslyOpen = lastFiltersOpenRef.current;
+    lastFiltersOpenRef.current = filtersOpen;
+
+    if (!filtersOpen || wasPreviouslyOpen) {
+      return;
+    }
+
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    if (window.scrollY <= 16) {
+      return;
+    }
+
+    const behavior = prefersReducedMotion ? 'auto' : 'smooth';
+    const target = filtersToggleRef.current || filtersRegionRef.current;
+
+    if (target && typeof target.scrollIntoView === 'function') {
+      target.scrollIntoView({ behavior, block: 'start' });
+    } else {
+      window.scrollTo({ top: 0, behavior });
+    }
+  }, [filtersOpen, prefersReducedMotion]);
+
+  useEffect(() => {
     writeStorage(STORAGE_KEYS.parity, parityMode);
   }, [parityMode]);
 
@@ -882,6 +912,7 @@ return (
                   setHeaderHidden(false);
                   setFiltersOpen(value => !value);
                 }}
+                ref={filtersToggleRef}
                 aria-label={filterButtonAria}
                 aria-expanded={filtersOpen}
                 aria-controls="filters-panel"
@@ -901,6 +932,7 @@ return (
         className={`filters-region${filtersOpen ? ' is-open' : ''}`}
         aria-hidden={!filtersOpen}
         id="filters-panel"
+        ref={filtersRegionRef}
       >
         <Container className="filters-region-inner">
           <FiltersPanel
