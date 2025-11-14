@@ -915,42 +915,46 @@ return (
       </div>
 
       <main className="app-main">
-        <Container as="section" id="today" className="app-section">
-          <div className="section-header">
-            <h2>{translations.sections.today}</h2>
-            <span className="section-caption">{todayHeading}</span>
-          </div>
-          <TodaySection
-            info={todayInfo}
-            showParityLabels={parityMode === 'all'}
-            parityMode={parityMode}
-          />
-        </Container>
+        <Container as="div" className="app-main-grid">
+          <section id="today" className="app-section">
+            <div className="section-header">
+              <h2>{translations.sections.today}</h2>
+              <span className="section-caption">{todayHeading}</span>
+            </div>
+            <TodaySection
+              info={todayInfo}
+              showParityLabels={parityMode === 'all'}
+              parityMode={parityMode}
+            />
+          </section>
 
-        <Container as="section" id="tomorrow" className="app-section">
-          <div className="section-header">
-            <h2>{translations.sections.tomorrow}</h2>
-            <span className="section-caption">{formatDayHeading(tomorrowParts, translations)}</span>
-          </div>
-          <TomorrowSection
-            entries={tomorrowEntries}
-            dateParts={tomorrowParts}
-            showParityLabels={parityMode === 'all'}
-            parityMode={parityMode}
-          />
-        </Container>
+          <section id="tomorrow" className="app-section">
+            <div className="section-header">
+              <h2>{translations.sections.tomorrow}</h2>
+              <span className="section-caption">{formatDayHeading(tomorrowParts, translations)}</span>
+            </div>
+            <TomorrowSection
+              entries={tomorrowEntries}
+              dateParts={tomorrowParts}
+              showParityLabels={parityMode === 'all'}
+              parityMode={parityMode}
+            />
+          </section>
 
-        <Container as="section" className="app-section week-section" id="week">
-          <div className="section-header">
-            <h2>{translations.sections.week}</h2>
-          </div>
-          <WeekView
-            days={dayFilterList}
-            entries={visiblePairs}
-            currentKey={todayInfo.currentKey}
-            showParityLabels={parityMode === 'all'}
-            parityMode={parityMode}
-          />
+          <section className="app-section week-section schedule-panel" id="week">
+            <div className="section-header">
+              <h2>{translations.sections.week}</h2>
+            </div>
+            <div className="schedule-panel-body">
+              <WeekView
+                days={dayFilterList}
+                entries={visiblePairs}
+                currentKey={todayInfo.currentKey}
+                showParityLabels={parityMode === 'all'}
+                parityMode={parityMode}
+              />
+            </div>
+          </section>
         </Container>
       </main>
 
