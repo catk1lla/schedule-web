@@ -1,5 +1,14 @@
 # Changelog
 
+## 2025-11-14 – Rebuild responsive icon bundle
+
+- Added `scripts/generate_icons.py` to regenerate icons with bilinear scaling and smooth rounded corners directly from `icon.png`.
+- Recreated multi-size PNG variants (16–1024px), favicon-targeted PNGs, app icon, Apple touch icon, and a multi-resolution `favicon.ico`, all under `icons/`, plus pointed `<link rel="icon">` at the relocated bundle.
+
+### Verification
+
+- Manual QA: not run (asset generation in CLI environment)
+
 ## 2025-11-14 – Load Manrope from Google Fonts
 
 - Linked the document head to Google Fonts with preconnect hints so the Manrope family loads consistently for all declared weights.
