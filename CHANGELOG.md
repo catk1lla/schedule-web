@@ -1,5 +1,14 @@
 # Changelog
 
+## 2025-11-14 – Desktop layout with scrollable schedule panel
+
+- Rebuilt the main content area into a responsive grid so the Today card anchors the left column with Tomorrow directly beneath it on large screens.
+- Styled the Week view as a dedicated right-column panel with its own scroll container, refined spacing, and softened chrome for a more cohesive composition.
+
+### Verification
+
+- Manual QA: Viewed in Chromium at 1440px and 768px via `npx serve . --listen 5173`.
+
 ## 2025-11-14 – Load Manrope from Google Fonts
 
 - Linked the document head to Google Fonts with preconnect hints so the Manrope family loads consistently for all declared weights.
