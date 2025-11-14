@@ -1,5 +1,15 @@
 # Changelog
 
+## 2025-11-14 – Polish section toggles and filters drawer
+
+- Forced the Manrope stack on all native form controls so header buttons and filter chips no longer fall back to system fonts.
+- Restyled the “Show Today” / “Show Tomorrow” toggles with pill-shaped surfaces, accent-active states, and smoother hover/press transitions to match the rest of the UI.
+- Rounded and lifted the filters drawer container so its shadow is no longer clipped and the panel feels consistent with other cards.
+
+### Verification
+
+- Manual QA: not run (CLI environment)
+
 ## 2025-11-14 – Scroll filters into view
 
 - Ensure opening the filters button while scrolled down reveals the header area by automatically scrolling the toggle into view and honoring reduced-motion preferences.

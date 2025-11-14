@@ -83,6 +83,13 @@ body {
   accent-color: var(--accent);
 }
 
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
 body::before {
   content: "";
   position: fixed;
@@ -123,11 +130,6 @@ header.app-header {
   position: sticky;
   top: 0;
   z-index: 20;
-}
-
-.app-shell.filters-open header.app-header {
-  border-radius: var(--radius) var(--radius) 0 0;
-  padding-bottom: var(--space-sm);
 }
 
 header.app-header.is-hidden {
@@ -367,6 +369,76 @@ header.app-header.is-hidden {
   box-shadow: 0 12px 24px rgba(37, 99, 235, 0.18);
 }
 
+.section-toggle-button {
+  --section-toggle-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  border-radius: 999px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--surface-strong) 95%, transparent), color-mix(in srgb, var(--surface) 80%, transparent));
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0.5rem 1.2rem;
+  min-height: 2.4rem;
+  cursor: pointer;
+  box-shadow: var(--section-toggle-shadow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.section-toggle-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18);
+}
+
+.section-toggle-button.is-open {
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  color: var(--accent);
+  box-shadow: 0 18px 42px rgba(37, 99, 235, 0.2);
+  background: color-mix(in srgb, var(--accent-soft) 80%, var(--surface));
+}
+
+.section-toggle-button:active {
+  transform: translateY(0);
+}
+
+[data-theme="dark"] .section-toggle-button {
+  background: color-mix(in srgb, var(--surface) 35%, transparent);
+  border-color: color-mix(in srgb, var(--border) 50%, transparent);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+}
+
+[data-theme="dark"] .section-toggle-button:hover {
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.45);
+}
+
+[data-theme="dark"] .section-toggle-button.is-open {
+  border-color: color-mix(in srgb, var(--accent) 65%, transparent);
+  box-shadow: 0 22px 45px rgba(7, 89, 133, 0.45);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.section-toggle-label {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1.2;
+}
+
+.section-toggle-caret {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.section-toggle-button.is-open .section-toggle-caret {
+  transform: rotate(-135deg);
+}
+
 .theme-button {
   border-radius: 50%;
   background: rgba(37, 99, 235, 0.08);
@@ -426,7 +498,8 @@ header.app-header.is-hidden {
   opacity: 0;
   transform: translateY(-12px);
   pointer-events: none;
-  margin-bottom: 0;
+  margin: var(--space-md) 0 0;
+  width: 100%;
   transition: max-height 0.3s ease, opacity 0.2s ease, transform 0.2s ease;
 }
 
@@ -435,16 +508,18 @@ header.app-header.is-hidden {
   opacity: 1;
   transform: translateY(0);
   pointer-events: auto;
-  margin-bottom: var(--space-lg);
+  overflow: visible;
 }
 
 .filters-region-inner {
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 0 0 var(--radius) var(--radius);
-  padding: var(--space-md);
-  box-shadow: var(--shadow-sm);
-  margin-top: -1px;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  border-radius: var(--radius);
+  padding: var(--space-lg) var(--space-md);
+  box-shadow: var(--shadow-md);
+  margin-top: 0;
+  position: relative;
+  isolation: isolate;
 }
 
 .filters-panel {
@@ -566,6 +641,7 @@ header.app-header.is-hidden {
 .parity-switch button:focus-visible,
 .language-switch-buttons button:focus-visible,
 .filters-toggle-button:focus-visible,
+.section-toggle-button:focus-visible,
 .filter-button:focus-visible,
 .theme-button:focus-visible,
 .filter-reset-button:focus-visible,
@@ -582,10 +658,6 @@ main.app-main {
   margin-top: var(--space-2xl);
 }
 
-.app-shell.filters-open .app-main {
-  margin-top: var(--space-xl);
-}
-
 .app-section {
   display: grid;
   gap: var(--space-lg);
@@ -594,10 +666,18 @@ main.app-main {
 .section-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 1rem;
   flex-wrap: wrap;
   margin: 0;
+}
+
+.section-heading {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 1rem;
 }
 
 .section-header h2 {
@@ -612,7 +692,18 @@ main.app-main {
   color: var(--muted);
   font-weight: 500;
   text-align: right;
+}
+
+.section-heading .section-caption {
   margin-left: auto;
+}
+
+.section-collapse-region {
+  width: 100%;
+}
+
+.section-collapse-region[hidden] {
+  display: none !important;
 }
 
 .today-card,

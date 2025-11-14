@@ -148,7 +148,9 @@ const TRANSLATIONS = {
           return `${actionLabel}. Активных фильтров: ${count}.`;
         }
         return actionLabel;
-      }
+      },
+      showSection: sectionLabel => `Показать ${sectionLabel}`,
+      hideSection: sectionLabel => `Скрыть ${sectionLabel}`
     },
     today: {
       noPairsBadge: 'Сегодня пар нет',
@@ -330,7 +332,9 @@ const TRANSLATIONS = {
           return `${actionLabel}. Active filters: ${count}.`;
         }
         return actionLabel;
-      }
+      },
+      showSection: sectionLabel => `Show ${sectionLabel}`,
+      hideSection: sectionLabel => `Hide ${sectionLabel}`
     },
     today: {
       noPairsBadge: 'No classes today',
@@ -621,10 +625,9 @@ function App() {
   const [systemTheme, setSystemTheme] = useState(() => getPreferredTheme());
   const [headerHidden, setHeaderHidden] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
+  const [todayCollapsed, setTodayCollapsed] = useState(true);
+  const [tomorrowCollapsed, setTomorrowCollapsed] = useState(true);
   const filtersToggleRef = useRef(null);
-  const filtersRegionRef = useRef(null);
-  const lastFiltersOpenRef = useRef(false);
 
   const [filters, setFilters] = useState(() => {
     const storedSubgroup = readStorage(STORAGE_KEYS.subgroup);
@@ -763,31 +766,6 @@ function App() {
     }
   }, [filtersOpen]);
 
-  useEffect(() => {
-    const wasPreviouslyOpen = lastFiltersOpenRef.current;
-    lastFiltersOpenRef.current = filtersOpen;
-
-    if (!filtersOpen || wasPreviouslyOpen) {
-      return;
-    }
-
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    if (window.scrollY <= 16) {
-      return;
-    }
-
-    const behavior = prefersReducedMotion ? 'auto' : 'smooth';
-    const target = filtersToggleRef.current || filtersRegionRef.current;
-
-    if (target && typeof target.scrollIntoView === 'function') {
-      target.scrollIntoView({ behavior, block: 'start' });
-    } else {
-      window.scrollTo({ top: 0, behavior });
-    }
-  }, [filtersOpen, prefersReducedMotion]);
 
   useEffect(() => {
     writeStorage(STORAGE_KEYS.parity, parityMode);
@@ -882,6 +860,15 @@ const translationContextValue = useMemo(() => ({
 const filterButtonActionLabel = filtersOpen ? translations.controls.hideFilters : translations.controls.showFilters;
 const filterButtonAria = translations.controls.filtersButtonAria(filterButtonActionLabel, activeFilterCount);
 const todayHeading = useMemo(() => formatDayHeading(now, translations), [now, translations]);
+const tomorrowHeading = useMemo(() => formatDayHeading(tomorrowParts, translations), [tomorrowParts, translations]);
+const todayToggleLabel = todayCollapsed
+  ? translations.controls.showSection(translations.sections.today)
+  : translations.controls.hideSection(translations.sections.today);
+const tomorrowToggleLabel = tomorrowCollapsed
+  ? translations.controls.showSection(translations.sections.tomorrow)
+  : translations.controls.hideSection(translations.sections.tomorrow);
+const todayContentId = 'today-section-content';
+const tomorrowContentId = 'tomorrow-section-content';
 
 return (
   <TranslationContext.Provider value={translationContextValue}>
@@ -927,48 +914,87 @@ return (
             </div>
           </div>
         </Container>
+        <div
+          className={`filters-region${filtersOpen ? ' is-open' : ''}`}
+          aria-hidden={!filtersOpen}
+          id="filters-panel"
+        >
+          <Container className="filters-region-inner">
+            <FiltersPanel
+              filters={filters}
+              groups={filterGroups}
+              onUpdateFilter={handleFilterChange}
+              isOpen={filtersOpen}
+              onReset={handleResetFilters}
+              resetDisabled={filtersAreDefault}
+            />
+          </Container>
+        </div>
       </header>
-      <div
-        className={`filters-region${filtersOpen ? ' is-open' : ''}`}
-        aria-hidden={!filtersOpen}
-        id="filters-panel"
-        ref={filtersRegionRef}
-      >
-        <Container className="filters-region-inner">
-          <FiltersPanel
-            filters={filters}
-            groups={filterGroups}
-            onUpdateFilter={handleFilterChange}
-            isOpen={filtersOpen}
-            onReset={handleResetFilters}
-            resetDisabled={filtersAreDefault}
-          />
-        </Container>
-      </div>
 
       <main className="app-main">
-        <Container as="section" id="today" className="app-section">
+        <Container
+          as="section"
+          id="today"
+          className={`app-section${todayCollapsed ? ' is-collapsed' : ''}`}
+        >
           <div className="section-header">
-            <h2>{translations.sections.today}</h2>
-            <span className="section-caption">{todayHeading}</span>
+            <div className="section-heading">
+              <h2>{translations.sections.today}</h2>
+              <span className="section-caption">{todayHeading}</span>
+            </div>
+            <button
+              type="button"
+              className={`section-toggle-button${todayCollapsed ? '' : ' is-open'}`}
+              onClick={() => setTodayCollapsed(value => !value)}
+              aria-expanded={!todayCollapsed}
+              aria-controls={todayContentId}
+              aria-label={todayToggleLabel}
+              title={todayToggleLabel}
+            >
+              <span className="section-toggle-label">{todayToggleLabel}</span>
+              <span className="section-toggle-caret" aria-hidden="true"></span>
+            </button>
           </div>
           <TodaySection
             info={todayInfo}
             showParityLabels={parityMode === 'all'}
             parityMode={parityMode}
+            isCollapsed={todayCollapsed}
+            contentId={todayContentId}
           />
         </Container>
 
-        <Container as="section" id="tomorrow" className="app-section">
+        <Container
+          as="section"
+          id="tomorrow"
+          className={`app-section${tomorrowCollapsed ? ' is-collapsed' : ''}`}
+        >
           <div className="section-header">
-            <h2>{translations.sections.tomorrow}</h2>
-            <span className="section-caption">{formatDayHeading(tomorrowParts, translations)}</span>
+            <div className="section-heading">
+              <h2>{translations.sections.tomorrow}</h2>
+              <span className="section-caption">{tomorrowHeading}</span>
+            </div>
+            <button
+              type="button"
+              className={`section-toggle-button${tomorrowCollapsed ? '' : ' is-open'}`}
+              onClick={() => setTomorrowCollapsed(value => !value)}
+              aria-expanded={!tomorrowCollapsed}
+              aria-controls={tomorrowContentId}
+              aria-label={tomorrowToggleLabel}
+              title={tomorrowToggleLabel}
+            >
+              <span className="section-toggle-label">{tomorrowToggleLabel}</span>
+              <span className="section-toggle-caret" aria-hidden="true"></span>
+            </button>
           </div>
           <TomorrowSection
             entries={tomorrowEntries}
             dateParts={tomorrowParts}
             showParityLabels={parityMode === 'all'}
             parityMode={parityMode}
+            isCollapsed={tomorrowCollapsed}
+            contentId={tomorrowContentId}
           />
         </Container>
 
@@ -1232,7 +1258,7 @@ function GlobeIcon() {
   );
 }
 
-function TodaySection({ info, showParityLabels, parityMode }) {
+function TodaySection({ info, showParityLabels, parityMode, isCollapsed = false, contentId }) {
   const { texts } = useTranslation();
   if (info.mode === 'empty') {
     return (
@@ -1243,11 +1269,83 @@ function TodaySection({ info, showParityLabels, parityMode }) {
     );
   }
 
-  const { summary, entries, highlightParity } = info;
+  const { summary, entries, highlightParity, highlightKey } = info;
   const isCurrent = summary.state === 'current';
   const cardParityVariant = (showParityLabels || parityMode !== 'all') ? null : highlightParity;
   const progressValue = summary.progress != null ? Math.round(summary.progress) : 0;
   const countdownDisplay = summary.countdownDisplay;
+  const pinnedItem = highlightKey ? entries.find(item => item.key === highlightKey) : null;
+
+  const renderEntry = item => {
+    const entry = item.entry;
+    const entryKey = item.key;
+    const subgroupBadge = getSubgroupBadge(entry.subgroup, texts);
+    const parityTone = getParityVariant(entry.weeks);
+    const parityLabel = showParityLabels && parityTone ? getParityLabel(entry.weeks, texts) : null;
+    const parityCardVariant = (showParityLabels || parityMode !== 'all') ? null : parityTone;
+    const teacherLabel = formatTeacherNames(entry.teacher);
+    const showTeacher = teacherLabel !== '';
+    const note = (entry.note || '').trim();
+    const typeVariant = getTypeVariant(entry.type);
+    const hasTags = showTeacher || note;
+    const statusClass = item.status === 'current'
+      ? ' is-current'
+      : item.status === 'next'
+        ? ' is-next'
+        : item.status === 'past'
+          ? ' is-past'
+          : '';
+    const showStatusChip = item.status === 'current' || item.status === 'next' || item.status === 'past';
+    const statusLabel = item.status === 'current'
+      ? texts.statuses.current
+      : item.status === 'next'
+        ? texts.statuses.next
+        : texts.statuses.past;
+    return (
+      <li
+        key={entryKey}
+        className={`pair-entry${statusClass}${parityCardVariant ? ` parity-${parityCardVariant}` : ''}`}
+        aria-current={item.status === 'current' ? 'true' : undefined}
+      >
+        <div className="pair-entry-header">
+          <div className="pair-entry-time">
+            <span className="pair-entry-number">
+              {typeof entry.pair === 'number' ? texts.pair.numberLabel(entry.pair) : entry.pair}
+            </span>
+            <span className="pair-entry-clock">{entry.time}</span>
+          </div>
+          <div className="pair-entry-flags">
+            {subgroupBadge && (
+              <span className={`subgroup-badge subgroup-${subgroupBadge.variant}`}>
+                {subgroupBadge.label}
+              </span>
+            )}
+            {parityLabel && parityTone && (
+              <span className={`meta-chip parity-chip parity-${parityTone}`}>{parityLabel}</span>
+            )}
+          </div>
+        </div>
+        <div className="pair-entry-body">
+          <div className="pair-entry-subject">{entry.subject}</div>
+          <div className="pair-entry-room">{`${texts.pair.roomPrefix} ${entry.place}`}</div>
+        </div>
+        <div className="pair-entry-footer">
+          <span className={`meta-chip meta-chip-type meta-chip-type--${typeVariant}`}>
+            {formatTypeLabel(entry.type, texts)}
+          </span>
+          <div className="pair-entry-tags">
+            {showStatusChip && (
+              <span className="meta-chip meta-chip-status">{statusLabel}</span>
+            )}
+            {showTeacher && (
+              <span className="meta-chip meta-chip-muted">{teacherLabel}</span>
+            )}
+            {note && <span className="meta-chip meta-chip-note">{note}</span>}
+          </div>
+        </div>
+      </li>
+    );
+  };
 
   return (
     <article
@@ -1298,166 +1396,117 @@ function TodaySection({ info, showParityLabels, parityMode }) {
           )}
         </div>
       )}
-      <ul className="day-pair-list today-pair-list" aria-label={texts.today.listAria}>
-        {entries.map(item => {
-          const entry = item.entry;
-          const entryKey = item.key;
-          const subgroupBadge = getSubgroupBadge(entry.subgroup, texts);
-          const parityTone = getParityVariant(entry.weeks);
-          const parityLabel = showParityLabels && parityTone ? getParityLabel(entry.weeks, texts) : null;
-          const parityCardVariant = (showParityLabels || parityMode !== 'all') ? null : parityTone;
-          const teacherLabel = formatTeacherNames(entry.teacher);
-          const showTeacher = teacherLabel !== '';
-          const note = (entry.note || '').trim();
-          const typeVariant = getTypeVariant(entry.type);
-          const hasTags = showTeacher || note;
-          const statusClass = item.status === 'current'
-            ? ' is-current'
-            : item.status === 'next'
-              ? ' is-next'
-              : item.status === 'past'
-                ? ' is-past'
-                : '';
-          const showStatusChip = item.status === 'current' || item.status === 'next' || item.status === 'past';
-          const statusLabel = item.status === 'current'
-            ? texts.statuses.current
-            : item.status === 'next'
-              ? texts.statuses.next
-              : texts.statuses.past;
-          return (
-            <li
-              key={entryKey}
-              className={`pair-entry${statusClass}${parityCardVariant ? ` parity-${parityCardVariant}` : ''}`}
-              aria-current={item.status === 'current' ? 'true' : undefined}
-            >
-              <div className="pair-entry-header">
-                <div className="pair-entry-time">
-                  <span className="pair-entry-number">
-                    {typeof entry.pair === 'number' ? texts.pair.numberLabel(entry.pair) : entry.pair}
-                  </span>
-                  <span className="pair-entry-clock">{entry.time}</span>
-                </div>
-                <div className="pair-entry-flags">
-                  {showStatusChip && (
-                    <span className={`meta-chip meta-chip-status status-${item.status}`}>
-                      {statusLabel}
-                    </span>
-                  )}
-                  {subgroupBadge && (
-                    <span className={`subgroup-badge subgroup-${subgroupBadge.variant}`}>
-                      {subgroupBadge.label}
-                    </span>
-                  )}
-                  {parityLabel && parityTone && (
-                    <span className={`meta-chip parity-chip parity-${parityTone}`}>{parityLabel}</span>
-                  )}
-                </div>
-              </div>
-              <div className="pair-entry-body">
-                <div className="pair-entry-subject">{entry.subject}</div>
-                <div className="pair-entry-room">{`${texts.pair.roomPrefix} ${entry.place}`}</div>
-              </div>
-              <div className="pair-entry-footer">
-                <span className={`meta-chip meta-chip-type meta-chip-type--${typeVariant}`}>
-                  {formatTypeLabel(entry.type, texts)}
-                </span>
-                {hasTags && (
-                  <div className="pair-entry-tags">
-                    {showTeacher && (
-                      <span className="meta-chip meta-chip-muted">{teacherLabel}</span>
-                    )}
-                    {note && <span className="meta-chip meta-chip-note">{note}</span>}
-                  </div>
-                )}
-              </div>
-            </li>
-          );
-        })}
-      </ul>
+      {isCollapsed && pinnedItem && (
+        <div className="section-pinned-list">
+          <ul className="day-pair-list today-pair-list today-pinned-list" aria-label={texts.today.listAria}>
+            {renderEntry(pinnedItem)}
+          </ul>
+        </div>
+      )}
+      <div
+        id={contentId}
+        className="section-collapse-region"
+        aria-hidden={isCollapsed}
+        style={{ display: isCollapsed ? 'none' : undefined }}
+      >
+        {entries.length > 0 && (
+          <ul className="day-pair-list today-pair-list" aria-label={texts.today.listAria}>
+            {entries.map(renderEntry)}
+          </ul>
+        )}
+      </div>
     </article>
   );
 }
 
-function TomorrowSection({ entries, dateParts, showParityLabels, parityMode }) {
+function TomorrowSection({ entries, dateParts, showParityLabels, parityMode, isCollapsed = false, contentId }) {
   const { texts } = useTranslation();
   const baseDayName = WEEKDAY_MAP[dateParts.weekday] || dateParts.weekday || '';
   const dayName = texts.dayNames.full[baseDayName] || capitalize(baseDayName);
   const dateLabel = formatDayDate(dateParts, texts);
-
-  if (!entries.length) {
-    return (
+  const content = !entries.length
+    ? (
       <div className="summary-card" aria-live="polite">
         <span className="badge">{texts.tomorrow.noPairsBadge}</span>
         <p className="info-text">{texts.tomorrow.noPairsMessage}</p>
       </div>
+    )
+    : (
+      <article className="tomorrow-card" aria-live="polite" aria-label={texts.tomorrow.listAria(dayName)}>
+        <div className="tomorrow-info">
+          <div className="tomorrow-dayline">
+            <span className="tomorrow-day-name">{dayName}</span>
+            <span className="tomorrow-date">{dateLabel}</span>
+          </div>
+        </div>
+        <ul className="day-pair-list tomorrow-pair-list">
+          {entries.map(entry => {
+            const entryKey = createEntryKey(entry);
+            const subgroupBadge = getSubgroupBadge(entry.subgroup, texts);
+            const parityTone = getParityVariant(entry.weeks);
+            const parityLabel = showParityLabels && parityTone ? getParityLabel(entry.weeks, texts) : null;
+            const parityCardVariant = (showParityLabels || parityMode !== 'all') ? null : parityTone;
+            const teacherLabel = formatTeacherNames(entry.teacher);
+            const showTeacher = teacherLabel !== '';
+            const typeVariant = getTypeVariant(entry.type);
+            const note = (entry.note || '').trim();
+            const hasTags = showTeacher || note;
+            return (
+              <li
+                key={entryKey}
+                className={`pair-entry${parityCardVariant ? ` parity-${parityCardVariant}` : ''}`}
+              >
+                <div className="pair-entry-header">
+                  <div className="pair-entry-time">
+                    <span className="pair-entry-number">
+                      {typeof entry.pair === 'number' ? texts.pair.numberLabel(entry.pair) : entry.pair}
+                    </span>
+                    <span className="pair-entry-clock">{entry.time}</span>
+                  </div>
+                  <div className="pair-entry-flags">
+                    {subgroupBadge && (
+                      <span className={`subgroup-badge subgroup-${subgroupBadge.variant}`}>
+                        {subgroupBadge.label}
+                      </span>
+                    )}
+                    {parityLabel && parityTone && (
+                      <span className={`meta-chip parity-chip parity-${parityTone}`}>{parityLabel}</span>
+                    )}
+                  </div>
+                </div>
+                <div className="pair-entry-body">
+                  <div className="pair-entry-subject">{entry.subject}</div>
+                  <div className="pair-entry-room">{`${texts.pair.roomPrefix} ${entry.place}`}</div>
+                </div>
+                <div className="pair-entry-footer">
+                  <span className={`meta-chip meta-chip-type meta-chip-type--${typeVariant}`}>
+                    {formatTypeLabel(entry.type, texts)}
+                  </span>
+                  {hasTags && (
+                    <div className="pair-entry-tags">
+                      {showTeacher && (
+                        <span className="meta-chip meta-chip-muted">{teacherLabel}</span>
+                      )}
+                      {note && <span className="meta-chip meta-chip-note">{note}</span>}
+                    </div>
+                  )}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </article>
     );
-  }
 
   return (
-    <article className="tomorrow-card" aria-live="polite" aria-label={texts.tomorrow.listAria(dayName)}>
-      <div className="tomorrow-info">
-        <div className="tomorrow-dayline">
-          <span className="tomorrow-day-name">{dayName}</span>
-          <span className="tomorrow-date">{dateLabel}</span>
-        </div>
-      </div>
-      <ul className="day-pair-list tomorrow-pair-list">
-        {entries.map(entry => {
-          const entryKey = createEntryKey(entry);
-          const subgroupBadge = getSubgroupBadge(entry.subgroup, texts);
-          const parityTone = getParityVariant(entry.weeks);
-          const parityLabel = showParityLabels && parityTone ? getParityLabel(entry.weeks, texts) : null;
-          const parityCardVariant = (showParityLabels || parityMode !== 'all') ? null : parityTone;
-          const teacherLabel = formatTeacherNames(entry.teacher);
-          const showTeacher = teacherLabel !== '';
-          const typeVariant = getTypeVariant(entry.type);
-          const note = (entry.note || '').trim();
-          const hasTags = showTeacher || note;
-          return (
-            <li
-              key={entryKey}
-              className={`pair-entry${parityCardVariant ? ` parity-${parityCardVariant}` : ''}`}
-            >
-              <div className="pair-entry-header">
-                <div className="pair-entry-time">
-                  <span className="pair-entry-number">
-                    {typeof entry.pair === 'number' ? texts.pair.numberLabel(entry.pair) : entry.pair}
-                  </span>
-                  <span className="pair-entry-clock">{entry.time}</span>
-                </div>
-                <div className="pair-entry-flags">
-                  {subgroupBadge && (
-                    <span className={`subgroup-badge subgroup-${subgroupBadge.variant}`}>
-                      {subgroupBadge.label}
-                    </span>
-                  )}
-                  {parityLabel && parityTone && (
-                    <span className={`meta-chip parity-chip parity-${parityTone}`}>{parityLabel}</span>
-                  )}
-                </div>
-              </div>
-              <div className="pair-entry-body">
-                <div className="pair-entry-subject">{entry.subject}</div>
-                <div className="pair-entry-room">{`${texts.pair.roomPrefix} ${entry.place}`}</div>
-              </div>
-              <div className="pair-entry-footer">
-                <span className={`meta-chip meta-chip-type meta-chip-type--${typeVariant}`}>
-                  {formatTypeLabel(entry.type, texts)}
-                </span>
-                {hasTags && (
-                  <div className="pair-entry-tags">
-                    {showTeacher && (
-                      <span className="meta-chip meta-chip-muted">{teacherLabel}</span>
-                    )}
-                    {note && <span className="meta-chip meta-chip-note">{note}</span>}
-                  </div>
-                )}
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-    </article>
+    <div
+      id={contentId}
+      className="section-collapse-region"
+      aria-hidden={isCollapsed}
+      hidden={isCollapsed}
+    >
+      {content}
+    </div>
   );
 }
 function WeekView({ days, entries, currentKey, showParityLabels, parityMode }) {
@@ -1957,7 +2006,7 @@ function computeTodayInfo({ schedule, now, parity, weekNumber, filters, texts, l
   });
 
   if (baseEntries.length === 0) {
-    return { mode: 'empty', currentKey: null };
+    return { mode: 'empty', currentKey: null, highlightKey: null };
   }
 
   const nowSeconds = now.secondsOfDay;
@@ -2001,6 +2050,7 @@ function computeTodayInfo({ schedule, now, parity, weekNumber, filters, texts, l
   const hasPastEntries = entries.some(item => item.status === 'past');
   const highlightEntry = current ? current.entry : next ? next.entry : null;
   const highlightParity = highlightEntry ? getParityVariant(highlightEntry.weeks) : null;
+  const highlightKey = highlightEntry ? createEntryKey(highlightEntry) : null;
 
   if (!current && !next) {
     return {
@@ -2019,6 +2069,7 @@ function computeTodayInfo({ schedule, now, parity, weekNumber, filters, texts, l
       },
       entries,
       highlightParity,
+      highlightKey,
       currentKey: null
     };
   }
@@ -2059,6 +2110,7 @@ function computeTodayInfo({ schedule, now, parity, weekNumber, filters, texts, l
       },
       entries,
       highlightParity,
+      highlightKey,
       currentKey: createEntryKey(current.entry)
     };
   }
@@ -2095,6 +2147,7 @@ function computeTodayInfo({ schedule, now, parity, weekNumber, filters, texts, l
     },
     entries,
     highlightParity,
+    highlightKey,
     currentKey: null
   };
 }
