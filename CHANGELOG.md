@@ -1,5 +1,13 @@
 # Changelog
 
+## 2025-11-15 – Switch UI font to Poppins
+
+- Replaced the Google Fonts import and global font stack so the entire schedule now renders with the Poppins family for a more rounded look.
+
+### Verification
+
+- Manual QA: not run (CLI environment)
+
 ## 2025-11-14 – Polish section toggles and filters drawer
 
 - Forced the Manrope stack on all native form controls so header buttons and filter chips no longer fall back to system fonts.

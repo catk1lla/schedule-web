@@ -23,7 +23,7 @@
   --shadow-md: 0 20px 60px rgba(15, 23, 42, 0.12);
   --shadow-sm: 0 12px 30px rgba(15, 23, 42, 0.08);
   --radius: 18px;
-  --font-family-base: "Manrope", "Inter", "Segoe UI", "Roboto", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-family-base: "Poppins", "Inter", "Segoe UI", "Roboto", -apple-system, BlinkMacSystemFont, sans-serif;
   --font-size-base: 1rem;
   --space-3xs: 0.25rem;
   --space-2xs: 0.375rem;
