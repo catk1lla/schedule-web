@@ -149,7 +149,7 @@ const TRANSLATIONS = {
         }
         return actionLabel;
       },
-      showSection: sectionLabel => `Показать ${sectionLabel}`,
+      showSection: () => 'Расширить',
       hideSection: sectionLabel => `Скрыть ${sectionLabel}`
     },
     today: {
@@ -333,7 +333,7 @@ const TRANSLATIONS = {
         }
         return actionLabel;
       },
-      showSection: sectionLabel => `Show ${sectionLabel}`,
+      showSection: () => 'Expand',
       hideSection: sectionLabel => `Hide ${sectionLabel}`
     },
     today: {

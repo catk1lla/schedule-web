@@ -1,5 +1,15 @@
 # Changelog
 
+## 2025-11-15 – Switch to Inter and highlight section toggles
+
+- Replaced the Google Fonts import and global font stack so the entire UI now renders with the Inter family and consistent fallbacks.
+- Updated the Today/Tomorrow toggle strings to read “Расширить” when collapsed (English: “Expand”) and refreshed the buttons with higher-contrast accent styling so they are easier to spot.
+- Gave the toggle caret and hover states more lift plus ensured the active state still contrasts against the content cards.
+
+### Verification
+
+- Manual QA: not run (CLI environment)
+
 ## 2025-11-15 – Switch UI font to Poppins
 
 - Replaced the Google Fonts import and global font stack so the entire schedule now renders with the Poppins family for a more rounded look.

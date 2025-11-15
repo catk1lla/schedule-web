@@ -23,7 +23,7 @@
   --shadow-md: 0 20px 60px rgba(15, 23, 42, 0.12);
   --shadow-sm: 0 12px 30px rgba(15, 23, 42, 0.08);
   --radius: 18px;
-  --font-family-base: "Poppins", "Inter", "Segoe UI", "Roboto", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-family-base: "Inter", "Segoe UI", "Roboto", -apple-system, BlinkMacSystemFont, sans-serif;
   --font-size-base: 1rem;
   --space-3xs: 0.25rem;
   --space-2xs: 0.375rem;
@@ -370,53 +370,59 @@ header.app-header.is-hidden {
 }
 
 .section-toggle-button {
-  --section-toggle-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
+  --section-toggle-glow: color-mix(in srgb, var(--accent) 35%, transparent);
+  --section-toggle-shadow: 0 18px 45px var(--section-toggle-glow);
   display: inline-flex;
   align-items: center;
-  gap: 0.6rem;
-  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  gap: 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 65%, transparent);
   border-radius: 999px;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--surface-strong) 95%, transparent), color-mix(in srgb, var(--surface) 80%, transparent));
-  color: var(--text);
-  font-size: 0.9rem;
-  font-weight: 600;
-  padding: 0.5rem 1.2rem;
-  min-height: 2.4rem;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 85%, transparent), color-mix(in srgb, var(--accent) 55%, transparent));
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  padding: 0.65rem 1.5rem;
+  min-height: 2.75rem;
   cursor: pointer;
   box-shadow: var(--section-toggle-shadow);
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+  text-shadow: 0 1px 3px rgba(15, 23, 42, 0.35);
 }
 
 .section-toggle-button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18);
+  transform: translateY(-2px);
+  box-shadow: 0 24px 60px var(--section-toggle-glow);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 90%, transparent), color-mix(in srgb, var(--accent) 65%, transparent));
 }
 
 .section-toggle-button.is-open {
   border-color: color-mix(in srgb, var(--accent) 55%, transparent);
   color: var(--accent);
-  box-shadow: 0 18px 42px rgba(37, 99, 235, 0.2);
-  background: color-mix(in srgb, var(--accent-soft) 80%, var(--surface));
+  box-shadow: 0 18px 42px color-mix(in srgb, var(--accent) 20%, transparent);
+  background: color-mix(in srgb, var(--surface-strong) 92%, transparent);
+  text-shadow: none;
 }
 
 .section-toggle-button:active {
   transform: translateY(0);
+  box-shadow: var(--section-toggle-shadow);
 }
 
 [data-theme="dark"] .section-toggle-button {
-  background: color-mix(in srgb, var(--surface) 35%, transparent);
-  border-color: color-mix(in srgb, var(--border) 50%, transparent);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+  --section-toggle-glow: color-mix(in srgb, var(--accent) 50%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 70%, transparent);
+  box-shadow: 0 20px 48px var(--section-toggle-glow);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 70%, transparent), color-mix(in srgb, var(--accent) 45%, transparent));
 }
 
 [data-theme="dark"] .section-toggle-button:hover {
-  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 26px 60px var(--section-toggle-glow);
 }
 
 [data-theme="dark"] .section-toggle-button.is-open {
-  border-color: color-mix(in srgb, var(--accent) 65%, transparent);
-  box-shadow: 0 22px 45px rgba(7, 89, 133, 0.45);
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  background: color-mix(in srgb, var(--surface) 30%, transparent);
+  box-shadow: 0 24px 48px color-mix(in srgb, var(--accent) 35%, transparent);
 }
 
 .section-toggle-label {
@@ -426,8 +432,8 @@ header.app-header.is-hidden {
 }
 
 .section-toggle-caret {
-  width: 0.75rem;
-  height: 0.75rem;
+  width: 0.85rem;
+  height: 0.85rem;
   border-right: 2px solid currentColor;
   border-bottom: 2px solid currentColor;
   transform: rotate(45deg);
