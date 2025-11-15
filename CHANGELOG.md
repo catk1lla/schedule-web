@@ -1,5 +1,14 @@
 # Changelog
 
+## 2025-11-20 – Compact mobile header
+
+- Tightened the header nav pill spacing, padding, and layout on phones so the buttons stay in a single line without inflating the sticky header height.
+- Completed a final polish pass after reviewing the project to ensure the UI, translations, and layout structure remain consistent across breakpoints.
+
+### Verification
+
+- Manual QA: not run (CLI environment)
+
 ## 2025-11-19 – Smooth summary empty state
 
 - Softened the empty-state summary card fill/border mix and swapped in a low-contrast glow so its rounded corners no longer show black halos against the page background.

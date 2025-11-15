@@ -105,7 +105,7 @@ const TRANSLATIONS = {
     sections: {
       today: 'Сегодня',
       tomorrow: 'Завтра',
-      week: 'Расписание на неделю',
+      week: 'Расписание',
       filters: 'Фильтры'
     },
     parity: {
