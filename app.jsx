@@ -83,18 +83,10 @@ const SCHEDULE_COMBINED = (() => {
   return merged;
 })();
 
-const SUPPORTED_LANGUAGES = ['ru', 'en'];
 const DEFAULT_LANGUAGE = 'ru';
-
-const LANGUAGE_OPTIONS = [
-  { value: 'ru', label: 'Русский' },
-  { value: 'en', label: 'English' }
-];
 
 const TRANSLATIONS = {
   ru: {
-    languageName: 'Русский',
-    languageToggle: 'Язык интерфейса',
     theme: {
       system: 'Системная тема',
       light: 'Светлая тема',
@@ -107,10 +99,13 @@ const TRANSLATIONS = {
       academicWeek: weekNumber => `Академическая неделя №${weekNumber}`,
       autoDetection: parityLabel => `Автоопределение: ${parityLabel} неделя`
     },
+    navigation: {
+      ariaLabel: 'Навигация по разделам'
+    },
     sections: {
       today: 'Сегодня',
       tomorrow: 'Завтра',
-      week: 'Неделя',
+      week: 'Расписание на неделю',
       filters: 'Фильтры'
     },
     parity: {
@@ -124,6 +119,7 @@ const TRANSLATIONS = {
     },
     filters: {
       heading: 'Фильтры',
+      helper: 'Выберите параметры, чтобы оставить только нужные занятия.',
       subgroup: 'Подгруппа',
       type: 'Тип занятия',
       day: 'День недели',
@@ -138,16 +134,6 @@ const TRANSLATIONS = {
       },
       dayOptions: {
         all: 'Все дни'
-      }
-    },
-    controls: {
-      showFilters: 'Показать фильтры',
-      hideFilters: 'Скрыть фильтры',
-      filtersButtonAria: (actionLabel, count) => {
-        if (count > 0) {
-          return `${actionLabel}. Активных фильтров: ${count}.`;
-        }
-        return actionLabel;
       }
     },
     today: {
@@ -273,195 +259,12 @@ const TRANSLATIONS = {
       fallbackTitle: 'Не удалось загрузить расписание',
       fallbackMessage: 'Попробуйте обновить страницу или зайдите позже.'
     }
-  },
-  en: {
-    languageName: 'English',
-    languageToggle: 'Interface language',
-    theme: {
-      system: 'System theme',
-      light: 'Light theme',
-      dark: 'Dark theme'
-    },
-    brand: {
-      title: 'Class schedule',
-      tagline: 'Stay on top of your studies',
-      description: 'Track current and upcoming classes, filter by subgroup, and choose the interface theme you prefer.',
-      academicWeek: weekNumber => `Academic week #${weekNumber}`,
-      autoDetection: parityLabel => `Auto detection: ${parityLabel} week`
-    },
-    sections: {
-      today: 'Today',
-      tomorrow: 'Tomorrow',
-      week: 'Week',
-      filters: 'Filters'
-    },
-    parity: {
-      label: 'Week parity',
-      auto: 'Auto',
-      all: 'All',
-      odd: 'Odd',
-      even: 'Even',
-      autoOdd: 'odd',
-      autoEven: 'even'
-    },
-    filters: {
-      heading: 'Filters',
-      subgroup: 'Subgroup',
-      type: 'Class type',
-      day: 'Weekday',
-      reset: 'Reset filters',
-      subgroupOptions: {
-        all: 'All subgroups',
-        '1': 'Subgroup 1',
-        '2': 'Subgroup 2'
-      },
-      typeOptions: {
-        all: 'All types'
-      },
-      dayOptions: {
-        all: 'All days'
-      }
-    },
-    controls: {
-      showFilters: 'Show filters',
-      hideFilters: 'Hide filters',
-      filtersButtonAria: (actionLabel, count) => {
-        if (count > 0) {
-          return `${actionLabel}. Active filters: ${count}.`;
-        }
-        return actionLabel;
-      }
-    },
-    today: {
-      noPairsBadge: 'No classes today',
-      noPairsMessage: 'Use the time to rest or study on your own.',
-      dayDoneBadge: 'Day completed',
-      dayDoneTitle: 'No classes left today',
-      dayDoneMessage: 'Great work! The next classes will be on another day.',
-      currentBadge: 'In progress',
-      currentMessage: 'A class is running right now. You have got this!',
-      countdownLabel: 'Class in progress',
-      countdownAria: 'Class in progress',
-      breakBadge: 'Break',
-      firstBadge: 'Before the first class',
-      breakMessageSuffix: ' Classes resume soon.',
-      firstMessageSuffix: ' Still time to prepare.',
-      listAria: 'Classes for today',
-      progressAria: value => `${value}% of the class remaining`
-    },
-    tomorrow: {
-      noPairsBadge: 'No classes tomorrow',
-      noPairsMessage: 'It is a day off — no classes scheduled.',
-      listAria: dayLabel => `Classes on ${dayLabel}`
-    },
-    statuses: {
-      current: 'Now',
-      next: 'Next',
-      past: 'Finished'
-    },
-    pair: {
-      roomPrefix: 'room',
-      numberLabel: value => `Class ${value}`,
-      subgroupLabels: {
-        first: '1st subgroup',
-        second: '2nd subgroup',
-        combined: '1st & 2nd subgroups'
-      }
-    },
-    week: {
-      listAria: 'Classes for the week',
-      dayAria: dayLabel => `Classes on ${dayLabel}`,
-      emptyNote: 'No classes match the selected filters.',
-      noDaysSelected: 'No days selected.',
-      dayEmpty: 'No classes scheduled for this day.'
-    },
-    footer: {
-      themeLabel: 'Theme',
-      themeButtonLabel: theme => `Current theme: ${theme} (press to toggle)`,
-      themeButtonTitle: theme => `Theme: ${theme}`,
-      navHeading: 'Sections',
-      extrasHeading: 'More',
-      nav: {
-        today: 'Today',
-        tomorrow: 'Tomorrow',
-        week: 'Week',
-        filters: 'Filters'
-      },
-      universityLink: 'University website',
-      updateInfo: 'Schedule updates every week',
-      copyright: year => `© ${year} Class schedule`,
-      lastUpdated: 'Last update in Moscow time'
-    },
-    countdown: {
-      zero: '0 s',
-      running: 'Class in progress',
-      labelPrefix: 'Starts in: {duration}',
-      endLabelPrefix: 'Ends in: {duration}',
-      ariaPrefix: 'Class starts in {duration}',
-      ariaEndPrefix: 'Class ends in {duration}',
-      secondsZero: 'Class starts in 0 seconds',
-      endSecondsZero: 'Class ends in 0 seconds',
-      startPrefixWithTime: time => `Starts at ${time}.`,
-      startPrefixSoon: 'Starting very soon.',
-      startSuffixAfterClasses: ' Classes restart shortly.',
-      startSuffixBeforeClasses: ' Plenty of time to prepare.',
-      unitsShort: {
-        days: 'd',
-        hours: 'h',
-        minutes: 'min',
-        seconds: 's'
-      },
-      unitsLong: {
-        days: ['day', 'days'],
-        hours: ['hour', 'hours'],
-        minutes: ['minute', 'minutes'],
-        seconds: ['second', 'seconds']
-      }
-    },
-    parityLabels: {
-      odd: 'Odd week',
-      even: 'Even week',
-      all: 'All weeks'
-    },
-    typeLabels: {
-      '-': 'Type not specified',
-      'лекция': 'Lecture',
-      'практика': 'Practical class',
-      'лабораторная': 'Laboratory class'
-    },
-    dayNames: {
-      full: {
-        'Понедельник': 'Monday',
-        'Вторник': 'Tuesday',
-        'Среда': 'Wednesday',
-        'Четверг': 'Thursday',
-        'Пятница': 'Friday',
-        'Суббота': 'Saturday',
-        'Воскресенье': 'Sunday'
-      },
-      short: {
-        'Понедельник': 'Mon',
-        'Вторник': 'Tue',
-        'Среда': 'Wed',
-        'Четверг': 'Thu',
-        'Пятница': 'Fri',
-        'Суббота': 'Sat',
-        'Воскресенье': 'Sun'
-      }
-    },
-    monthNames: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
-    timezoneLabel: '(MSK)',
-    errors: {
-      fallbackTitle: 'Unable to load the schedule',
-      fallbackMessage: 'Refresh the page or try again later.'
-    }
   }
 };
 
 const TranslationContext = React.createContext({
   language: DEFAULT_LANGUAGE,
-  texts: TRANSLATIONS[DEFAULT_LANGUAGE],
-  setLanguage: () => {}
+  texts: TRANSLATIONS[DEFAULT_LANGUAGE]
 });
 
 function useTranslation() {
@@ -475,22 +278,6 @@ function Container({ as: Component = 'div', className = '', children, ...props }
       {children}
     </Component>
   );
-}
-
-function getTranslations(language) {
-  if (language && TRANSLATIONS[language]) {
-    return TRANSLATIONS[language];
-  }
-  return TRANSLATIONS[DEFAULT_LANGUAGE];
-}
-
-function normalizeLanguage(raw) {
-  if (SUPPORTED_LANGUAGES.includes(raw)) {
-    return raw;
-  }
-  const value = String(raw || '').toLowerCase();
-  const match = SUPPORTED_LANGUAGES.find(lang => value.startsWith(lang));
-  return match || DEFAULT_LANGUAGE;
 }
 
 const WEEK_DAYS = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
@@ -514,8 +301,7 @@ const STORAGE_KEYS = {
   theme: 'schedule::theme',
   subgroup: 'schedule::subgroup',
   type: 'schedule::type',
-  day: 'schedule::day',
-  language: 'schedule::language'
+  day: 'schedule::day'
 };
 
 const ALL_TYPES = Array.from(new Set([...SCHEDULE_ODD, ...SCHEDULE_EVEN].map(item => item.type)))
@@ -585,28 +371,34 @@ function buildFilterGroups(texts) {
   ];
 }
 
+function getFilterOptionVariant(field, value) {
+  if (field === 'subgroup') {
+    if (value === '1') return 'subgroup-first';
+    if (value === '2') return 'subgroup-second';
+    if (value === '1-2') return 'subgroup-combined';
+    return 'subgroup-all';
+  }
+
+  if (field === 'type') {
+    const variant = getTypeVariant(value);
+    return variant ? `type-${variant}` : null;
+  }
+
+  if (field === 'day') {
+    if (value === 'all') return 'day-all';
+    return value === 'Суббота' ? 'day-weekend' : 'day-weekday';
+  }
+
+  return null;
+}
+
 const THEME_SEQUENCE = ['system', 'light', 'dark'];
+const NAV_SCROLL_HOLD_MS = 900;
 
 function App() {
   const now = useMoscowNow();
 
-  const [language, setLanguage] = useState(() => {
-    const stored = readStorage(STORAGE_KEYS.language);
-    if (stored) {
-      return normalizeLanguage(stored);
-    }
-    if (typeof navigator !== 'undefined') {
-      const browserLanguage = Array.isArray(navigator.languages) && navigator.languages.length > 0
-        ? navigator.languages[0]
-        : navigator.language || navigator.userLanguage;
-      if (browserLanguage) {
-        return normalizeLanguage(browserLanguage);
-      }
-    }
-    return DEFAULT_LANGUAGE;
-  });
-
-  const translations = useMemo(() => getTranslations(language), [language]);
+  const translations = TRANSLATIONS[DEFAULT_LANGUAGE];
   const filterGroups = useMemo(() => buildFilterGroups(translations), [translations]);
 
   const [parityMode, setParityMode] = useState(() => {
@@ -620,10 +412,9 @@ function App() {
   });
   const [systemTheme, setSystemTheme] = useState(() => getPreferredTheme());
   const [headerHidden, setHeaderHidden] = useState(false);
-  const [filtersOpen, setFiltersOpen] = useState(false);
   const [todayCollapsed, setTodayCollapsed] = useState(true);
   const [tomorrowCollapsed, setTomorrowCollapsed] = useState(true);
-  const filtersToggleRef = useRef(null);
+  const headerHoldUntilRef = useRef(0);
 
   const [filters, setFilters] = useState(() => {
     const storedSubgroup = readStorage(STORAGE_KEYS.subgroup);
@@ -639,6 +430,13 @@ function App() {
       type: validTypes.has(storedType) ? storedType : 'all'
     };
   });
+
+  const holdHeaderVisible = useCallback(() => {
+    setHeaderHidden(false);
+    if (typeof window !== 'undefined') {
+      headerHoldUntilRef.current = Date.now() + NAV_SCROLL_HOLD_MS;
+    }
+  }, [setHeaderHidden]);
 
   const handleFilterChange = useCallback((field, value) => {
     setFilters(current => {
@@ -693,13 +491,9 @@ function App() {
 
   useEffect(() => {
     if (typeof document !== 'undefined' && document.documentElement) {
-      document.documentElement.setAttribute('lang', language);
+      document.documentElement.setAttribute('lang', DEFAULT_LANGUAGE);
     }
-  }, [language]);
-
-  useEffect(() => {
-    writeStorage(STORAGE_KEYS.language, language);
-  }, [language]);
+  }, []);
 
   useEffect(() => {
     if (typeof document !== 'undefined') {
@@ -725,12 +519,18 @@ function App() {
       rafId = window.requestAnimationFrame(() => {
         const currentY = window.scrollY;
         const delta = currentY - lastY;
+        const holdUntil = headerHoldUntilRef.current || 0;
+        const nowTimestamp = Date.now();
 
-        if (filtersOpen) {
+        if (holdUntil > nowTimestamp) {
           setHeaderHidden(false);
           lastY = currentY;
           rafId = null;
           return;
+        }
+
+        if (holdUntil && holdUntil <= nowTimestamp) {
+          headerHoldUntilRef.current = 0;
         }
 
         if (currentY <= 0) {
@@ -754,13 +554,7 @@ function App() {
         window.cancelAnimationFrame(rafId);
       }
     };
-  }, [filtersOpen]);
-
-  useEffect(() => {
-    if (filtersOpen) {
-      setHeaderHidden(false);
-    }
-  }, [filtersOpen]);
+  }, []);
 
 
   useEffect(() => {
@@ -800,10 +594,9 @@ function App() {
       parity: todayParity,
       weekNumber: academicWeekNumber,
       filters,
-      texts: translations,
-      language
+      texts: translations
     });
-  }, [scheduleSource, now, parityMode, effectiveParity, autoParity, academicWeekNumber, filters, translations, language]);
+  }, [scheduleSource, now, parityMode, effectiveParity, autoParity, academicWeekNumber, filters, translations]);
 
   const tomorrowParts = useMemo(() => {
     const baseDate = now.isoDate instanceof Date ? now.isoDate : new Date();
@@ -840,21 +633,24 @@ function App() {
 
 const dayFilterList = filters.day === 'all' ? WEEK_DAYS : WEEK_DAYS.filter(day => day === filters.day);
 const filtersAreDefault = isDefaultFilters(filters);
-const activeFilterCount = Object.values(filters).reduce((total, value) => {
-  return value === 'all' ? total : total + 1;
-}, 0);
 
 const currentYear = now.year;
 const themeLabel = translations.theme[themeMode] || themeMode;
 const autoParityLabel = autoParity === 'odd' ? translations.parity.autoOdd : translations.parity.autoEven;
 const parityChipText = getParityLabel(autoParity, translations) || autoParityLabel;
 const translationContextValue = useMemo(() => ({
-  language,
-  texts: translations,
-  setLanguage
-}), [language, translations]);
-const filterButtonActionLabel = filtersOpen ? translations.controls.hideFilters : translations.controls.showFilters;
-const filterButtonAria = translations.controls.filtersButtonAria(filterButtonActionLabel, activeFilterCount);
+  language: DEFAULT_LANGUAGE,
+  texts: translations
+}), [translations]);
+const navItems = useMemo(() => ([
+  { id: 'today', label: translations.sections.today },
+  { id: 'tomorrow', label: translations.sections.tomorrow },
+  { id: 'week', label: translations.sections.week }
+]), [translations]);
+const navigationLabel = translations.navigation?.ariaLabel || translations.brand.title;
+const handleNavAnchorClick = useCallback(() => {
+  holdHeaderVisible();
+}, [holdHeaderVisible]);
 const todayHeading = useMemo(() => formatDayHeading(now, translations), [now, translations]);
 const tomorrowHeading = useMemo(() => formatDayHeading(tomorrowParts, translations), [tomorrowParts, translations]);
 const todayContentId = 'today-section-content';
@@ -866,64 +662,31 @@ const tomorrowCaptionId = 'tomorrow-section-caption';
 
 return (
   <TranslationContext.Provider value={translationContextValue}>
-    <div className={`app-shell${filtersOpen ? ' filters-open' : ''}`}>
+    <div className="app-shell">
       <header className={`app-header${headerHidden ? ' is-hidden' : ''}`}>
         <Container className="header-inner">
           <div className="brand-line">
             <div className="brand-block" aria-live="polite">
               <h1>{translations.brand.title}</h1>
               <div className="brand-meta">
-                <div className="brand-meta-secondary">
-                  <span className="brand-meta-text">{translations.brand.academicWeek(academicWeekNumber)}</span>
-                  <span
-                    className={`brand-parity-chip brand-parity-chip--${autoParity}`}
-                    aria-label={translations.brand.autoDetection(parityChipText)}
-                  >
-                    {parityChipText}
-                  </span>
-                </div>
+                <span className="brand-meta-text">{translations.brand.academicWeek(academicWeekNumber)}</span>
+                <span
+                  className={`brand-parity-chip brand-parity-chip--${autoParity}`}
+                  aria-label={translations.brand.autoDetection(parityChipText)}
+                >
+                  {parityChipText}
+                </span>
               </div>
             </div>
-            <div className="control-block">
-              <ParitySelector parityMode={parityMode} onChange={setParityMode} />
-              <button
-                type="button"
-                className={`filters-toggle-button${filtersOpen ? ' is-open' : ''}${activeFilterCount > 0 ? ' has-active' : ''}`}
-                onClick={() => {
-                  setHeaderHidden(false);
-                  setFiltersOpen(value => !value);
-                }}
-                ref={filtersToggleRef}
-                aria-label={filterButtonAria}
-                aria-expanded={filtersOpen}
-                aria-controls="filters-panel"
-                title={filterButtonActionLabel}
-              >
-                <FilterIcon />
-                <span className="filters-toggle-label">{translations.sections.filters}</span>
-                {activeFilterCount > 0 && (
-                  <span className="filters-toggle-count" aria-hidden="true">{activeFilterCount}</span>
-                )}
-              </button>
-            </div>
+            <nav className="site-nav" aria-label={navigationLabel}>
+              {navItems.map(item => (
+                <a key={item.id} href={`#${item.id}`} onClick={handleNavAnchorClick}>
+                  {item.label}
+                </a>
+              ))}
+            </nav>
           </div>
         </Container>
-        <div
-          className={`filters-region${filtersOpen ? ' is-open' : ''}`}
-          aria-hidden={!filtersOpen}
-          id="filters-panel"
-        >
-          <Container className="filters-region-inner">
-            <FiltersPanel
-              filters={filters}
-              groups={filterGroups}
-              onUpdateFilter={handleFilterChange}
-              isOpen={filtersOpen}
-              onReset={handleResetFilters}
-              resetDisabled={filtersAreDefault}
-            />
-          </Container>
-        </div>
       </header>
 
       <main className="app-main">
@@ -946,7 +709,18 @@ return (
                   <span className="section-heading-title">{translations.sections.today}</span>
                   <span className="section-caption" id={todayCaptionId}>{todayHeading}</span>
                 </span>
-                <span className="section-toggle-caret" aria-hidden="true"></span>
+                <span className="section-toggle-icon" aria-hidden="true">
+                  <svg viewBox="0 0 12 12" focusable="false">
+                    <path
+                      d="M3 4.5 6 7.5 9 4.5"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </span>
               </button>
             </h2>
           </div>
@@ -978,7 +752,18 @@ return (
                   <span className="section-heading-title">{translations.sections.tomorrow}</span>
                   <span className="section-caption" id={tomorrowCaptionId}>{tomorrowHeading}</span>
                 </span>
-                <span className="section-toggle-caret" aria-hidden="true"></span>
+                <span className="section-toggle-icon" aria-hidden="true">
+                  <svg viewBox="0 0 12 12" focusable="false">
+                    <path
+                      d="M3 4.5 6 7.5 9 4.5"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </span>
               </button>
             </h2>
           </div>
@@ -996,6 +781,25 @@ return (
           <div className="section-header">
             <h2>{translations.sections.week}</h2>
           </div>
+          <div className="schedule-controls-card week-controls-card">
+            <div className="schedule-controls-head">
+              <div className="filters-inline-header">
+                <p className="filters-inline-label">{translations.sections.filters}</p>
+                <p className="filters-inline-note">{translations.filters.helper}</p>
+              </div>
+              <div className="parity-inline-block">
+                <span className="filters-inline-label">{translations.parity.label}</span>
+                <ParitySelector parityMode={parityMode} onChange={setParityMode} />
+              </div>
+            </div>
+            <FiltersPanel
+              filters={filters}
+              groups={filterGroups}
+              onUpdateFilter={handleFilterChange}
+              onReset={handleResetFilters}
+              resetDisabled={filtersAreDefault}
+            />
+          </div>
           <WeekView
             days={dayFilterList}
             entries={visiblePairs}
@@ -1004,6 +808,7 @@ return (
             parityMode={parityMode}
           />
         </Container>
+
       </main>
 
       <footer className="app-footer">
@@ -1017,20 +822,22 @@ return (
               </div>
             </div>
             <div className="footer-controls">
-              <LanguageSelector />
-              <button
-                type="button"
-                className="theme-button footer-theme-button"
-                onClick={() => {
-                  const currentIndex = THEME_SEQUENCE.indexOf(themeMode);
-                  const nextIndex = (currentIndex + 1) % THEME_SEQUENCE.length;
-                  setThemeMode(THEME_SEQUENCE[nextIndex]);
-                }}
-                aria-label={translations.footer.themeButtonLabel(themeLabel)}
-                title={translations.footer.themeButtonTitle(themeLabel)}
-              >
-                <ThemeIcon mode={themeMode} />
-              </button>
+              <div className="footer-theme-control" role="group" aria-label={translations.footer.themeLabel}>
+                <span className="footer-theme-label">{translations.footer.themeLabel}</span>
+                <button
+                  type="button"
+                  className="theme-button footer-theme-button"
+                  onClick={() => {
+                    const currentIndex = THEME_SEQUENCE.indexOf(themeMode);
+                    const nextIndex = (currentIndex + 1) % THEME_SEQUENCE.length;
+                    setThemeMode(THEME_SEQUENCE[nextIndex]);
+                  }}
+                  aria-label={translations.footer.themeButtonLabel(themeLabel)}
+                  title={translations.footer.themeButtonTitle(themeLabel)}
+                >
+                  <ThemeIcon mode={themeMode} />
+                </button>
+              </div>
             </div>
           </div>
           <div className="footer-bottom">
@@ -1041,29 +848,6 @@ return (
     </div>
   </TranslationContext.Provider>
 );
-}
-
-function LanguageSelector() {
-  const { language, texts, setLanguage } = useTranslation();
-  return (
-    <div className="language-switch">
-      <span className="language-switch-icon" aria-hidden="true">
-        <GlobeIcon />
-      </span>
-      <div className="language-switch-buttons" role="group" aria-label={texts.languageToggle}>
-        {LANGUAGE_OPTIONS.map(option => (
-          <button
-            key={option.value}
-            type="button"
-            aria-pressed={language === option.value}
-            onClick={() => setLanguage(normalizeLanguage(option.value))}
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
 }
 
 function ParitySelector({ parityMode, onChange }) {
@@ -1091,11 +875,11 @@ function ParitySelector({ parityMode, onChange }) {
   );
 }
 
-function FiltersPanel({ filters, groups = [], onUpdateFilter, isOpen = false, onReset, resetDisabled = false }) {
+function FiltersPanel({ filters, groups = [], onUpdateFilter, onReset, resetDisabled = false }) {
   const { texts } = useTranslation();
   return (
     <div
-      className={`filters-panel${isOpen ? ' is-open' : ''}`}
+      className="filters-panel"
       aria-label={texts.filters.heading}
     >
       {groups.map(group => (
@@ -1107,7 +891,9 @@ function FiltersPanel({ filters, groups = [], onUpdateFilter, isOpen = false, on
                 key={option.value}
                 active={filters[group.field] === option.value}
                 onClick={() => onUpdateFilter(group.field, option.value)}
-                disabled={!isOpen}
+                variant={getFilterOptionVariant(group.field, option.value)}
+                field={group.field}
+                value={option.value}
               >
                 {option.label}
               </FilterOptionButton>
@@ -1121,8 +907,7 @@ function FiltersPanel({ filters, groups = [], onUpdateFilter, isOpen = false, on
             type="button"
             className="filter-reset-button"
             onClick={onReset}
-            disabled={!isOpen || resetDisabled}
-            tabIndex={isOpen ? 0 : -1}
+            disabled={resetDisabled}
             aria-label={texts.filters.reset}
             title={texts.filters.reset}
           >
@@ -1134,7 +919,7 @@ function FiltersPanel({ filters, groups = [], onUpdateFilter, isOpen = false, on
   );
 }
 
-function FilterOptionButton({ active, onClick, disabled = false, children }) {
+function FilterOptionButton({ active, onClick, disabled = false, children, variant, field, value }) {
   return (
     <button
       type="button"
@@ -1142,24 +927,12 @@ function FilterOptionButton({ active, onClick, disabled = false, children }) {
       aria-pressed={active}
       onClick={onClick}
       disabled={disabled}
+      data-variant={variant || undefined}
+      data-filter-field={field || undefined}
+      data-filter-value={value || undefined}
     >
       {children}
     </button>
-  );
-}
-
-function FilterIcon() {
-  return (
-    <svg className="icon icon-filter" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path
-        d="M4 5.5h16M7.5 11.5h9M10.5 17.5h3"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
   );
 }
 
@@ -1225,30 +998,67 @@ function ThemeIcon({ mode }) {
   );
 }
 
-function GlobeIcon() {
+function CountdownTicker({ summary, showSummary = true }) {
+  const { texts } = useTranslation();
+  if (!summary || !summary.countdownLabel) {
+    return null;
+  }
+
+  const countdownDisplay = summary.countdownDisplay;
+  const showProgress = summary.state === 'current' && typeof summary.progress === 'number';
+  const progressValue = summary.progress != null ? Math.round(summary.progress) : 0;
+  const bannerClasses = ['countdown-banner'];
+  if (showProgress) {
+    bannerClasses.push('is-current');
+  }
+  if (!showSummary) {
+    bannerClasses.push('countdown-banner--inline');
+  }
+
   return (
-    <svg className="icon icon-globe" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path
-        d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.6"
-      />
-      <path
-        d="M3.6 9h16.8M3.6 15h16.8M12 3v18"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.2"
-        strokeLinecap="round"
-      />
-      <path
-        d="M12 3c2.5 2.7 3.8 6 3.8 9S14.5 18.3 12 21m0-18c-2.5 2.7-3.8 6-3.8 9s1.3 6.3 3.8 9"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.2"
-        strokeLinecap="round"
-      />
-    </svg>
+    <section className={bannerClasses.join(' ')} aria-live="polite">
+      {showSummary && (
+        <div className="countdown-banner-head">
+          {summary.badge && <span className="badge countdown-badge">{summary.badge}</span>}
+          {summary.title && <p className="countdown-banner-title">{summary.title}</p>}
+        </div>
+      )}
+      <div className="countdown-line">
+        <div
+          className="countdown-value"
+          role={summary.countdownRole || undefined}
+          aria-live={summary.countdownLive || undefined}
+          aria-label={summary.countdownAria || undefined}
+          aria-atomic={summary.countdownLive ? 'true' : undefined}
+        >
+          {countdownDisplay ? (
+            <>
+              {countdownDisplay.prefix && (
+                <span className="countdown-label-text">{countdownDisplay.prefix}</span>
+              )}
+              <span className="countdown-time">{countdownDisplay.value}</span>
+              {countdownDisplay.suffix && (
+                <span className="countdown-label-text">{countdownDisplay.suffix}</span>
+              )}
+            </>
+          ) : (
+            <span className="countdown-time">{summary.countdownLabel}</span>
+          )}
+        </div>
+        {showProgress && (
+          <div
+            className="progress-track"
+            role="progressbar"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow={progressValue}
+            aria-valuetext={texts.today.progressAria(progressValue)}
+          >
+            <div className="progress-fill" style={{ width: `${summary.progress}%` }}></div>
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -1266,9 +1076,18 @@ function TodaySection({ info, showParityLabels, parityMode, isCollapsed = false,
   const { summary, entries, highlightParity, highlightKey } = info;
   const isCurrent = summary.state === 'current';
   const cardParityVariant = (showParityLabels || parityMode !== 'all') ? null : highlightParity;
-  const progressValue = summary.progress != null ? Math.round(summary.progress) : 0;
-  const countdownDisplay = summary.countdownDisplay;
   const pinnedItem = highlightKey ? entries.find(item => item.key === highlightKey) : null;
+  const showCountdown = Boolean(summary && summary.countdownLabel);
+  const todayCardClasses = ['today-card', 'today-card--list'];
+  if (isCurrent) {
+    todayCardClasses.push('current');
+  }
+  if (cardParityVariant) {
+    todayCardClasses.push(`parity-${cardParityVariant}`);
+  }
+  if (showCountdown) {
+    todayCardClasses.push('has-countdown');
+  }
 
   const renderEntry = item => {
     const entry = item.entry;
@@ -1343,53 +1162,25 @@ function TodaySection({ info, showParityLabels, parityMode, isCollapsed = false,
 
   return (
     <article
-      className={`today-card today-card--list${isCurrent ? ' current' : ''}${cardParityVariant ? ` parity-${cardParityVariant}` : ''}`}
+      className={todayCardClasses.join(' ')}
       aria-live="polite"
     >
-      <div className="today-head">
-        <span className="badge">{summary.badge}</span>
-      </div>
-      <div className="today-main">
-        <h3 className="today-title">{summary.title}</h3>
-        {summary.message && <p className="info-text">{summary.message}</p>}
-      </div>
-      {summary.countdownLabel && (
-        <div className="countdown-line">
-          <div
-            className="countdown-value"
-            role={summary.countdownRole || undefined}
-            aria-live={summary.countdownLive || undefined}
-            aria-label={summary.countdownAria || undefined}
-            aria-atomic={summary.countdownLive ? 'true' : undefined}
-          >
-            {countdownDisplay ? (
-              <>
-                {countdownDisplay.prefix && (
-                  <span className="countdown-label-text">{countdownDisplay.prefix}</span>
-                )}
-                <span className="countdown-time">{countdownDisplay.value}</span>
-                {countdownDisplay.suffix && (
-                  <span className="countdown-label-text">{countdownDisplay.suffix}</span>
-                )}
-              </>
-            ) : (
-              <span className="countdown-time">{summary.countdownLabel}</span>
-            )}
+      <div className={`today-summary${showCountdown ? ' has-countdown' : ''}`}>
+        <div className="today-overview">
+          <div className="today-head">
+            <span className="badge">{summary.badge}</span>
           </div>
-          {summary.state === 'current' && (
-            <div
-              className="progress-track"
-              role="progressbar"
-              aria-valuemin="0"
-              aria-valuemax="100"
-              aria-valuenow={progressValue}
-              aria-valuetext={texts.today.progressAria(progressValue)}
-            >
-              <div className="progress-fill" style={{ width: `${summary.progress}%` }}></div>
-            </div>
-          )}
+          <div className="today-main">
+            <h3 className="today-title">{summary.title}</h3>
+            {summary.message && <p className="info-text">{summary.message}</p>}
+          </div>
         </div>
-      )}
+        {showCountdown && (
+          <div className="today-countdown">
+            <CountdownTicker summary={summary} showSummary={false} />
+          </div>
+        )}
+      </div>
       {isCollapsed && pinnedItem && (
         <div className="section-pinned-list">
           <ul className="day-pair-list today-pair-list today-pinned-list" aria-label={texts.today.listAria}>
@@ -2082,7 +1873,7 @@ function getEntriesForDay({ schedule, dayName, parity, weekNumber, filters }) {
   return typeFiltered.length > 0 ? typeFiltered : baseEntries;
 }
 
-function computeTodayInfo({ schedule, now, parity, weekNumber, filters, texts, language }) {
+function computeTodayInfo({ schedule, now, parity, weekNumber, filters, texts }) {
   const todayName = WEEKDAY_MAP[now.weekday] || 'Воскресенье';
 
   const baseEntries = getEntriesForDay({
@@ -2174,7 +1965,7 @@ function computeTodayInfo({ schedule, now, parity, weekNumber, filters, texts, l
       const countdownTemplate = texts.countdown.endLabelPrefix;
       const countdownValue = formatCountdown(remainingMs, texts);
       countdownLabel = countdownTemplate.replace('{duration}', countdownValue);
-      countdownAria = formatCountdownAria(remainingMs, texts, language, {
+      countdownAria = formatCountdownAria(remainingMs, texts, DEFAULT_LANGUAGE, {
         prefix: texts.countdown.ariaEndPrefix,
         zero: texts.countdown.endSecondsZero
       });
@@ -2216,7 +2007,7 @@ function computeTodayInfo({ schedule, now, parity, weekNumber, filters, texts, l
   const countdownValue = formatCountdown(remainingMs, texts);
   const countdownTemplate = texts.countdown.labelPrefix;
   const countdownLabel = countdownTemplate.replace('{duration}', countdownValue);
-  const countdownAria = formatCountdownAria(remainingMs, texts, language);
+  const countdownAria = formatCountdownAria(remainingMs, texts, DEFAULT_LANGUAGE);
   const countdownDisplay = createCountdownDisplay(countdownTemplate, countdownValue);
 
   return {

@@ -1,5 +1,78 @@
 # Changelog
 
+## 2025-11-19 – Smooth summary empty state
+
+- Softened the empty-state summary card fill/border mix and swapped in a low-contrast glow so its rounded corners no longer show black halos against the page background.
+
+### Verification
+
+- Manual QA: not run (CLI environment)
+
+## 2025-11-19 – Polish Today block and filters
+
+- Blended the Today hero card surface into the page background, tightened its glow inside the border, and kept the parity highlight under a single layered gradient so there is no visible seam against the main canvas.
+- Tuned the Today list surface mix so the rounded list area inherits the site background tone, eliminating the leftover color mismatch around the pair list corners.
+- Softened the empty-state summary card fill/border so its rectangle fades into the page background without dark bands.
+- Matched the Tomorrow card container to the page background mix so the pair list’s rounded corners no longer show dark seams.
+- Rebuilt subgroup badges plus filter pills around shared tone variables so subgroup/type/day options now carry meaningful colors that stay consistent across chips and the filter panel.
+- Restacked the collapsible heading caption on phones so the date label wraps under “Сегодня/Завтра” with mobile-friendly spacing instead of cramming beside the title.
+
+### Verification
+
+- Manual QA: not run (CLI environment)
+
+## 2025-11-18 – Keep countdown with first pair
+
+- Embedded the first-pair summary inside the Today card alongside the countdown, removed the standalone banner, and tweaked the inline timer style so the pre-class state reads as a single section.
+- Rebalanced the collapsible Today/Tomorrow headers with consistent padding, borders, and hover states so their highlight area no longer jumps between collapsed and expanded layouts.
+- Gave the header anchor pills a softer focus treatment and pause the auto-hide logic after nav clicks so the header stays visible when following the in-page links.
+
+### Verification
+
+- Manual QA: not run (CLI environment)
+
+## 2025-11-17 – Lock Russian locale and unify controls
+
+- Removed the language toggle, stripped the unused English dictionary, and now always hydrate the UI plus `<html lang>` with Russian so visitors are not prompted to switch languages.
+- Replaced the orphaned footer globe control with a labeled theme switch pill so the remaining action clearly communicates its purpose and fits the existing pill motif.
+- Restyled type chips, subgroup badges, status pills, and the countdown progress bar to reuse shared theme tokens instead of ad-hoc hex colors, giving the schedule a single visual language in both light and dark themes.
+
+### Verification
+
+- Manual QA: not run (CLI environment)
+
+# Changelog
+
+## 2025-11-15 – Separate countdown and tidy collapsibles
+
+- Pulled the next-class countdown (and in-progress progress bar) into its own banner so “Сегодня” reads cleanly while the timer stays visible above the sections.
+- Reworked the collapsible headers with softer backgrounds, a balanced chevron icon, and hover states so the Today/Tomorrow cards no longer look broken when collapsed.
+- Kept the timer banner visually aligned with the rest of the schedule card stack for a single cohesive look across the page.
+
+### Verification
+
+- Manual QA: not run (CLI environment)
+
+## 2025-11-15 – Streamline weekly navigation
+
+- Trimmed the header nav down to Today/Tomorrow/Week schedule anchors with minimalist pill styling and renamed the week section to “Расписание на неделю”/“Week schedule”.
+- Removed the Speakers/FAQ/Contacts sections and relocated the subgroup/day/type filters plus parity switch directly above the weekly schedule for tighter context.
+- Restyled the Today/Tomorrow collapsible headers with a softer card treatment and a clean chevron icon so the collapsed state feels more inviting to expand.
+
+### Verification
+
+- Manual QA: not run (CLI environment)
+
+## 2025-11-15 – Simplify navigation and filters layout
+
+- Rebuilt the header into a light navigation bar with section anchors so only the schedule links (Schedule/Speakers/FAQ/Contacts) remain above the fold while the brand meta stays compact.
+- Moved the parity switch and subgroup/day/type filters into a dedicated card directly above the schedule, removed the old drawer toggle, and restyled the chips/reset action to match the minimalist typography spacing.
+- Added informational sections for speakers, the FAQ blurb, and contact guidance so the new navigation has visible targets in both languages.
+
+### Verification
+
+- Manual QA: not run (CLI environment)
+
 ## 2025-11-16 – Clickable day headers with animation
 
 - Removed the separate “Expand/Hide” buttons so the Today and Tomorrow headings themselves now behave as the toggles, keeping the layout cleaner and matching the requested interaction.
