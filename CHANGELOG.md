@@ -1,5 +1,14 @@
 # Changelog
 
+## 2025-11-16 – Clickable day headers with animation
+
+- Removed the separate “Expand/Hide” buttons so the Today and Tomorrow headings themselves now behave as the toggles, keeping the layout cleaner and matching the requested interaction.
+- Added a shared collapsible region helper plus CSS transitions so both sections smoothly expand/collapse while respecting system reduced-motion preferences.
+
+### Verification
+
+- Manual QA: not run (CLI environment)
+
 ## 2025-11-15 – Switch to Inter and highlight section toggles
 
 - Replaced the Google Fonts import and global font stack so the entire UI now renders with the Inter family and consistent fallbacks.

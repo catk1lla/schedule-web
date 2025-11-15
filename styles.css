@@ -369,66 +369,53 @@ header.app-header.is-hidden {
   box-shadow: 0 12px 24px rgba(37, 99, 235, 0.18);
 }
 
-.section-toggle-button {
-  --section-toggle-glow: color-mix(in srgb, var(--accent) 35%, transparent);
-  --section-toggle-shadow: 0 18px 45px var(--section-toggle-glow);
+.section-heading-button {
+  width: 100%;
   display: inline-flex;
   align-items: center;
   gap: 0.8rem;
-  border: 1px solid color-mix(in srgb, var(--accent) 65%, transparent);
-  border-radius: 999px;
-  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 85%, transparent), color-mix(in srgb, var(--accent) 55%, transparent));
-  color: #fff;
-  font-size: 0.95rem;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  padding: 0.65rem 1.5rem;
-  min-height: 2.75rem;
+  border: none;
+  background: none;
+  padding: 0.15rem 0;
   cursor: pointer;
-  box-shadow: var(--section-toggle-shadow);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
-  text-shadow: 0 1px 3px rgba(15, 23, 42, 0.35);
+  color: inherit;
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1.4;
+  text-align: left;
+  appearance: none;
+  transition: color 0.2s ease;
 }
 
-.section-toggle-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 24px 60px var(--section-toggle-glow);
-  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 90%, transparent), color-mix(in srgb, var(--accent) 65%, transparent));
+.section-heading-button .section-heading-main {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  align-items: baseline;
 }
 
-.section-toggle-button.is-open {
-  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+.section-heading-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.section-heading-button .section-caption {
+  margin-left: auto;
+}
+
+.section-heading-button.is-open .section-heading-title {
   color: var(--accent);
-  box-shadow: 0 18px 42px color-mix(in srgb, var(--accent) 20%, transparent);
-  background: color-mix(in srgb, var(--surface-strong) 92%, transparent);
-  text-shadow: none;
 }
 
-.section-toggle-button:active {
-  transform: translateY(0);
-  box-shadow: var(--section-toggle-shadow);
+.section-heading-button.is-open .section-caption {
+  color: var(--accent);
 }
 
-[data-theme="dark"] .section-toggle-button {
-  --section-toggle-glow: color-mix(in srgb, var(--accent) 50%, transparent);
-  border-color: color-mix(in srgb, var(--accent) 70%, transparent);
-  box-shadow: 0 20px 48px var(--section-toggle-glow);
-  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 70%, transparent), color-mix(in srgb, var(--accent) 45%, transparent));
-}
-
-[data-theme="dark"] .section-toggle-button:hover {
-  box-shadow: 0 26px 60px var(--section-toggle-glow);
-}
-
-[data-theme="dark"] .section-toggle-button.is-open {
-  background: color-mix(in srgb, var(--surface) 30%, transparent);
-  box-shadow: 0 24px 48px color-mix(in srgb, var(--accent) 35%, transparent);
-}
-
-.section-toggle-label {
-  display: inline-flex;
-  align-items: center;
-  line-height: 1.2;
+.section-heading-button:hover .section-heading-title,
+.section-heading-button:hover .section-caption {
+  color: var(--accent);
 }
 
 .section-toggle-caret {
@@ -441,7 +428,7 @@ header.app-header.is-hidden {
   flex-shrink: 0;
 }
 
-.section-toggle-button.is-open .section-toggle-caret {
+.section-heading-button.is-open .section-toggle-caret {
   transform: rotate(-135deg);
 }
 
@@ -647,7 +634,7 @@ header.app-header.is-hidden {
 .parity-switch button:focus-visible,
 .language-switch-buttons button:focus-visible,
 .filters-toggle-button:focus-visible,
-.section-toggle-button:focus-visible,
+.section-heading-button:focus-visible,
 .filter-button:focus-visible,
 .theme-button:focus-visible,
 .filter-reset-button:focus-visible,
@@ -679,11 +666,8 @@ main.app-main {
 }
 
 .section-heading {
-  display: flex;
   flex: 1 1 auto;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.5rem 1rem;
+  margin: 0;
 }
 
 .section-header h2 {
@@ -700,16 +684,26 @@ main.app-main {
   text-align: right;
 }
 
-.section-heading .section-caption {
+.section-heading-main .section-caption {
   margin-left: auto;
 }
 
 .section-collapse-region {
   width: 100%;
+  overflow: hidden;
+  height: auto;
+  opacity: 1;
+  transition: height 0.35s ease, opacity 0.25s ease;
 }
 
-.section-collapse-region[hidden] {
-  display: none !important;
+.section-collapse-region.is-collapsed {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .section-collapse-region {
+    transition: none;
+  }
 }
 
 .today-card,

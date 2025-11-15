@@ -148,9 +148,7 @@ const TRANSLATIONS = {
           return `${actionLabel}. Активных фильтров: ${count}.`;
         }
         return actionLabel;
-      },
-      showSection: () => 'Расширить',
-      hideSection: sectionLabel => `Скрыть ${sectionLabel}`
+      }
     },
     today: {
       noPairsBadge: 'Сегодня пар нет',
@@ -332,9 +330,7 @@ const TRANSLATIONS = {
           return `${actionLabel}. Active filters: ${count}.`;
         }
         return actionLabel;
-      },
-      showSection: () => 'Expand',
-      hideSection: sectionLabel => `Hide ${sectionLabel}`
+      }
     },
     today: {
       noPairsBadge: 'No classes today',
@@ -861,14 +857,12 @@ const filterButtonActionLabel = filtersOpen ? translations.controls.hideFilters 
 const filterButtonAria = translations.controls.filtersButtonAria(filterButtonActionLabel, activeFilterCount);
 const todayHeading = useMemo(() => formatDayHeading(now, translations), [now, translations]);
 const tomorrowHeading = useMemo(() => formatDayHeading(tomorrowParts, translations), [tomorrowParts, translations]);
-const todayToggleLabel = todayCollapsed
-  ? translations.controls.showSection(translations.sections.today)
-  : translations.controls.hideSection(translations.sections.today);
-const tomorrowToggleLabel = tomorrowCollapsed
-  ? translations.controls.showSection(translations.sections.tomorrow)
-  : translations.controls.hideSection(translations.sections.tomorrow);
 const todayContentId = 'today-section-content';
 const tomorrowContentId = 'tomorrow-section-content';
+const todayHeadingId = 'today-section-title';
+const tomorrowHeadingId = 'tomorrow-section-title';
+const todayCaptionId = 'today-section-caption';
+const tomorrowCaptionId = 'tomorrow-section-caption';
 
 return (
   <TranslationContext.Provider value={translationContextValue}>
@@ -939,22 +933,22 @@ return (
           className={`app-section${todayCollapsed ? ' is-collapsed' : ''}`}
         >
           <div className="section-header">
-            <div className="section-heading">
-              <h2>{translations.sections.today}</h2>
-              <span className="section-caption">{todayHeading}</span>
-            </div>
-            <button
-              type="button"
-              className={`section-toggle-button${todayCollapsed ? '' : ' is-open'}`}
-              onClick={() => setTodayCollapsed(value => !value)}
-              aria-expanded={!todayCollapsed}
-              aria-controls={todayContentId}
-              aria-label={todayToggleLabel}
-              title={todayToggleLabel}
-            >
-              <span className="section-toggle-label">{todayToggleLabel}</span>
-              <span className="section-toggle-caret" aria-hidden="true"></span>
-            </button>
+            <h2 className="section-heading" id={todayHeadingId}>
+              <button
+                type="button"
+                className={`section-heading-button${todayCollapsed ? '' : ' is-open'}`}
+                onClick={() => setTodayCollapsed(value => !value)}
+                aria-expanded={!todayCollapsed}
+                aria-controls={todayContentId}
+                aria-describedby={todayCaptionId}
+              >
+                <span className="section-heading-main">
+                  <span className="section-heading-title">{translations.sections.today}</span>
+                  <span className="section-caption" id={todayCaptionId}>{todayHeading}</span>
+                </span>
+                <span className="section-toggle-caret" aria-hidden="true"></span>
+              </button>
+            </h2>
           </div>
           <TodaySection
             info={todayInfo}
@@ -971,22 +965,22 @@ return (
           className={`app-section${tomorrowCollapsed ? ' is-collapsed' : ''}`}
         >
           <div className="section-header">
-            <div className="section-heading">
-              <h2>{translations.sections.tomorrow}</h2>
-              <span className="section-caption">{tomorrowHeading}</span>
-            </div>
-            <button
-              type="button"
-              className={`section-toggle-button${tomorrowCollapsed ? '' : ' is-open'}`}
-              onClick={() => setTomorrowCollapsed(value => !value)}
-              aria-expanded={!tomorrowCollapsed}
-              aria-controls={tomorrowContentId}
-              aria-label={tomorrowToggleLabel}
-              title={tomorrowToggleLabel}
-            >
-              <span className="section-toggle-label">{tomorrowToggleLabel}</span>
-              <span className="section-toggle-caret" aria-hidden="true"></span>
-            </button>
+            <h2 className="section-heading" id={tomorrowHeadingId}>
+              <button
+                type="button"
+                className={`section-heading-button${tomorrowCollapsed ? '' : ' is-open'}`}
+                onClick={() => setTomorrowCollapsed(value => !value)}
+                aria-expanded={!tomorrowCollapsed}
+                aria-controls={tomorrowContentId}
+                aria-describedby={tomorrowCaptionId}
+              >
+                <span className="section-heading-main">
+                  <span className="section-heading-title">{translations.sections.tomorrow}</span>
+                  <span className="section-caption" id={tomorrowCaptionId}>{tomorrowHeading}</span>
+                </span>
+                <span className="section-toggle-caret" aria-hidden="true"></span>
+              </button>
+            </h2>
           </div>
           <TomorrowSection
             entries={tomorrowEntries}
@@ -1403,18 +1397,16 @@ function TodaySection({ info, showParityLabels, parityMode, isCollapsed = false,
           </ul>
         </div>
       )}
-      <div
+      <CollapsibleRegion
         id={contentId}
-        className="section-collapse-region"
-        aria-hidden={isCollapsed}
-        style={{ display: isCollapsed ? 'none' : undefined }}
+        isCollapsed={isCollapsed}
       >
         {entries.length > 0 && (
           <ul className="day-pair-list today-pair-list" aria-label={texts.today.listAria}>
             {entries.map(renderEntry)}
           </ul>
         )}
-      </div>
+      </CollapsibleRegion>
     </article>
   );
 }
@@ -1499,13 +1491,29 @@ function TomorrowSection({ entries, dateParts, showParityLabels, parityMode, isC
     );
 
   return (
-    <div
+    <CollapsibleRegion
       id={contentId}
-      className="section-collapse-region"
-      aria-hidden={isCollapsed}
-      hidden={isCollapsed}
+      isCollapsed={isCollapsed}
     >
       {content}
+    </CollapsibleRegion>
+  );
+}
+
+function CollapsibleRegion({ id, isCollapsed, className = '', children }) {
+  const regionRef = useCollapsibleMotion(isCollapsed);
+  const classes = ['section-collapse-region', isCollapsed ? 'is-collapsed' : 'is-expanded'];
+  if (className) {
+    classes.push(className);
+  }
+  return (
+    <div
+      id={id}
+      ref={regionRef}
+      className={classes.join(' ')}
+      aria-hidden={isCollapsed}
+    >
+      {children}
     </div>
   );
 }
@@ -1856,6 +1864,82 @@ function WeekView({ days, entries, currentKey, showParityLabels, parityMode }) {
   );
 }
 
+function useCollapsibleMotion(isCollapsed) {
+  const regionRef = useRef(null);
+  const prefersReducedMotion = usePrefersReducedMotion();
+  const isFirstRender = useRef(true);
+
+  useEffect(() => {
+    const node = regionRef.current;
+    if (!node) {
+      return undefined;
+    }
+
+    const setStaticState = () => {
+      node.style.height = isCollapsed ? '0px' : 'auto';
+      node.style.opacity = isCollapsed ? '0' : '1';
+    };
+
+    if (isFirstRender.current) {
+      setStaticState();
+      isFirstRender.current = false;
+      return undefined;
+    }
+
+    if (prefersReducedMotion) {
+      setStaticState();
+      return undefined;
+    }
+
+    const requestFrame = typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function'
+      ? window.requestAnimationFrame
+      : callback => setTimeout(callback, 16);
+    const cancelFrame = typeof window !== 'undefined' && typeof window.cancelAnimationFrame === 'function'
+      ? window.cancelAnimationFrame
+      : clearTimeout;
+
+    const isExpanding = !isCollapsed;
+    const startHeight = node.scrollHeight;
+    let rafId = null;
+
+    if (isExpanding) {
+      node.style.height = '0px';
+      node.style.opacity = '0';
+      rafId = requestFrame(() => {
+        const target = node.scrollHeight || startHeight;
+        node.style.height = `${target}px`;
+        node.style.opacity = '1';
+      });
+    } else {
+      node.style.height = `${startHeight}px`;
+      node.style.opacity = '1';
+      rafId = requestFrame(() => {
+        node.style.height = '0px';
+        node.style.opacity = '0';
+      });
+    }
+
+    const handleTransitionEnd = event => {
+      if (event.target !== node || event.propertyName !== 'height') {
+        return;
+      }
+      if (isExpanding) {
+        node.style.height = 'auto';
+      }
+    };
+
+    node.addEventListener('transitionend', handleTransitionEnd);
+    return () => {
+      node.removeEventListener('transitionend', handleTransitionEnd);
+      if (rafId != null) {
+        cancelFrame(rafId);
+      }
+    };
+  }, [isCollapsed, prefersReducedMotion]);
+
+  return regionRef;
+}
+
 function useMediaQuery(query, defaultValue = false) {
   const [matches, setMatches] = useState(() => {
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
@@ -1883,6 +1967,10 @@ function useMediaQuery(query, defaultValue = false) {
   }, [query, defaultValue]);
 
   return matches;
+}
+
+function usePrefersReducedMotion() {
+  return useMediaQuery('(prefers-reduced-motion: reduce)');
 }
 
 function useMoscowNow() {
