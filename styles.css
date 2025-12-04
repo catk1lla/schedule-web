@@ -97,8 +97,8 @@ body::before {
   position: fixed;
   inset: 0;
   background: radial-gradient(120% 120% at 10% 10%, rgba(37, 99, 235, 0.15), transparent 55%),
-              radial-gradient(120% 120% at 90% 10%, rgba(14, 165, 233, 0.18), transparent 55%),
-              radial-gradient(120% 120% at 50% 100%, rgba(99, 102, 241, 0.18), transparent 55%);
+    radial-gradient(120% 120% at 90% 10%, rgba(14, 165, 233, 0.18), transparent 55%),
+    radial-gradient(120% 120% at 50% 100%, rgba(99, 102, 241, 0.18), transparent 55%);
   pointer-events: none;
   z-index: 0;
 }
@@ -645,8 +645,8 @@ main.app-main {
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  gap: var(--space-2xl);
-  margin-top: var(--space-2xl);
+  gap: 0.5rem;
+  margin-top: var(--space-xl);
 }
 
 .app-section {
@@ -737,7 +737,11 @@ main.app-main {
 }
 
 .tomorrow-card {
-  background: color-mix(in srgb, var(--bg) 95%, var(--surface-strong) 5%);
+  --tomorrow-surface: color-mix(in srgb, var(--bg) 95%, var(--surface-strong) 5%);
+  --tomorrow-accent-layer: color-mix(in srgb, var(--accent) 9%, transparent);
+  background: linear-gradient(150deg, var(--tomorrow-accent-layer), transparent 60%), var(--tomorrow-surface);
+  overflow: hidden;
+  isolation: isolate;
   border-color: color-mix(in srgb, var(--border) 60%, transparent);
   box-shadow: var(--shadow-lg), 0 28px 60px -50px color-mix(in srgb, var(--accent-soft) 70%, transparent);
 }
@@ -1683,6 +1687,7 @@ footer.app-footer {
 }
 
 @keyframes currentPulseGlow {
+
   0%,
   100% {
     opacity: 0.45;
@@ -1881,7 +1886,9 @@ select:focus-visible {
     width: 100%;
   }
 }
+
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
@@ -1894,4 +1901,8 @@ select:focus-visible {
   .today-card.current::after {
     animation: none;
   }
+}
+
+.status-section {
+  margin-bottom: 1.5rem;
 }

@@ -6,55 +6,55 @@ if (typeof formatCountdown !== 'function' || typeof formatCountdownAria !== 'fun
 }
 
 const SCHEDULE_ODD = [
-  {day:'Понедельник', pair:3, time:'11:35-13:10', weeks:'all', type:'практика', subgroup:null, subject:'Электив по физической культуре и спорту', place:'спорткомплекс 6-го учебного корпуса', teacher:'Андронова Л. Н.', note:''},
+  { day: 'Понедельник', pair: 3, time: '11:35-13:10', weeks: 'all', type: 'практика', subgroup: null, subject: 'Электив по физической культуре и спорту', place: 'спорткомплекс 6-го учебного корпуса', teacher: 'Андронова Л. Н.', note: '' },
 
-  {day:'Вторник', pair:1, time:'08:00-09:35', weeks:'odd', type:'лекция', subgroup:null, subject:'Основы российской государственности', place:'6427', teacher:'Седаев П. В.', note:''},
-  {day:'Пятница', pair:1, time:'08:00-09:35', weeks:'all', type:'практика', subgroup:null, subject:'Математика', place:'6520', teacher:'Малышев И. Г.', note:''},
-  {day:'Суббота', pair:1, time:'08:00-09:35', weeks:'all', type:'лабораторная', subgroup:1, subject:'Программирование на Java', place:'6451', teacher:'Зарубин И. Б.', note:''},
+  { day: 'Вторник', pair: 1, time: '08:00-09:35', weeks: 'odd', type: 'лекция', subgroup: null, subject: 'Основы российской государственности', place: '6427', teacher: 'Седаев П. В.', note: '' },
+  { day: 'Пятница', pair: 1, time: '08:00-09:35', weeks: 'all', type: 'практика', subgroup: null, subject: 'Математика', place: '6520', teacher: 'Малышев И. Г.', note: '' },
+  { day: 'Суббота', pair: 1, time: '08:00-09:35', weeks: 'all', type: 'лабораторная', subgroup: 1, subject: 'Программирование на Java', place: '6451', teacher: 'Зарубин И. Б.', note: '' },
 
-  {day:'Вторник', pair:2, time:'09:45-11:20', weeks:'odd', type:'лекция', subgroup:null, subject:'Графические информационные технологии', place:'6246', teacher:'ст. пр. Малаканова М. А.', note:''},
-  {day:'Среда', pair:2, time:'09:45-11:20', weeks:'odd', type:'практика', subgroup:2, subject:'Иностранный язык (англ.)', place:'6523', teacher:'Зазыкина Т. Н.', note:''},
-  {day:'Четверг', pair:2, time:'09:45-11:20', weeks:'all', type:'практика', subgroup:null, subject:'Дискретная математика', place:'6345', teacher:'доц. Степаненко М. А.', note:''},
-  {day:'Пятница', pair:2, time:'09:45-11:20', weeks:'all', type:'лекция', subgroup:null, subject:'История', place:'6245', teacher:'проф. Гордина Е. Д.', note:''},
-  {day:'Суббота', pair:2, time:'09:45-11:20', weeks:'all', type:'практика', subgroup:null, subject:'Основы российской государственности', place:'6515', teacher:'Седаев П. В.', note:''},
+  { day: 'Вторник', pair: 2, time: '09:45-11:20', weeks: 'odd', type: 'лекция', subgroup: null, subject: 'Графические информационные технологии', place: '6246', teacher: 'ст. пр. Малаканова М. А.', note: '' },
+  { day: 'Среда', pair: 2, time: '09:45-11:20', weeks: 'odd', type: 'практика', subgroup: 2, subject: 'Иностранный язык (англ.)', place: '6523', teacher: 'Зазыкина Т. Н.', note: '' },
+  { day: 'Четверг', pair: 2, time: '09:45-11:20', weeks: 'all', type: 'практика', subgroup: null, subject: 'Дискретная математика', place: '6345', teacher: 'доц. Степаненко М. А.', note: '' },
+  { day: 'Пятница', pair: 2, time: '09:45-11:20', weeks: 'all', type: 'лекция', subgroup: null, subject: 'История', place: '6245', teacher: 'проф. Гордина Е. Д.', note: '' },
+  { day: 'Суббота', pair: 2, time: '09:45-11:20', weeks: 'all', type: 'практика', subgroup: null, subject: 'Основы российской государственности', place: '6515', teacher: 'Седаев П. В.', note: '' },
 
-  {day:'Вторник', pair:3, time:'11:35-13:10', weeks:'all', type:'лабораторная', subgroup:'1-2', subject:'Основы Web-технологий', place:'6143/6251', teacher:'Глумова Е. С.; Бойтякова К. А.', note:''},
-  {day:'Среда', pair:3, time:'11:35-13:10', weeks:'all', type:'лабораторная', subgroup:'1-2', subject:'Графические информационные технологии', place:'6339/6342', teacher:'Малаканова М. А.; Серова М. А.', note:''},
-  {day:'Четверг', pair:3, time:'11:35-13:10', weeks:'all', type:'лекция', subgroup:null, subject:'Математика', place:'6128', teacher:'доц. Малышев И. Г.', note:''},
-  {day:'Пятница', pair:3, time:'11:35-13:10', weeks:'all', type:'лекция', subgroup:null, subject:'Дискретная математика', place:'6258', teacher:'доц. Степаненко М. А.', note:''},
-  {day:'Суббота', pair:3, time:'11:35-13:10', weeks:'all', type:'лекция', subgroup:null, subject:'Программирование на Java', place:'6455', teacher:'Зарубин И. Б.', note:''},
+  { day: 'Вторник', pair: 3, time: '11:35-13:10', weeks: 'all', type: 'лабораторная', subgroup: '1-2', subject: 'Основы Web-технологий', place: '6143/6251', teacher: 'Глумова Е. С.; Бойтякова К. А.', note: '' },
+  { day: 'Среда', pair: 3, time: '11:35-13:10', weeks: 'all', type: 'лабораторная', subgroup: '1-2', subject: 'Графические информационные технологии', place: '6339/6342', teacher: 'Малаканова М. А.; Серова М. А.', note: '' },
+  { day: 'Четверг', pair: 3, time: '11:35-13:10', weeks: 'all', type: 'лекция', subgroup: null, subject: 'Математика', place: '6128', teacher: 'доц. Малышев И. Г.', note: '' },
+  { day: 'Пятница', pair: 3, time: '11:35-13:10', weeks: 'all', type: 'лекция', subgroup: null, subject: 'Дискретная математика', place: '6258', teacher: 'доц. Степаненко М. А.', note: '' },
+  { day: 'Суббота', pair: 3, time: '11:35-13:10', weeks: 'all', type: 'лекция', subgroup: null, subject: 'Программирование на Java', place: '6455', teacher: 'Зарубин И. Б.', note: '' },
 
-  {day:'Вторник', pair:4, time:'13:40-15:15', weeks:'all', type:'практика', subgroup:1, subject:'Иностранный язык (англ.)', place:'6235', teacher:'Ерофеева А. В.', note:''},
-  {day:'Пятница', pair:4, time:'13:40-15:15', weeks:'all', type:'лекция', subgroup:null, subject:'Основы Web-технологий', place:'6425', teacher:'Курушин Е. А.', note:''},
+  { day: 'Вторник', pair: 4, time: '13:40-15:15', weeks: 'all', type: 'практика', subgroup: 1, subject: 'Иностранный язык (англ.)', place: '6235', teacher: 'Ерофеева А. В.', note: '' },
+  { day: 'Пятница', pair: 4, time: '13:40-15:15', weeks: 'all', type: 'лекция', subgroup: null, subject: 'Основы Web-технологий', place: '6425', teacher: 'Курушин Е. А.', note: '' },
 
-  {day:'Среда', pair:5, time:'15:25-17:00', weeks:'odd', type:'-', subgroup:null, subject:'Час куратора', place:'6429', teacher:'–', note:'точечные недели: 3, 7, 11, 15; по нечётным', weeksList:[3,7,11,15]},
-  {day:'Пятница', pair:5, time:'15:25-17:00', weeks:'all', type:'практика', subgroup:2, subject:'Программирование на Java', place:'6451', teacher:'Зарубин И. Б.', note:''}
+  { day: 'Среда', pair: 5, time: '15:25-17:00', weeks: 'odd', type: '-', subgroup: null, subject: 'Час куратора', place: '6429', teacher: '–', note: 'точечные недели: 3, 7, 11, 15; по нечётным', weeksList: [3, 7, 11, 15] },
+  { day: 'Пятница', pair: 5, time: '15:25-17:00', weeks: 'all', type: 'практика', subgroup: 2, subject: 'Программирование на Java', place: '6451', teacher: 'Зарубин И. Б.', note: '' }
 ];
 
 const SCHEDULE_EVEN = [
-  {day:'Понедельник', pair:3, time:'11:35-13:10', weeks:'all', type:'практика', subgroup:null, subject:'Электив по физической культуре и спорту', place:'спорткомплекс 6-го учебного корпуса', teacher:'Андронова Л. Н.', note:''},
+  { day: 'Понедельник', pair: 3, time: '11:35-13:10', weeks: 'all', type: 'практика', subgroup: null, subject: 'Электив по физической культуре и спорту', place: 'спорткомплекс 6-го учебного корпуса', teacher: 'Андронова Л. Н.', note: '' },
 
-  {day:'Четверг', pair:1, time:'08:00-09:35', weeks:'even', type:'практика', subgroup:null, subject:'Математика', place:'6532', teacher:'Малышев И. Г.', note:''},
-  {day:'Пятница', pair:1, time:'08:00-09:35', weeks:'all', type:'практика', subgroup:null, subject:'Математика', place:'6520', teacher:'Малышев И. Г.', note:''},
-  {day:'Суббота', pair:1, time:'08:00-09:35', weeks:'all', type:'лабораторная', subgroup:1, subject:'Программирование на Java', place:'6451', teacher:'Зарубин И. Б.', note:''},
+  { day: 'Четверг', pair: 1, time: '08:00-09:35', weeks: 'even', type: 'практика', subgroup: null, subject: 'Математика', place: '6532', teacher: 'Малышев И. Г.', note: '' },
+  { day: 'Пятница', pair: 1, time: '08:00-09:35', weeks: 'all', type: 'практика', subgroup: null, subject: 'Математика', place: '6520', teacher: 'Малышев И. Г.', note: '' },
+  { day: 'Суббота', pair: 1, time: '08:00-09:35', weeks: 'all', type: 'лабораторная', subgroup: 1, subject: 'Программирование на Java', place: '6451', teacher: 'Зарубин И. Б.', note: '' },
 
-  {day:'Вторник', pair:2, time:'09:45-11:20', weeks:'even', type:'лекция', subgroup:null, subject:'Математика', place:'6126', teacher:'доц. Малышев И. Г.', note:''},
-  {day:'Четверг', pair:2, time:'09:45-11:20', weeks:'all', type:'практика', subgroup:null, subject:'Дискретная математика', place:'6345', teacher:'доц. Степаненко М. А.', note:''},
-  {day:'Пятница', pair:2, time:'09:45-11:20', weeks:'all', type:'лекция', subgroup:null, subject:'История', place:'6245', teacher:'проф. Гордина Е. Д.', note:''},
-  {day:'Суббота', pair:2, time:'09:45-11:20', weeks:'all', type:'практика', subgroup:null, subject:'Основы российской государственности', place:'6515', teacher:'Седаев П. В.', note:''},
+  { day: 'Вторник', pair: 2, time: '09:45-11:20', weeks: 'even', type: 'лекция', subgroup: null, subject: 'Математика', place: '6126', teacher: 'доц. Малышев И. Г.', note: '' },
+  { day: 'Четверг', pair: 2, time: '09:45-11:20', weeks: 'all', type: 'практика', subgroup: null, subject: 'Дискретная математика', place: '6345', teacher: 'доц. Степаненко М. А.', note: '' },
+  { day: 'Пятница', pair: 2, time: '09:45-11:20', weeks: 'all', type: 'лекция', subgroup: null, subject: 'История', place: '6245', teacher: 'проф. Гордина Е. Д.', note: '' },
+  { day: 'Суббота', pair: 2, time: '09:45-11:20', weeks: 'all', type: 'практика', subgroup: null, subject: 'Основы российской государственности', place: '6515', teacher: 'Седаев П. В.', note: '' },
 
-  {day:'Вторник', pair:3, time:'11:35-13:10', weeks:'all', type:'лабораторная', subgroup:'1-2', subject:'Основы Web-технологий', place:'6143/6251', teacher:'Глумова Е. С.; Бойтякова К. А.', note:''},
-  {day:'Среда', pair:3, time:'11:35-13:10', weeks:'all', type:'лабораторная', subgroup:'1-2', subject:'Графические информационные технологии', place:'6339/6342', teacher:'Малаканова М. А.; Серова М. А.', note:''},
-  {day:'Четверг', pair:3, time:'11:35-13:10', weeks:'all', type:'лекция', subgroup:null, subject:'Математика', place:'6128', teacher:'доц. Малышев И. Г.', note:''},
-  {day:'Пятница', pair:3, time:'11:35-13:10', weeks:'all', type:'лекция', subgroup:null, subject:'Дискретная математика', place:'6258', teacher:'доц. Степаненко М. А.', note:''},
-  {day:'Суббота', pair:3, time:'11:35-13:10', weeks:'all', type:'лекция', subgroup:null, subject:'Программирование на Java', place:'6455', teacher:'Зарубин И. Б.', note:''},
+  { day: 'Вторник', pair: 3, time: '11:35-13:10', weeks: 'all', type: 'лабораторная', subgroup: '1-2', subject: 'Основы Web-технологий', place: '6143/6251', teacher: 'Глумова Е. С.; Бойтякова К. А.', note: '' },
+  { day: 'Среда', pair: 3, time: '11:35-13:10', weeks: 'all', type: 'лабораторная', subgroup: '1-2', subject: 'Графические информационные технологии', place: '6339/6342', teacher: 'Малаканова М. А.; Серова М. А.', note: '' },
+  { day: 'Четверг', pair: 3, time: '11:35-13:10', weeks: 'all', type: 'лекция', subgroup: null, subject: 'Математика', place: '6128', teacher: 'доц. Малышев И. Г.', note: '' },
+  { day: 'Пятница', pair: 3, time: '11:35-13:10', weeks: 'all', type: 'лекция', subgroup: null, subject: 'Дискретная математика', place: '6258', teacher: 'доц. Степаненко М. А.', note: '' },
+  { day: 'Суббота', pair: 3, time: '11:35-13:10', weeks: 'all', type: 'лекция', subgroup: null, subject: 'Программирование на Java', place: '6455', teacher: 'Зарубин И. Б.', note: '' },
 
-  {day:'Вторник', pair:4, time:'13:40-15:15', weeks:'all', type:'практика', subgroup:1, subject:'Иностранный язык (англ.)', place:'6235', teacher:'Ерофеева А. В.', note:''},
-  {day:'Четверг', pair:4, time:'13:40-15:15', weeks:'even', type:'практика', subgroup:null, subject:'История России', place:'6411', teacher:'Гордина Е. Д.', note:''},
-  {day:'Пятница', pair:4, time:'13:40-15:15', weeks:'all', type:'лекция', subgroup:null, subject:'Основы Web-технологий', place:'6425', teacher:'Курушин Е. А.', note:''},
+  { day: 'Вторник', pair: 4, time: '13:40-15:15', weeks: 'all', type: 'практика', subgroup: 1, subject: 'Иностранный язык (англ.)', place: '6235', teacher: 'Ерофеева А. В.', note: '' },
+  { day: 'Четверг', pair: 4, time: '13:40-15:15', weeks: 'even', type: 'практика', subgroup: null, subject: 'История России', place: '6411', teacher: 'Гордина Е. Д.', note: '' },
+  { day: 'Пятница', pair: 4, time: '13:40-15:15', weeks: 'all', type: 'лекция', subgroup: null, subject: 'Основы Web-технологий', place: '6425', teacher: 'Курушин Е. А.', note: '' },
 
-  {day:'Четверг', pair:5, time:'15:25-17:00', weeks:'even', type:'практика', subgroup:2, subject:'Иностранный язык (англ.)', place:'6324', teacher:'Зазыкина Т. Н.', note:''},
-  {day:'Пятница', pair:5, time:'15:25-17:00', weeks:'all', type:'практика', subgroup:2, subject:'Программирование на Java', place:'6451', teacher:'Зарубин И. Б.', note:''}
+  { day: 'Четверг', pair: 5, time: '15:25-17:00', weeks: 'even', type: 'практика', subgroup: 2, subject: 'Иностранный язык (англ.)', place: '6324', teacher: 'Зазыкина Т. Н.', note: '' },
+  { day: 'Пятница', pair: 5, time: '15:25-17:00', weeks: 'all', type: 'практика', subgroup: 2, subject: 'Программирование на Java', place: '6451', teacher: 'Зарубин И. Б.', note: '' }
 ];
 
 const SCHEDULE_COMBINED = (() => {
@@ -631,223 +631,233 @@ function App() {
     });
   }, [tomorrowScheduleSource, tomorrowParts, tomorrowParity, tomorrowWeekNumber, filters]);
 
-const dayFilterList = filters.day === 'all' ? WEEK_DAYS : WEEK_DAYS.filter(day => day === filters.day);
-const filtersAreDefault = isDefaultFilters(filters);
+  const dayFilterList = filters.day === 'all' ? WEEK_DAYS : WEEK_DAYS.filter(day => day === filters.day);
+  const filtersAreDefault = isDefaultFilters(filters);
 
-const currentYear = now.year;
-const themeLabel = translations.theme[themeMode] || themeMode;
-const autoParityLabel = autoParity === 'odd' ? translations.parity.autoOdd : translations.parity.autoEven;
-const parityChipText = getParityLabel(autoParity, translations) || autoParityLabel;
-const translationContextValue = useMemo(() => ({
-  language: DEFAULT_LANGUAGE,
-  texts: translations
-}), [translations]);
-const navItems = useMemo(() => ([
-  { id: 'today', label: translations.sections.today },
-  { id: 'tomorrow', label: translations.sections.tomorrow },
-  { id: 'week', label: translations.sections.week }
-]), [translations]);
-const navigationLabel = translations.navigation?.ariaLabel || translations.brand.title;
-const handleNavAnchorClick = useCallback(() => {
-  holdHeaderVisible();
-}, [holdHeaderVisible]);
-const todayHeading = useMemo(() => formatDayHeading(now, translations), [now, translations]);
-const tomorrowHeading = useMemo(() => formatDayHeading(tomorrowParts, translations), [tomorrowParts, translations]);
-const todayContentId = 'today-section-content';
-const tomorrowContentId = 'tomorrow-section-content';
-const todayHeadingId = 'today-section-title';
-const tomorrowHeadingId = 'tomorrow-section-title';
-const todayCaptionId = 'today-section-caption';
-const tomorrowCaptionId = 'tomorrow-section-caption';
+  const currentYear = now.year;
+  const themeLabel = translations.theme[themeMode] || themeMode;
+  const autoParityLabel = autoParity === 'odd' ? translations.parity.autoOdd : translations.parity.autoEven;
+  const parityChipText = getParityLabel(autoParity, translations) || autoParityLabel;
+  const translationContextValue = useMemo(() => ({
+    language: DEFAULT_LANGUAGE,
+    texts: translations
+  }), [translations]);
+  const navItems = useMemo(() => ([
+    { id: 'today', label: translations.sections.today },
+    { id: 'tomorrow', label: translations.sections.tomorrow },
+    { id: 'week', label: translations.sections.week }
+  ]), [translations]);
+  const navigationLabel = translations.navigation?.ariaLabel || translations.brand.title;
+  const handleNavAnchorClick = useCallback(() => {
+    holdHeaderVisible();
+  }, [holdHeaderVisible]);
+  const todayHeading = useMemo(() => formatDayHeading(now, translations), [now, translations]);
+  const tomorrowHeading = useMemo(() => formatDayHeading(tomorrowParts, translations), [tomorrowParts, translations]);
+  const todayContentId = 'today-section-content';
+  const tomorrowContentId = 'tomorrow-section-content';
+  const todayHeadingId = 'today-section-title';
+  const tomorrowHeadingId = 'tomorrow-section-title';
+  const todayCaptionId = 'today-section-caption';
+  const tomorrowCaptionId = 'tomorrow-section-caption';
 
-return (
-  <TranslationContext.Provider value={translationContextValue}>
-    <div className="app-shell">
-      <header className={`app-header${headerHidden ? ' is-hidden' : ''}`}>
-        <Container className="header-inner">
-          <div className="brand-line">
-            <div className="brand-block" aria-live="polite">
-              <h1>{translations.brand.title}</h1>
-              <div className="brand-meta">
-                <span className="brand-meta-text">{translations.brand.academicWeek(academicWeekNumber)}</span>
-                <span
-                  className={`brand-parity-chip brand-parity-chip--${autoParity}`}
-                  aria-label={translations.brand.autoDetection(parityChipText)}
-                >
-                  {parityChipText}
-                </span>
+  return (
+    <TranslationContext.Provider value={translationContextValue}>
+      <div className="app-shell">
+        <header className={`app-header${headerHidden ? ' is-hidden' : ''}`}>
+          <Container className="header-inner">
+            <div className="brand-line">
+              <div className="brand-block" aria-live="polite">
+                <h1>{translations.brand.title}</h1>
+                <div className="brand-meta">
+                  <span className="brand-meta-text">{translations.brand.academicWeek(academicWeekNumber)}</span>
+                  <span
+                    className={`brand-parity-chip brand-parity-chip--${autoParity}`}
+                    aria-label={translations.brand.autoDetection(parityChipText)}
+                  >
+                    {parityChipText}
+                  </span>
+                </div>
               </div>
+              <nav className="site-nav" aria-label={navigationLabel}>
+                {navItems.map(item => (
+                  <a key={item.id} href={`#${item.id}`} onClick={handleNavAnchorClick}>
+                    {item.label}
+                  </a>
+                ))}
+              </nav>
             </div>
-            <nav className="site-nav" aria-label={navigationLabel}>
-              {navItems.map(item => (
-                <a key={item.id} href={`#${item.id}`} onClick={handleNavAnchorClick}>
-                  {item.label}
-                </a>
-              ))}
-            </nav>
-          </div>
-        </Container>
-      </header>
+          </Container>
+        </header>
 
-      <main className="app-main">
-        <Container
-          as="section"
-          id="today"
-          className={`app-section${todayCollapsed ? ' is-collapsed' : ''}`}
-        >
-          <div className="section-header">
-            <h2 className="section-heading" id={todayHeadingId}>
-              <button
-                type="button"
-                className={`section-heading-button${todayCollapsed ? '' : ' is-open'}`}
-                onClick={() => setTodayCollapsed(value => !value)}
-                aria-expanded={!todayCollapsed}
-                aria-controls={todayContentId}
-                aria-describedby={todayCaptionId}
-              >
-                <span className="section-heading-main">
-                  <span className="section-heading-title">{translations.sections.today}</span>
-                  <span className="section-caption" id={todayCaptionId}>{todayHeading}</span>
-                </span>
-                <span className="section-toggle-icon" aria-hidden="true">
-                  <svg viewBox="0 0 12 12" focusable="false">
-                    <path
-                      d="M3 4.5 6 7.5 9 4.5"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.4"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </span>
-              </button>
-            </h2>
-          </div>
-          <TodaySection
-            info={todayInfo}
-            showParityLabels={parityMode === 'all'}
-            parityMode={parityMode}
-            isCollapsed={todayCollapsed}
-            contentId={todayContentId}
-          />
-        </Container>
+        <main className="app-main">
+          {todayInfo.mode !== 'empty' && (
+            <Container className="app-section status-section">
+              <StatusBlock
+                info={todayInfo}
+                parityMode={parityMode}
+                showParityLabels={parityMode === 'all'}
+              />
+            </Container>
+          )}
 
-        <Container
-          as="section"
-          id="tomorrow"
-          className={`app-section${tomorrowCollapsed ? ' is-collapsed' : ''}`}
-        >
-          <div className="section-header">
-            <h2 className="section-heading" id={tomorrowHeadingId}>
-              <button
-                type="button"
-                className={`section-heading-button${tomorrowCollapsed ? '' : ' is-open'}`}
-                onClick={() => setTomorrowCollapsed(value => !value)}
-                aria-expanded={!tomorrowCollapsed}
-                aria-controls={tomorrowContentId}
-                aria-describedby={tomorrowCaptionId}
-              >
-                <span className="section-heading-main">
-                  <span className="section-heading-title">{translations.sections.tomorrow}</span>
-                  <span className="section-caption" id={tomorrowCaptionId}>{tomorrowHeading}</span>
-                </span>
-                <span className="section-toggle-icon" aria-hidden="true">
-                  <svg viewBox="0 0 12 12" focusable="false">
-                    <path
-                      d="M3 4.5 6 7.5 9 4.5"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.4"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </span>
-              </button>
-            </h2>
-          </div>
-          <TomorrowSection
-            entries={tomorrowEntries}
-            dateParts={tomorrowParts}
-            showParityLabels={parityMode === 'all'}
-            parityMode={parityMode}
-            isCollapsed={tomorrowCollapsed}
-            contentId={tomorrowContentId}
-          />
-        </Container>
-
-        <Container as="section" className="app-section week-section" id="week">
-          <div className="section-header">
-            <h2>{translations.sections.week}</h2>
-          </div>
-          <div className="schedule-controls-card week-controls-card">
-            <div className="schedule-controls-head">
-              <div className="filters-inline-header">
-                <p className="filters-inline-label">{translations.sections.filters}</p>
-                <p className="filters-inline-note">{translations.filters.helper}</p>
-              </div>
-              <div className="parity-inline-block">
-                <span className="filters-inline-label">{translations.parity.label}</span>
-                <ParitySelector parityMode={parityMode} onChange={setParityMode} />
-              </div>
-            </div>
-            <FiltersPanel
-              filters={filters}
-              groups={filterGroups}
-              onUpdateFilter={handleFilterChange}
-              onReset={handleResetFilters}
-              resetDisabled={filtersAreDefault}
-            />
-          </div>
-          <WeekView
-            days={dayFilterList}
-            entries={visiblePairs}
-            currentKey={todayInfo.currentKey}
-            showParityLabels={parityMode === 'all'}
-            parityMode={parityMode}
-          />
-        </Container>
-
-      </main>
-
-      <footer className="app-footer">
-        <Container className="footer-inner">
-          <div className="footer-main">
-            <div className="footer-brand">
-              <div className="footer-site-name">{translations.brand.title}</div>
-              <div className="footer-meta-line">
-                <span className="footer-meta-item">{translations.footer.updateInfo}</span>
-                <span className="footer-meta-item">{translations.footer.lastUpdated}</span>
-              </div>
-            </div>
-            <div className="footer-controls">
-              <div className="footer-theme-control" role="group" aria-label={translations.footer.themeLabel}>
-                <span className="footer-theme-label">{translations.footer.themeLabel}</span>
+          <Container
+            as="section"
+            id="today"
+            className={`app-section${todayCollapsed ? ' is-collapsed' : ''}`}
+          >
+            <div className="section-header">
+              <h2 className="section-heading" id={todayHeadingId}>
                 <button
                   type="button"
-                  className="theme-button footer-theme-button"
-                  onClick={() => {
-                    const currentIndex = THEME_SEQUENCE.indexOf(themeMode);
-                    const nextIndex = (currentIndex + 1) % THEME_SEQUENCE.length;
-                    setThemeMode(THEME_SEQUENCE[nextIndex]);
-                  }}
-                  aria-label={translations.footer.themeButtonLabel(themeLabel)}
-                  title={translations.footer.themeButtonTitle(themeLabel)}
+                  className={`section-heading-button${todayCollapsed ? '' : ' is-open'}`}
+                  onClick={() => setTodayCollapsed(value => !value)}
+                  aria-expanded={!todayCollapsed}
+                  aria-controls={todayContentId}
+                  aria-describedby={todayCaptionId}
                 >
-                  <ThemeIcon mode={themeMode} />
+                  <span className="section-heading-main">
+                    <span className="section-heading-title">{translations.sections.today}</span>
+                    <span className="section-caption" id={todayCaptionId}>{todayHeading}</span>
+                  </span>
+                  <span className="section-toggle-icon" aria-hidden="true">
+                    <svg viewBox="0 0 12 12" focusable="false">
+                      <path
+                        d="M3 4.5 6 7.5 9 4.5"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.4"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </span>
                 </button>
+              </h2>
+            </div>
+            <TodaySection
+              info={todayInfo}
+              showParityLabels={parityMode === 'all'}
+              parityMode={parityMode}
+              isCollapsed={todayCollapsed}
+              contentId={todayContentId}
+            />
+          </Container>
+
+          <Container
+            as="section"
+            id="tomorrow"
+            className={`app-section${tomorrowCollapsed ? ' is-collapsed' : ''}`}
+          >
+            <div className="section-header">
+              <h2 className="section-heading" id={tomorrowHeadingId}>
+                <button
+                  type="button"
+                  className={`section-heading-button${tomorrowCollapsed ? '' : ' is-open'}`}
+                  onClick={() => setTomorrowCollapsed(value => !value)}
+                  aria-expanded={!tomorrowCollapsed}
+                  aria-controls={tomorrowContentId}
+                  aria-describedby={tomorrowCaptionId}
+                >
+                  <span className="section-heading-main">
+                    <span className="section-heading-title">{translations.sections.tomorrow}</span>
+                    <span className="section-caption" id={tomorrowCaptionId}>{tomorrowHeading}</span>
+                  </span>
+                  <span className="section-toggle-icon" aria-hidden="true">
+                    <svg viewBox="0 0 12 12" focusable="false">
+                      <path
+                        d="M3 4.5 6 7.5 9 4.5"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.4"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </span>
+                </button>
+              </h2>
+            </div>
+            <TomorrowSection
+              entries={tomorrowEntries}
+              dateParts={tomorrowParts}
+              showParityLabels={parityMode === 'all'}
+              parityMode={parityMode}
+              isCollapsed={tomorrowCollapsed}
+              contentId={tomorrowContentId}
+            />
+          </Container>
+
+          <Container as="section" className="app-section week-section" id="week">
+            <div className="section-header">
+              <h2>{translations.sections.week}</h2>
+            </div>
+            <div className="schedule-controls-card week-controls-card">
+              <div className="schedule-controls-head">
+                <div className="filters-inline-header">
+                  <p className="filters-inline-label">{translations.sections.filters}</p>
+                  <p className="filters-inline-note">{translations.filters.helper}</p>
+                </div>
+                <div className="parity-inline-block">
+                  <span className="filters-inline-label">{translations.parity.label}</span>
+                  <ParitySelector parityMode={parityMode} onChange={setParityMode} />
+                </div>
+              </div>
+              <FiltersPanel
+                filters={filters}
+                groups={filterGroups}
+                onUpdateFilter={handleFilterChange}
+                onReset={handleResetFilters}
+                resetDisabled={filtersAreDefault}
+              />
+            </div>
+            <WeekView
+              days={dayFilterList}
+              entries={visiblePairs}
+              currentKey={todayInfo.currentKey}
+              showParityLabels={parityMode === 'all'}
+              parityMode={parityMode}
+            />
+          </Container>
+
+        </main>
+
+        <footer className="app-footer">
+          <Container className="footer-inner">
+            <div className="footer-main">
+              <div className="footer-brand">
+                <div className="footer-site-name">{translations.brand.title}</div>
+                <div className="footer-meta-line">
+                  <span className="footer-meta-item">{translations.footer.updateInfo}</span>
+                  <span className="footer-meta-item">{translations.footer.lastUpdated}</span>
+                </div>
+              </div>
+              <div className="footer-controls">
+                <div className="footer-theme-control" role="group" aria-label={translations.footer.themeLabel}>
+                  <span className="footer-theme-label">{translations.footer.themeLabel}</span>
+                  <button
+                    type="button"
+                    className="theme-button footer-theme-button"
+                    onClick={() => {
+                      const currentIndex = THEME_SEQUENCE.indexOf(themeMode);
+                      const nextIndex = (currentIndex + 1) % THEME_SEQUENCE.length;
+                      setThemeMode(THEME_SEQUENCE[nextIndex]);
+                    }}
+                    aria-label={translations.footer.themeButtonLabel(themeLabel)}
+                    title={translations.footer.themeButtonTitle(themeLabel)}
+                  >
+                    <ThemeIcon mode={themeMode} />
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-          <div className="footer-bottom">
-            <small>{translations.footer.copyright(currentYear)}</small>
-          </div>
-        </Container>
-      </footer>
-    </div>
-  </TranslationContext.Provider>
-);
+            <div className="footer-bottom">
+              <small>{translations.footer.copyright(currentYear)}</small>
+            </div>
+          </Container>
+        </footer>
+      </div>
+    </TranslationContext.Provider>
+  );
 }
 
 function ParitySelector({ parityMode, onChange }) {
@@ -1062,110 +1072,102 @@ function CountdownTicker({ summary, showSummary = true }) {
   );
 }
 
-function TodaySection({ info, showParityLabels, parityMode, isCollapsed = false, contentId }) {
-  const { texts } = useTranslation();
-  if (info.mode === 'empty') {
-    return (
-      <div className="summary-card" aria-live="polite">
-        <span className="badge">{texts.today.noPairsBadge}</span>
-        <p className="info-text">{texts.today.noPairsMessage}</p>
-      </div>
-    );
-  }
-
-  const { summary, entries, highlightParity, highlightKey } = info;
-  const isCurrent = summary.state === 'current';
-  const cardParityVariant = (showParityLabels || parityMode !== 'all') ? null : highlightParity;
-  const pinnedItem = highlightKey ? entries.find(item => item.key === highlightKey) : null;
-  const showCountdown = Boolean(summary && summary.countdownLabel);
-  const todayCardClasses = ['today-card', 'today-card--list'];
-  if (isCurrent) {
-    todayCardClasses.push('current');
-  }
-  if (cardParityVariant) {
-    todayCardClasses.push(`parity-${cardParityVariant}`);
-  }
-  if (showCountdown) {
-    todayCardClasses.push('has-countdown');
-  }
-
-  const renderEntry = item => {
-    const entry = item.entry;
-    const entryKey = item.key;
-    const subgroupBadge = getSubgroupBadge(entry.subgroup, texts);
-    const parityTone = getParityVariant(entry.weeks);
-    const parityLabel = showParityLabels && parityTone ? getParityLabel(entry.weeks, texts) : null;
-    const parityCardVariant = (showParityLabels || parityMode !== 'all') ? null : parityTone;
-    const teacherLabel = formatTeacherNames(entry.teacher);
-    const showTeacher = teacherLabel !== '';
-    const note = (entry.note || '').trim();
-    const typeVariant = getTypeVariant(entry.type);
-    const hasTags = showTeacher || note;
-    const statusClass = item.status === 'current'
-      ? ' is-current'
-      : item.status === 'next'
-        ? ' is-next'
-        : item.status === 'past'
-          ? ' is-past'
-          : '';
-    const showStatusChip = item.status === 'current' || item.status === 'next' || item.status === 'past';
-    const statusLabel = item.status === 'current'
-      ? texts.statuses.current
-      : item.status === 'next'
-        ? texts.statuses.next
-        : texts.statuses.past;
-    return (
-      <li
-        key={entryKey}
-        className={`pair-entry${statusClass}${parityCardVariant ? ` parity-${parityCardVariant}` : ''}`}
-        aria-current={item.status === 'current' ? 'true' : undefined}
-      >
-        <div className="pair-entry-header">
-          <div className="pair-entry-time">
-            <span className="pair-entry-number">
-              {typeof entry.pair === 'number' ? texts.pair.numberLabel(entry.pair) : entry.pair}
-            </span>
-            <span className="pair-entry-clock">{entry.time}</span>
-          </div>
-          <div className="pair-entry-flags">
-            {subgroupBadge && (
-              <span className={`subgroup-badge subgroup-${subgroupBadge.variant}`}>
-                {subgroupBadge.label}
-              </span>
-            )}
-            {parityLabel && parityTone && (
-              <span className={`meta-chip parity-chip parity-${parityTone}`}>{parityLabel}</span>
-            )}
-          </div>
-        </div>
-        <div className="pair-entry-body">
-          <div className="pair-entry-subject">{entry.subject}</div>
-          <div className="pair-entry-room">{`${texts.pair.roomPrefix} ${entry.place}`}</div>
-        </div>
-        <div className="pair-entry-footer">
-          <span className={`meta-chip meta-chip-type meta-chip-type--${typeVariant}`}>
-            {formatTypeLabel(entry.type, texts)}
-          </span>
-          <div className="pair-entry-tags">
-            {showStatusChip && (
-              <span className="meta-chip meta-chip-status">{statusLabel}</span>
-            )}
-            {showTeacher && (
-              <span className="meta-chip meta-chip-muted">{teacherLabel}</span>
-            )}
-            {note && <span className="meta-chip meta-chip-note">{note}</span>}
-          </div>
-        </div>
-      </li>
-    );
-  };
+function PairEntryItem({ item, texts, showParityLabels, parityMode }) {
+  const entry = item.entry;
+  const entryKey = item.key;
+  const subgroupBadge = getSubgroupBadge(entry.subgroup, texts);
+  const parityTone = getParityVariant(entry.weeks);
+  const parityLabel = showParityLabels && parityTone ? getParityLabel(entry.weeks, texts) : null;
+  const parityCardVariant = (showParityLabels || parityMode !== 'all') ? null : parityTone;
+  const teacherLabel = formatTeacherNames(entry.teacher);
+  const showTeacher = teacherLabel !== '';
+  const note = (entry.note || '').trim();
+  const typeVariant = getTypeVariant(entry.type);
+  const hasTags = showTeacher || note;
+  const statusClass = item.status === 'current'
+    ? ' is-current'
+    : item.status === 'next'
+      ? ' is-next'
+      : item.status === 'past'
+        ? ' is-past'
+        : '';
+  const showStatusChip = item.status === 'current' || item.status === 'next' || item.status === 'past';
+  const statusLabel = item.status === 'current'
+    ? texts.statuses.current
+    : item.status === 'next'
+      ? texts.statuses.next
+      : texts.statuses.past;
 
   return (
-    <article
-      className={todayCardClasses.join(' ')}
-      aria-live="polite"
+    <li
+      key={entryKey}
+      className={`pair-entry${statusClass}${parityCardVariant ? ` parity-${parityCardVariant}` : ''}`}
+      aria-current={item.status === 'current' ? 'true' : undefined}
     >
-      <div className={`today-summary${showCountdown ? ' has-countdown' : ''}`}>
+      <div className="pair-entry-header">
+        <div className="pair-entry-time">
+          <span className="pair-entry-number">
+            {typeof entry.pair === 'number' ? texts.pair.numberLabel(entry.pair) : entry.pair}
+          </span>
+          <span className="pair-entry-clock">{entry.time}</span>
+        </div>
+        <div className="pair-entry-flags">
+          {subgroupBadge && (
+            <span className={`subgroup-badge subgroup-${subgroupBadge.variant}`}>
+              {subgroupBadge.label}
+            </span>
+          )}
+          {parityLabel && parityTone && (
+            <span className={`meta-chip parity-chip parity-${parityTone}`}>{parityLabel}</span>
+          )}
+        </div>
+      </div>
+      <div className="pair-entry-body">
+        <div className="pair-entry-subject">{entry.subject}</div>
+        <div className="pair-entry-room">{`${texts.pair.roomPrefix} ${entry.place}`}</div>
+      </div>
+      <div className="pair-entry-footer">
+        <span className={`meta-chip meta-chip-type meta-chip-type--${typeVariant}`}>
+          {formatTypeLabel(entry.type, texts)}
+        </span>
+        <div className="pair-entry-tags">
+          {showStatusChip && (
+            <span className="meta-chip meta-chip-status">{statusLabel}</span>
+          )}
+          {showTeacher && (
+            <span className="meta-chip meta-chip-muted">{teacherLabel}</span>
+          )}
+          {note && <span className="meta-chip meta-chip-note">{note}</span>}
+        </div>
+      </div>
+    </li>
+  );
+}
+
+function StatusBlock({ info, parityMode, showParityLabels }) {
+  const { texts } = useTranslation();
+  const { summary, highlightParity, entries, highlightKey } = info;
+  if (!summary) return null;
+
+  const isCurrent = summary.state === 'current';
+  const cardParityVariant = (showParityLabels || parityMode !== 'all') ? null : highlightParity;
+  const showCountdown = Boolean(summary.countdownLabel);
+  const pinnedItem = highlightKey ? entries.find(item => item.key === highlightKey) : null;
+
+  const classes = ['today-card', 'status-card'];
+  if (isCurrent) {
+    classes.push('current');
+  }
+  if (cardParityVariant) {
+    classes.push(`parity-${cardParityVariant}`);
+  }
+  if (showCountdown) {
+    classes.push('has-countdown');
+  }
+
+  return (
+    <article className={classes.join(' ')} aria-live="polite">
+      <div className="today-summary">
         <div className="today-overview">
           <div className="today-head">
             <span className="badge">{summary.badge}</span>
@@ -1181,24 +1183,71 @@ function TodaySection({ info, showParityLabels, parityMode, isCollapsed = false,
           </div>
         )}
       </div>
-      {isCollapsed && pinnedItem && (
+      {pinnedItem && (
         <div className="section-pinned-list">
           <ul className="day-pair-list today-pair-list today-pinned-list" aria-label={texts.today.listAria}>
-            {renderEntry(pinnedItem)}
+            <PairEntryItem
+              item={pinnedItem}
+              texts={texts}
+              showParityLabels={showParityLabels}
+              parityMode={parityMode}
+            />
           </ul>
         </div>
       )}
-      <CollapsibleRegion
-        id={contentId}
-        isCollapsed={isCollapsed}
+    </article>
+  );
+}
+
+function TodaySection({ info, showParityLabels, parityMode, isCollapsed = false, contentId }) {
+  const { texts } = useTranslation();
+
+  let content;
+
+  if (info.mode === 'empty') {
+    content = (
+      <div className="summary-card" aria-live="polite">
+        <span className="badge">{texts.today.noPairsBadge}</span>
+        <p className="info-text">{texts.today.noPairsMessage}</p>
+      </div>
+    );
+  } else {
+    const { entries, highlightParity } = info;
+    const cardParityVariant = (showParityLabels || parityMode !== 'all') ? null : highlightParity;
+    const todayCardClasses = ['today-card', 'today-card--list'];
+    if (cardParityVariant) {
+      todayCardClasses.push(`parity-${cardParityVariant}`);
+    }
+
+    content = (
+      <article
+        className={todayCardClasses.join(' ')}
+        aria-live="polite"
       >
         {entries.length > 0 && (
           <ul className="day-pair-list today-pair-list" aria-label={texts.today.listAria}>
-            {entries.map(renderEntry)}
+            {entries.map(item => (
+              <PairEntryItem
+                key={item.key}
+                item={item}
+                texts={texts}
+                showParityLabels={showParityLabels}
+                parityMode={parityMode}
+              />
+            ))}
           </ul>
         )}
-      </CollapsibleRegion>
-    </article>
+      </article>
+    );
+  }
+
+  return (
+    <CollapsibleRegion
+      id={contentId}
+      isCollapsed={isCollapsed}
+    >
+      {content}
+    </CollapsibleRegion>
   );
 }
 
